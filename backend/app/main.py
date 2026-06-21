@@ -1,10 +1,31 @@
-from fastapi import FastAPI
-from app.routes.chat import router as chat_router
-app = FastAPI()
+# app/main.py
 
-app.include_router(chat_router)
+from fastapi import FastAPI
+
+from app.core.database import Base, engine
+
+# Import models so SQLAlchemy can detect them
+from app.models.user import User
+
+app = FastAPI(
+    title="AI Project Management API",
+    version="1.0.0"
+)
+
+# Create tables in Neon PostgreSQL
+Base.metadata.create_all(bind=engine)
+
+
 @app.get("/")
-def home():
+def root():
     return {
-        'message':"Stack Pilot is running"
+        "message": "AI Project Management Backend Running"
+    }
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "success",
+        "database": "connected"
     }
