@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional         
 
 class SendOTPRequest(BaseModel):
     email: EmailStr
@@ -7,7 +8,7 @@ class SendOTPRequest(BaseModel):
 class RegisterRequest(BaseModel):
     name: str
     email: EmailStr
-    password: str
+    password: str = Field(max_length=72)
     otp: str
 
 

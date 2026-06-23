@@ -59,6 +59,12 @@ def register(
     db: Session = Depends(get_db)
 ):
 
+    if len(data.password) > 72:
+        raise HTTPException(
+            status_code=400,
+            detail="Password too long. Max 72 characters allowed."
+        )
+
     existing_user = db.query(User).filter(
         User.email == data.email
     ).first()
@@ -134,6 +140,11 @@ def login(
     )
 
     return {
-        "access_token": token,
-        "token_type": "bearer"
+    "access_token": token,
+    "token_type": "bearer",
+    "user": {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email
     }
+}

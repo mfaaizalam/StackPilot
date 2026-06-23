@@ -1,40 +1,27 @@
-import { useState } from "react";
-import { sendMessage } from "./services/api";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 
-function App() {
-  const [message, setMessage] = useState("");
-  const [response, setResponse] = useState("");
-
-  const handleSend = async () => {
-    const data = await sendMessage(message);
-    setResponse(data.response);
-  };
-
-  return (
-    <div className="p-10">
-      <h1 className="text-3xl font-bold mb-4">
-        StackPilot
-      </h1>
-
-      <input
-        className="border p-2 mr-2"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-
-      <button
-        className="border px-4 py-2"
-        onClick={handleSend}
-      >
-        Send
-      </button>
-
-      <div className="mt-6">
-        <h2 className="font-bold">AI Response:</h2>
-        <p>{response}</p>
-      </div>
-    </div>
-  );
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem("token");
+  return token ? children : <Navigate to="/login" replace />;
 }
 
-export default App;
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute>
+            <Dashboard />
+          </PrivateRoute>
+        }
+      />
+    </Routes>
+  );
+}
