@@ -7,6 +7,9 @@ from app.core.database import Base, engine
 from app.routes.auth import router as auth_router
 from app.models.user import User
 from app.models.otp import OTP
+from app.routes.board import router as Board_router
+from app.routes.column import router as Column_router
+from app.routes.task import router as task_router
 app = FastAPI(
     title="AI Project Management API",
     version="1.0.0"
@@ -27,6 +30,13 @@ Base.metadata.create_all(bind=engine)
 
 # REGISTER ROUTES
 app.include_router(auth_router)
+
+# Board Routes
+app.include_router(Board_router)
+# Column Route
+app.include_router(Column_router)
+#Task Route
+app.include_router(task_router)
 @app.get("/")
 def root():
     return {

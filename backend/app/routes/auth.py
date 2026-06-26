@@ -7,9 +7,10 @@ from app.core.database import get_db
 from app.core.security import (
     hash_password,
     verify_password,
-    create_access_token
+    create_access_token,
+     verify_token
 )
-
+from fastapi.security import OAuth2PasswordBearer
 from app.models.user import User
 from app.models.otp import OTP
 
@@ -25,7 +26,35 @@ router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+auth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    payload = verify_token(token)
+
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )
+
+    user_id = int(payload["sub"])
+
+    user = db.query(User).filter(
+        User.id == user_id
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+
+    return user
 
 @router.post("/send-otp")
 def send_otp(

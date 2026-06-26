@@ -4,6 +4,7 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
+
 # Password Hashing
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -28,14 +29,14 @@ def verify_password(
 # JWT Token Creation
 def create_access_token(
     data: dict,
-    expires_minutes: int = 30
+   expires_days: int = 30
 ):
 
     to_encode = data.copy()
 
     expire = datetime.utcnow() + timedelta(
-        minutes=expires_minutes
-    )
+    days=expires_days
+)
 
     to_encode.update(
         {"exp": expire}
