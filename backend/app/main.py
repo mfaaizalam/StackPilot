@@ -10,6 +10,7 @@ from app.models.otp import OTP
 from app.routes.board import router as Board_router
 from app.routes.column import router as Column_router
 from app.routes.task import router as task_router
+from app.routes.ai import router as ai_router
 app = FastAPI(
     title="AI Project Management API",
     version="1.0.0"
@@ -37,6 +38,11 @@ app.include_router(Board_router)
 app.include_router(Column_router)
 #Task Route
 app.include_router(task_router)
+
+#Generate AI project route
+app.include_router(ai_router)
+
+
 @app.get("/")
 def root():
     return {
