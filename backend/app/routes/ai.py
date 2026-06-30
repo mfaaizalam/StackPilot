@@ -37,8 +37,9 @@ def generate_project_route(
             detail=str(e)
         )
 
-@router.post("/save-project")
+@router.post("/boards/{board_id}/save-project")
 def save_project_route(
+    board_id: int,
     request: SaveProjectRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -46,9 +47,10 @@ def save_project_route(
     try:
 
         result = save_project(
-            db=db,
-            data=request,
-            user_id=current_user.id      # Temporary
+        db=db,
+        board_id=board_id,
+        data=request,
+        user_id=current_user.id
         )
 
         return result

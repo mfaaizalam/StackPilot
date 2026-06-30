@@ -15,7 +15,5 @@ class GenerateTask(BaseModel):
 
 
 class ProjectGenerateResponse(BaseModel):
-    board_name: str
-    project_description: str
     columns: list[str]
     tasks: list[GenerateTask]

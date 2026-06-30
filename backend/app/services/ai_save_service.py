@@ -3,26 +3,35 @@ from sqlalchemy.orm import Session
 from app.models.board import Board
 from app.models.column import BoardColumn
 from app.models.task import Task
-
 from app.schemas.ai_save import SaveProjectRequest
-
-
+from fastapi import HTTPException
 def save_project(
     db: Session,
+    board_id: int,
     data: SaveProjectRequest,
-    user_id: int
+    user_id: int,
 ):
     try:
-        # Create Board
-        board = Board(
-            name=data.board_name,
-            description=data.project_description,
-            owner_id=user_id
-        )
+        # found Board
+        board = db.query(Board).filter(
+            Board.id == board_id,
+            Board.owner_id == user_id
+        ).first()
 
-        db.add(board)
-        db.flush()   # Generate board.id without committing
+        if not board:
+            raise HTTPException(
+                status_code=404,
+                detail="Board not found."
+            )
+        existing_columns = db.query(BoardColumn).filter(
+        BoardColumn.board_id == board.id
+        ).first()
 
+        if existing_columns:
+            raise HTTPException(
+            status_code=400,
+            detail="This board already contains columns. AI generation is only available for empty boards."
+            )
         # Store column name -> column id
         column_map = {}
 
@@ -59,6 +68,12 @@ def save_project(
             "board_name": board.name
         }
 
-    except Exception:
+    except HTTPException:
         db.rollback()
         raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+        status_code=500,
+        detail=str(e)
+    )

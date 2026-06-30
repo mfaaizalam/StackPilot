@@ -18,7 +18,6 @@ IMPORTANT RULES:
 
 Generate:
 
-- project_description
 - columns
 - tasks
 
@@ -35,8 +34,6 @@ The default columns are:
 Return JSON exactly in this format:
 
 {
-  "board_name": "",
-  "project_description": "",
   "columns": [
     "Backlog",
     "To Do",
