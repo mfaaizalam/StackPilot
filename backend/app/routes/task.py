@@ -6,6 +6,9 @@ from app.schemas.task import TaskUpdate
 from app.routes.auth import get_current_user
 from app.models.task import Task
 from app.models.user import User
+from app.rag.embedding_service import create_embedding
+from app.rag.qdrant_service import qdrant
+from app.models.board import Board
 from app.models.column import BoardColumn
 router = APIRouter(
     prefix="/tasks",
@@ -19,10 +22,10 @@ def create_column(
     db:Session =Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    Column= (
+    column= (
         db.query(BoardColumn).filter(BoardColumn.id ==task.column_id ).first()
     )
-    if not Column:
+    if not column:
         raise HTTPException(
             status_code=404,
             detail="Board not found"
@@ -37,6 +40,29 @@ def create_column(
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
+
+    # Adding vector db
+    text =f"""
+        Title:{new_task.title}
+        Description:{new_task.description}
+        Priority: {task.priority}
+    """
+    embedding = create_embedding(text)
+
+    payload = {
+        "type":"task",
+        "board_id":column.board_id,
+        "task_id":new_task.id,
+        "column_id":new_task.column_id,
+        "priority":new_task.priority,
+        "title":new_task.title,
+        "text":text
+    }
+    qdrant.insert_vector(
+        embedding=embedding,
+        point_id=new_task.id,
+        payload=payload
+    )
     return new_task
 
 # READ
@@ -96,6 +122,32 @@ def update_task(
     db.commit()
     db.refresh(task)
 
+    #Update Vector Db
+    column =(
+        db.query(BoardColumn).filter(BoardColumn.id==task.column_id).first()
+    )
+    text =f"""
+        Title:{task.title}
+        Description:{task.description}
+        Priority: {task.priority}
+    """
+    embedding = create_embedding(text)
+
+    payload = {
+        "type":"task",
+        "board_id":column.board_id,
+        "task_id":task.id,
+        "column_id":task.column_id,
+        "priority":task.priority,
+        "title":task.title,
+        "text":text
+    }
+    qdrant.insert_vector(
+        embedding=embedding,
+        point_id=task.id,
+        payload=payload
+    )
+
     return task    
 
 # Delete 
@@ -107,8 +159,14 @@ def delete_task(
     task = (
         db.query(Task).filter(Task.id==task_id).first()
     )
+    if not task:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
     db.delete(task)
     db.commit()
+    qdrant.delete_vector(task_id)
     return {
         "message":"Task Deleted Successfully"
     }
