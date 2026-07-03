@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str
 
+    QDRANT_URL:str
+    QDRANT_API_KEY:str
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"
