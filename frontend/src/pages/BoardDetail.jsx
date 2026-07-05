@@ -4,6 +4,7 @@ import api from "../api/axios.js";
 import ColumnModal from "../components/ColumnModal.jsx";
 import TaskModal from "../components/TaskModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import ChatWidget from "../components/ChatWidget.jsx";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function IconPlus({ size = 14 }) {
@@ -99,8 +100,10 @@ function TaskDetail({ task, columns, onClose, onEdit, onDelete }) {
 function TaskCard({ task, onView, onEdit, onDelete, onDragStart, onDragEnd }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const isDraft = !!task.__draft;
 
   const handleDragStart = (e) => {
+    if (isDraft) return;
     setDragging(true);
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("taskId", String(task.id));
@@ -113,47 +116,61 @@ function TaskCard({ task, onView, onEdit, onDelete, onDragStart, onDragEnd }) {
 
   return (
     <div
-      draggable
+      draggable={!isDraft}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onClick={() => !menuOpen && onView(task)}
-      className={`group relative bg-white border rounded-xl p-4 hover:border-neutral-300 hover:shadow-sm transition cursor-pointer select-none ${dragging ? "opacity-40 scale-95 border-neutral-300" : "border-neutral-200"}`}
+      onClick={() => { if (isDraft) return; if (!menuOpen) onView(task); }}
+      className={`group relative bg-white border rounded-xl p-4 transition cursor-pointer select-none ${
+        isDraft
+          ? "border-dashed border-neutral-300 bg-neutral-50/70 hover:border-neutral-400"
+          : `hover:border-neutral-300 hover:shadow-sm ${dragging ? "opacity-40 scale-95 border-neutral-300" : "border-neutral-200"}`
+      }`}
     >
-      {/* Drag grip — visible on hover */}
-      <div className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-300 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
-        <IconGrip />
-      </div>
+      {/* Drag grip — visible on hover, hidden for drafts */}
+      {!isDraft && (
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-300 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
+          <IconGrip />
+        </div>
+      )}
 
-      {/* Action menu */}
-      <div className="absolute top-3 right-3" onClick={e => e.stopPropagation()}>
-        <button
-          onClick={() => setMenuOpen(v => !v)}
-          className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 opacity-0 group-hover:opacity-100 transition"
-        >
-          <IconDots />
-        </button>
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 text-sm">
-              <button onClick={() => { setMenuOpen(false); onEdit(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-neutral-700 hover:bg-neutral-50 transition">
-                <IconEdit /> Edit
-              </button>
-              <button onClick={() => { setMenuOpen(false); onDelete(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition">
-                <IconTrash /> Delete
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+      {/* Action menu — hidden for drafts, nothing to edit/delete until saved */}
+      {!isDraft && (
+        <div className="absolute top-3 right-3" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 opacity-0 group-hover:opacity-100 transition"
+          >
+            <IconDots />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 text-sm">
+                <button onClick={() => { setMenuOpen(false); onEdit(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-neutral-700 hover:bg-neutral-50 transition">
+                  <IconEdit /> Edit
+                </button>
+                <button onClick={() => { setMenuOpen(false); onDelete(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition">
+                  <IconTrash /> Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
-      <p className="text-sm font-medium text-neutral-900 pr-6 pl-4 leading-snug">{task.title}</p>
+      <p className={`text-sm font-medium pr-6 pl-4 leading-snug ${isDraft ? "text-neutral-600" : "text-neutral-900"}`}>{task.title}</p>
       {task.description && (
         <p className="mt-1.5 text-xs text-neutral-500 line-clamp-2 leading-relaxed pl-4">{task.description}</p>
       )}
       <div className="mt-3 flex items-center gap-2 pl-4">
         <PriorityBadge priority={task.priority} />
-        <span className="text-[11px] text-neutral-400">#{task.id}</span>
+        {isDraft ? (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-neutral-100 text-neutral-500 border-neutral-200">
+            Draft · unsaved
+          </span>
+        ) : (
+          <span className="text-[11px] text-neutral-400">#{task.id}</span>
+        )}
       </div>
     </div>
   );
@@ -279,6 +296,11 @@ export default function BoardDetail() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  // AI-drafted tasks (from chat) live directly in `tasks` flagged
+  // `__draft: true` — there's no separate popup/dialog state anymore.
+  // Confirmation happens inline in the chat panel itself.
+  const [savingDrafts, setSavingDrafts] = useState(false);
+
   // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -373,6 +395,75 @@ export default function BoardDetail() {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, column_id: task.column_id } : t));
       showToast("Move failed.", "error");
     }
+  };
+
+  // ── AI chat → board bridge ───────────────────────────────────────────────
+  // Every AI response that drafts/edits/clears tasks sends back the
+  // COMPLETE resulting set (never a diff), so we always fully replace
+  // whatever draft cards currently exist with the new set. This is what
+  // makes "remove the CI task" or "make that one high priority" work: the
+  // AI sees the current pending list (sent with every chat message, see
+  // ChatWidget) and returns the corrected full list, which lands here.
+  const handleTasksDrafted = (newColumns = [], newTasks = []) => {
+    setColumns(prev => {
+      const existingIds = new Set(prev.map(c => c.id));
+      const toAdd = newColumns
+        .filter(c => !existingIds.has(c.id))
+        .map(c => ({ id: c.id, name: c.name, board_id: Number(boardId) }));
+      return toAdd.length ? [...prev, ...toAdd] : prev;
+    });
+
+    setTasks(prev => {
+      const withoutOldDrafts = prev.filter(t => !t.__draft);
+      const freshDrafts = newTasks.map((t, i) => ({
+        id: `draft-${Date.now()}-${i}`,
+        __draft: true,
+        title: t.title,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        column_id: t.column_id,
+      }));
+      return [...withoutOldDrafts, ...freshDrafts];
+    });
+  };
+
+  // The AI created a real column (already persisted server-side once the
+  // user confirmed it in chat) — just reflect it into local board state.
+  const handleColumnCreated = (col) => {
+    setColumns(prev => (prev.some(c => c.id === col.id) ? prev : [...prev, { id: col.id, name: col.name, board_id: Number(boardId) }]));
+    showToast(`Column "${col.name}" added.`);
+  };
+
+  // Called from the chat panel's inline "Yes" button — saves every
+  // currently-drafted task for real, one by one, and swaps each in place.
+  const handleSaveAllDrafts = async () => {
+    const drafts = tasks.filter(t => t.__draft);
+    if (!drafts.length) return { success: true, savedCount: 0, failedCount: 0 };
+
+    setSavingDrafts(true);
+    let savedCount = 0;
+    let failedCount = 0;
+
+    for (const draft of drafts) {
+      try {
+        const { data } = await api.post("/tasks/", {
+          title: draft.title,
+          description: draft.description,
+          priority: draft.priority,
+          column_id: draft.column_id,
+        });
+        setTasks(prev => prev.map(t => (t.id === draft.id ? data : t)));
+        savedCount += 1;
+      } catch {
+        failedCount += 1;
+      }
+    }
+
+    setSavingDrafts(false);
+    if (failedCount) {
+      showToast(`${failedCount} task(s) failed to save — you can ask the assistant to try again.`, "error");
+    }
+    return { success: failedCount === 0, savedCount, failedCount };
   };
 
   const logout = () => {
@@ -542,6 +633,24 @@ export default function BoardDetail() {
           {toast.msg}
         </div>
       )}
+
+      {/* RAG-connected chat assistant, scoped to this board. Confirmation
+          for AI-drafted tasks happens inline in the chat panel — no popup. */}
+      <ChatWidget
+        boardId={boardId}
+        pendingTasks={tasks
+          .filter(t => t.__draft)
+          .map(t => ({
+            title: t.title,
+            description: t.description,
+            priority: t.priority,
+            column_id: t.column_id,
+            column_name: columns.find(c => c.id === t.column_id)?.name || "",
+          }))}
+        onTasksDrafted={handleTasksDrafted}
+        onColumnCreated={handleColumnCreated}
+        onSaveAllDrafts={handleSaveAllDrafts}
+      />
     </div>
   );
 }
