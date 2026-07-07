@@ -1,14 +1,15 @@
-from fastapi import APIRouter,HTTPException,Depends
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.schemas.chat import ChatResponse,ChatRequest
+from app.schemas.chat import ChatResponse, ChatRequest
 from app.routes.auth import get_current_user
-from app.services.chat_service import save_message
 from app.services.gemini_chat_service import ask_ai
+
 router = APIRouter(
     prefix="/boards",
     tags=["Chat"]
 )
+
 
 @router.post(
     "/{board_id}/chat",
@@ -21,16 +22,18 @@ def chat(
     current_user=Depends(get_current_user)
 ):
     try:
-        ai_response = ask_ai(
+        result = ask_ai(
             db=db,
             board_id=board_id,
             user_id=current_user.id,
-            user_message=request.message
+            user_message=request.message,
+            pending_tasks=request.pending_tasks
         )
 
         return ChatResponse(
             role="assistant",
-            message=ai_response
+            message=result["message"],
+            action=result["action"]
         )
 
     except Exception as e:
