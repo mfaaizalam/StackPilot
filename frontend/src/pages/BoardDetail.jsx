@@ -28,6 +28,13 @@ function IconClose() {
 function IconGrip() {
   return <svg width="10" height="14" viewBox="0 0 10 14" fill="none"><circle cx="3" cy="3" r="1.2" fill="currentColor"/><circle cx="7" cy="3" r="1.2" fill="currentColor"/><circle cx="3" cy="7" r="1.2" fill="currentColor"/><circle cx="7" cy="7" r="1.2" fill="currentColor"/><circle cx="3" cy="11" r="1.2" fill="currentColor"/><circle cx="7" cy="11" r="1.2" fill="currentColor"/></svg>;
 }
+function IconAnalyze({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M2.5 13.5V9M6.5 13.5V5M10.5 13.5V7M14.5 13.5V2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 // ── Priority badge ───────────────────────────────────────────────────────────
 const PRIORITY_STYLES = {
@@ -633,6 +640,15 @@ export default function BoardDetail() {
           {toast.msg}
         </div>
       )}
+
+      {/* Analyze-your-project launcher — mirrors the chat launcher, bottom-left. */}
+      <button
+        onClick={() => navigate(`/boards/${boardId}/analyze`)}
+        title="Project insights"
+        className="fixed bottom-5 left-5 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center bg-neutral-950 text-white hover:bg-neutral-800 transition"
+      >
+        <IconAnalyze />
+      </button>
 
       {/* RAG-connected chat assistant, scoped to this board. Confirmation
           for AI-drafted tasks happens inline in the chat panel — no popup. */}

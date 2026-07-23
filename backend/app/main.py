@@ -12,6 +12,7 @@ from app.routes.column import router as Column_router
 from app.routes.task import router as task_router
 from app.routes.ai import router as ai_router
 from app.routes.chat import router as ai_chat
+from app.routes.analysis import router as analysis_router
 app = FastAPI(
     title="AI Project Management API",
     version="1.0.0"
@@ -44,6 +45,9 @@ app.include_router(task_router)
 app.include_router(ai_router)
 # Get AI assistance
 app.include_router(ai_chat)
+
+# Analyze a project (feasibility / ROI / capability report)
+app.include_router(analysis_router)
 
 @app.get("/")
 def root():

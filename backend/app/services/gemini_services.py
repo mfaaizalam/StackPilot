@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.schemas.ai import ProjectGenerateResponse
 
 client = genai.Client(
-    api_key=settings.GEMINI_API_KEY
+    api_key=settings.GEMINI_API_KEY_3
 )
 
 def clean_json(text: str)->str:
@@ -25,7 +25,7 @@ def generate_project(project_name: str,project_type:str, requirements: str)->Pro
     {requirements}
     """
     response = client.models.generate_content(
-    model="gemini-2.5-flash",
+    model="gemini-3.6-flash",
     contents=[
         SYSTEM_PROMPT,
         user_prompt

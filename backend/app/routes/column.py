@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.models.column import BoardColumn
 from app.models.board import Board
 from app.schemas.column import ColumnCreate
+from app.routes.auth import get_current_user
 
 router = APIRouter(
     prefix="/columns",
@@ -36,11 +37,14 @@ def create_column(
 
 
 #read 
+#read 
 @router.get("/")
 def get_columns(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    return db.query(BoardColumn).all()
+    column = db.query(BoardColumn).filter(BoardColumn.board.has(owner_id=current_user.id)).all()
+    return column 
 
 @router.get('/{column_id}')
 def get_column(

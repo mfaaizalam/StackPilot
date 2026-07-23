@@ -25,10 +25,14 @@ def create_board(
 # Readb all board
 @router.get("/")
 def get_boards(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    boards = db.query(Board).all()
-
+    boards = (
+        db.query(Board)
+        .filter(Board.owner_id == current_user.id)
+        .all()
+    )
     return boards
 
 # Read Single Board

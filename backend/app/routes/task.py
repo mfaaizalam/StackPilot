@@ -10,6 +10,7 @@ from app.rag.embedding_service import create_embedding
 from app.rag.qdrant_service import qdrant
 from app.models.board import Board
 from app.models.column import BoardColumn
+from app.routes.auth import get_current_user
 router = APIRouter(
     prefix="/tasks",
     tags =["Task"]
@@ -68,9 +69,11 @@ def create_column(
 # READ
 @router.get("/")
 def get_tasks(
-    db:Session =Depends(get_db)
+    db:Session =Depends(get_db),
+    current_user =Depends(get_current_user)
 ):
-    return db.query(Task).all()
+    task = db.query(Task).filter(Task.column.has(BoardColumn.board.has(owner_id=current_user.id))).all()
+    return task
 
 
 @router.get("/{task_id}")

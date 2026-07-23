@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import api from "../api/axios.js";
+import ReactMarkdown from "react-markdown";
 
 // ── Icons (same hand-drawn style as the rest of the app) ─────────────────────
 function IconChat({ size = 22 }) {
@@ -48,13 +49,34 @@ function ChatBubble({ role, message, error }) {
   const isUser = role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
-          isUser ? "bg-neutral-950 text-white" : error ? "bg-red-50 text-red-700 border border-red-100" : "bg-neutral-100 text-neutral-800"
-        }`}
-      >
-        {message}
-      </div>
+<div
+  className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
+    isUser
+      ? "bg-neutral-950 text-white"
+      : error
+      ? "bg-red-50 text-red-700 border border-red-100"
+      : "bg-neutral-100 text-neutral-800"
+  }`}
+>
+  <ReactMarkdown
+    components={{
+      h1: ({ children }) => (
+        <h1 className="text-xl font-bold mb-4">{children}</h1>
+      ),
+      h2: ({ children }) => (
+        <h2 className="text-lg font-bold mt-4 mb-2">{children}</h2>
+      ),
+      p: ({ children }) => (
+        <p className="mb-2 whitespace-pre-wrap">{children}</p>
+      ),
+      strong: ({ children }) => (
+        <strong className="font-bold">{children}</strong>
+      ),
+    }}
+  >
+    {message}
+  </ReactMarkdown>
+</div>
     </div>
   );
 }
@@ -203,8 +225,8 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
                 <IconSparkle />
               </div>
               <div>
-                <p className="text-sm font-semibold text-neutral-900 leading-none">Project Assistant</p>
-                <p className="text-[11px] text-neutral-400 mt-0.5">Can draft tasks straight onto the board</p>
+                <p className="text-sm font-semibold text-neutral-900 leading-none">Stack Pilot Assistant</p>
+                <p className="text-[11px] text-neutral-400 mt-0.5">Stack Pilot Assistant can make mistakes.</p>
               </div>
             </div>
             <button

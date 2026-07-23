@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str
 
     GEMINI_API_KEY: str 
+    GEMINI_API_KEY_2: str | None = None
+    GEMINI_API_KEY_3: str | None = None
     
     SECRET_KEY: str
     ALGORITHM: str
