@@ -70,9 +70,7 @@ export default function Login() {
             <label className="block text-sm font-medium text-neutral-700">
               Password
             </label>
-            <a href="#" className="text-xs text-neutral-500 hover:text-neutral-900">
-              Forgot?
-            </a>
+           
           </div>
           <input
             type="password"

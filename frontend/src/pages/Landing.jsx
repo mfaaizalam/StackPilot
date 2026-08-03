@@ -46,49 +46,27 @@ function NavBar() {
   );
 }
 
-/* Signature hero element: a floating stack of kanban-style cards —
-   a literal, board-shaped read of "StackPilot". */
+/* Signature hero element: a product-preview video in a soft glass frame,
+   replacing the old floating-cards illustration. */
 function StackVisual() {
-  const columns = [
-    { label: "To do", accent: "bg-neutral-700", items: ["Design schema", "Auth flow"] },
-    { label: "In progress", accent: "bg-white", items: ["Board API", "AI report"] },
-    { label: "Done", accent: "bg-neutral-500", items: ["Project setup"] },
-  ];
-
   return (
-    <div className="relative w-full max-w-md mx-auto lg:mx-0 h-[380px]">
+    <div className="relative w-full max-w-md mx-auto lg:mx-0">
       <div className="absolute -bottom-24 -right-16 w-80 h-80 rounded-full bg-white/5 blur-3xl" />
       <div className="absolute -top-16 -left-10 w-64 h-64 rounded-full bg-white/5 blur-3xl" />
 
-      {columns.map((col, i) => (
-        <div
-          key={col.label}
-          className="animate-float absolute w-52 rounded-xl border border-white/10 bg-neutral-900/80 backdrop-blur p-4 shadow-2xl shadow-black/40"
-          style={{
-            "--tilt": `${(i - 1) * 4}deg`,
-            top: `${i * 68}px`,
-            left: `${i * 56}px`,
-            zIndex: 10 - i,
-            animationDelay: `${i * 0.4}s`,
-            transform: `rotate(${(i - 1) * 4}deg)`,
-          }}
+      <div className="relative rounded-2xl border border-white/10 bg-neutral-900/80 backdrop-blur p-2 shadow-2xl shadow-black/40">
+        <video
+          className="w-full h-auto rounded-xl"
+          src="/StackPilot_video.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          controls
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-neutral-300">{col.label}</span>
-            <span className={`w-2 h-2 rounded-full ${col.accent}`} />
-          </div>
-          <div className="space-y-2">
-            {col.items.map((item) => (
-              <div
-                key={item}
-                className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-neutral-200"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+          Your browser does not support the video tag.
+        </video>
+      </div>
     </div>
   );
 }

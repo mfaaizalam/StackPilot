@@ -4,7 +4,7 @@ from app.core.database import get_db
 from app.schemas.chat import ChatResponse, ChatRequest
 from app.routes.auth import get_current_user
 from app.services.gemini_chat_service import ask_ai
-
+from app.services.chat_service import get_chat_messages
 router = APIRouter(
     prefix="/boards",
     tags=["Chat"]
@@ -41,3 +41,21 @@ def chat(
             status_code=500,
             detail=str(e)
         )
+
+@router.get("/{board_id}/chat")
+def get_board_chat(
+    board_id: int,
+    db: Session = Depends(get_db)
+):
+    chats = get_chat_messages(db, board_id)
+
+    return [
+        {
+            "id": chat.id,
+            "role": chat.role,
+            "message": chat.message,
+            "user_id": chat.user_id,
+            "created_at": chat.created_at,
+        }
+        for chat in chats
+    ]

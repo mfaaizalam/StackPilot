@@ -23,3 +23,16 @@ def save_message(
     return chat
 
 
+def get_chat_messages(
+    db: Session,
+    board_id: int
+):
+    """
+    Returns all chat messages for a board ordered by creation time.
+    """
+    return (
+        db.query(Chat)
+        .filter(Chat.board_id == board_id)
+        .order_by(Chat.created_at.asc())   # or Chat.id.asc()
+        .all()
+    )

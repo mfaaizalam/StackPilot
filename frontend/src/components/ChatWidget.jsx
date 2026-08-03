@@ -49,34 +49,34 @@ function ChatBubble({ role, message, error }) {
   const isUser = role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-<div
-  className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
-    isUser
-      ? "bg-neutral-950 text-white"
-      : error
-      ? "bg-red-50 text-red-700 border border-red-100"
-      : "bg-neutral-100 text-neutral-800"
-  }`}
->
-  <ReactMarkdown
-    components={{
-      h1: ({ children }) => (
-        <h1 className="text-xl font-bold mb-4">{children}</h1>
-      ),
-      h2: ({ children }) => (
-        <h2 className="text-lg font-bold mt-4 mb-2">{children}</h2>
-      ),
-      p: ({ children }) => (
-        <p className="mb-2 whitespace-pre-wrap">{children}</p>
-      ),
-      strong: ({ children }) => (
-        <strong className="font-bold">{children}</strong>
-      ),
-    }}
-  >
-    {message}
-  </ReactMarkdown>
-</div>
+      <div
+        className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
+          isUser
+            ? "bg-neutral-950 text-white"
+            : error
+            ? "bg-red-50 text-red-700 border border-red-100"
+            : "bg-neutral-100 text-neutral-800"
+        }`}
+      >
+        <ReactMarkdown
+          components={{
+            h1: ({ children }) => (
+              <h1 className="text-xl font-bold mb-4">{children}</h1>
+            ),
+            h2: ({ children }) => (
+              <h2 className="text-lg font-bold mt-4 mb-2">{children}</h2>
+            ),
+            p: ({ children }) => (
+              <p className="mb-2 whitespace-pre-wrap">{children}</p>
+            ),
+            strong: ({ children }) => (
+              <strong className="font-bold">{children}</strong>
+            ),
+          }}
+        >
+          {message}
+        </ReactMarkdown>
+      </div>
     </div>
   );
 }
@@ -97,6 +97,9 @@ function ChatBubble({ role, message, error }) {
 //   { type: "create_column", column: {id,name} }
 //     → already persisted server-side; just needs reflecting into state.
 //
+// History is loaded from GET /boards/{boardId}/chat whenever the panel is
+// opened, so previous messages persist across page reloads / re-opens.
+//
 // There is no popup here. Confirmation happens in a bar pinned above the
 // composer (rendered whenever pendingTasks.length > 0), not a modal.
 export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted, onColumnCreated, onSaveAllDrafts }) {
@@ -106,8 +109,50 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
   const [sending, setSending] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Fetch chat history for this board (GET /boards/{boardId}/chat)
+  const loadChatHistory = async () => {
+    try {
+      setLoadError("");
+      setLoadingHistory(true);
+
+      const { data } = await api.get(`/boards/${boardId}/chat`);
+
+      // Backend returns: [{ id, role, message, user_id, created_at }, ...]
+      setMessages(
+        (data || []).map((m) => ({
+          id: m.id,
+          role: m.role,
+          message: m.message,
+        }))
+      );
+      setHistoryLoaded(true);
+    } catch (err) {
+      const detail =
+        err?.response?.data?.detail || "Failed to load chat history.";
+      setLoadError(detail);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // Load history the first time the panel is opened for this board.
+  // Remove the `!historyLoaded` check if you want it to re-fetch on every open.
+  useEffect(() => {
+    if (open && boardId && !historyLoaded) {
+      loadChatHistory();
+    }
+  }, [open, boardId, historyLoaded]);
+
+  // Reset so a board switch triggers a fresh history load
+  useEffect(() => {
+    setHistoryLoaded(false);
+    setMessages([]);
+  }, [boardId]);
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 50);
@@ -239,7 +284,13 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
 
           {/* Messages */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
-            {messages.length === 0 && (
+            {loadingHistory && messages.length === 0 && (
+              <div className="h-full flex items-center justify-center">
+                <TypingDots />
+              </div>
+            )}
+
+            {!loadingHistory && messages.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mb-3 text-neutral-400">
                   <IconSparkle size={16} />
@@ -252,7 +303,7 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
             )}
 
             {messages.map((m, i) => (
-              <ChatBubble key={i} role={m.role} message={m.message} error={m.error} />
+              <ChatBubble key={m.id ?? i} role={m.role} message={m.message} error={m.error} />
             ))}
 
             {sending && (
