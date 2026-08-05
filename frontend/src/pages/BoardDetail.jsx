@@ -483,49 +483,49 @@ export default function BoardDetail() {
     <div className="min-h-screen bg-neutral-50 flex flex-col">
       {/* Header */}
       <header className="border-b border-neutral-200 bg-white sticky top-0 z-10 shrink-0">
-        <div className="px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             <div className="flex items-center gap-2 font-semibold tracking-tight shrink-0">
               <div className="w-7 h-7 rounded-md bg-neutral-950 text-white flex items-center justify-center font-bold text-sm">S</div>
-              StackPilot
+              <span className="hidden sm:inline">StackPilot</span>
             </div>
-            <span className="text-neutral-300">/</span>
+            <span className="hidden sm:inline text-neutral-300">/</span>
             <button onClick={() => navigate("/boards")} className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900 transition shrink-0">
-              <IconBack /> Boards
+              <IconBack /> <span className="hidden sm:inline">Boards</span>
             </button>
             {board && (
               <>
-                <span className="text-neutral-300">/</span>
-                <span className="text-sm font-medium text-neutral-900 truncate">{board.name}</span>
+                <span className="text-neutral-300 shrink-0">/</span>
+                <span className="text-sm font-medium text-neutral-900 truncate min-w-0">{board.name}</span>
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={() => { setEditingColumn(null); setColModalOpen(true); }}
-              className="flex items-center gap-2 bg-neutral-950 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-neutral-800 transition"
+              className="flex items-center gap-1.5 sm:gap-2 bg-neutral-950 text-white text-sm font-medium px-2.5 sm:px-4 py-2 rounded-lg hover:bg-neutral-800 transition"
             >
-              <IconPlus size={14}/> Add column
+              <IconPlus size={14}/> <span className="hidden sm:inline">Add column</span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-xs">
+            <div className="hidden sm:flex w-8 h-8 rounded-full bg-neutral-900 text-white items-center justify-center font-semibold text-xs">
               {user?.name?.charAt(0) || "U"}
             </div>
-            <button onClick={logout} className="text-sm px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition">Sign out</button>
+            <button onClick={logout} className="text-sm px-2.5 sm:px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition">Sign out</button>
           </div>
         </div>
       </header>
 
       {/* Board description */}
       {board?.description && (
-        <div className="border-b border-neutral-100 bg-white px-6 py-2.5">
-          <p className="text-xs text-neutral-500">{board.description}</p>
+        <div className="border-b border-neutral-100 bg-white px-3 sm:px-6 py-2.5">
+          <p className="text-xs text-neutral-500 truncate">{board.description}</p>
         </div>
       )}
 
       {/* Kanban canvas */}
-      <div className="flex-1 overflow-x-auto">
-        <div className="flex gap-4 p-6" style={{ minWidth: "max-content", minHeight: "calc(100vh - 64px)" }}>
+      <div className="flex-1 min-w-0 overflow-x-auto">
+        <div className="flex gap-4 p-4 sm:p-6" style={{ minWidth: "max-content", minHeight: "calc(100vh - 64px)" }}>
 
           {/* Loading */}
           {loading && [1,2,3].map(i => (
