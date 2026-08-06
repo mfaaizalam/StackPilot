@@ -35,6 +35,14 @@ export default function Register() {
           err?.response?.data?.detail ||
           "Failed to send OTP."
       );
+      console.error("===== OTP ERROR =====");
+      console.error("Error:", err);
+      console.error("Message:", err.message);
+      console.error("Status:", err.response?.status);
+      console.error("Response:", err.response?.data);
+      console.error("Headers:", err.response?.headers);
+      console.error("Request:", err.request);
+      console.error("=====================");
     } finally {
       setSendingOtp(false);
     }

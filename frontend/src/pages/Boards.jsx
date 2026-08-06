@@ -201,31 +201,74 @@ export default function Boards() {
             StackPilot
           </div>
 
-          <div className="flex items-center gap-4">
-            <nav className="hidden sm:flex items-center gap-1">
-              <button onClick={() => navigate("/dashboard")} className="text-sm px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition">Home</button>
-              <button className="text-sm px-3 py-1.5 rounded-md bg-neutral-100 text-neutral-900 font-medium">
-                Boards
-              </button>
-            </nav>
+          
+<div className="flex items-center gap-2 sm:gap-4">
 
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm">
-                {user?.name?.charAt(0) || "U"}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
-                <p className="text-xs text-neutral-500 mt-0.5">{user?.email || ""}</p>
-              </div>
-            </div>
+  {/* Desktop Navigation */}
+  <nav className="hidden sm:flex items-center gap-1">
+    <button
+      onClick={() => navigate("/dashboard")}
+      className="text-sm px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition"
+    >
+      Home
+    </button>
 
-            <button
-              onClick={logout}
-              className="text-sm px-3.5 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition"
-            >
-              Sign out
-            </button>
-          </div>
+    <button
+      className="text-sm px-3 py-1.5 rounded-md bg-neutral-100 text-neutral-900 font-medium"
+    >
+      Boards
+    </button>
+  </nav>
+
+  {/* Mobile Home Button */}
+  <button
+    onClick={() => navigate("/dashboard")}
+    className="sm:hidden flex items-center gap-1 text-sm px-2 py-1.5 rounded-md text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition"
+  >
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+    >
+      <path
+        d="M10 12L6 8l4-4"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+    Home
+  </button>
+
+  {/* User */}
+  <div className="flex items-center gap-2 sm:gap-3">
+    <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm">
+      {user?.name?.charAt(0) || "U"}
+    </div>
+
+    <div className="hidden sm:block">
+      <p className="text-sm font-medium leading-none">
+        {user?.name || "User"}
+      </p>
+      <p className="text-xs text-neutral-500 mt-0.5">
+        {user?.email || ""}
+      </p>
+    </div>
+  </div>
+
+  {/* Sign out */}
+  <button
+    onClick={logout}
+    className="text-sm px-2.5 sm:px-3.5 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition"
+  >
+    Sign out
+  </button>
+
+</div>
+
+
         </div>
       </header>
 
