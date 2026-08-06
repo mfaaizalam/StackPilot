@@ -232,13 +232,9 @@ const {
       <div className="mt-3 flex items-center gap-2 pl-4">
         <PriorityBadge priority={task.priority} />
 
-        {isDraft ? (
+        {isDraft && (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-neutral-100 text-neutral-500 border-neutral-200">
             Draft · unsaved
-          </span>
-        ) : (
-          <span className="text-[11px] text-neutral-400">
-            #{task.id}
           </span>
         )}
       </div>

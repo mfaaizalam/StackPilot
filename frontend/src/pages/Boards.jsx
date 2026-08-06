@@ -99,12 +99,6 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
           <p className="mt-1 text-xs text-neutral-400 italic">No description</p>
         )}
       </div>
-
-      {/* Footer */}
-      <div className="flex items-center gap-1.5 text-xs text-neutral-400">
-        <IconBoard />
-        <span>Board #{board.id}</span>
-      </div>
     </div>
   );
 }
