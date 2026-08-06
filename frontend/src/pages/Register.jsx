@@ -29,21 +29,13 @@ export default function Register() {
       await api.post("/auth/send-otp", { email: form.email });
       setOtpSent(true);
       setInfo("OTP sent. Check your inbox.");
-    } catch (err) {
-      setError(
-        err?.response?.data?.message ||
-          err?.response?.data?.detail ||
-          "Failed to send OTP."
-      );
-      console.error("===== OTP ERROR =====");
-      console.error("Error:", err);
-      console.error("Message:", err.message);
-      console.error("Status:", err.response?.status);
-      console.error("Response:", err.response?.data);
-      console.error("Headers:", err.response?.headers);
-      console.error("Request:", err.request);
-      console.error("=====================");
-    } finally {
+    } 
+    catch (err) { console.log("===== OTP ERROR ====="); 
+      console.log("Error:", err); console.log("Message:", err.message); 
+      console.log("Status:", err.response?.status); console.log("Response data:", err.response?.data); 
+      console.log("Response headers:", err.response?.headers); console.log("Request:", err.request); 
+      setError( err?.response?.data?.message || err?.response?.data?.detail || `OTP request failed. Status: ${err?.response?.status || "No response"}` ); }
+    finally {
       setSendingOtp(false);
     }
   };
