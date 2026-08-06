@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api/axios.js";
@@ -7,6 +6,16 @@ import TaskModal from "../components/TaskModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import ChatWidget from "../components/ChatWidget.jsx";
 
+import {
+  DragDropProvider,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/react";
+
+import {
+  PointerSensor,
+  PointerActivationConstraints,
+} from "@dnd-kit/dom";
 // ── Icons ────────────────────────────────────────────────────────────────────
 function IconPlus({ size = 14 }) {
   return <svg width={size} height={size} viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/></svg>;
@@ -105,60 +114,95 @@ function TaskDetail({ task, columns, onClose, onEdit, onDelete }) {
 }
 
 // ── Task card (with drag support) ────────────────────────────────────────────
-function TaskCard({ task, onView, onEdit, onDelete, onDragStart, onDragEnd }) {
+function TaskCard({
+  task,
+  onView,
+  onEdit,
+  onDelete,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dragging, setDragging] = useState(false);
+
   const isDraft = !!task.__draft;
 
-  const handleDragStart = (e) => {
-    if (isDraft) return;
-    setDragging(true);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("taskId", String(task.id));
-    onDragStart?.(task);
-  };
-  const handleDragEnd = () => {
-    setDragging(false);
-    onDragEnd?.();
-  };
+const {
+  ref,
+  isDragging,
+} = useDraggable({
+  id: `task-${task.id}`,
+  disabled: isDraft,
+});
 
   return (
     <div
-      draggable={!isDraft}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onClick={() => { if (isDraft) return; if (!menuOpen) onView(task); }}
+      ref={ref}
+      onClick={() => {
+        if (isDraft) return;
+
+        if (!menuOpen && !isDragging) {
+          onView(task);
+        }
+      }}
       className={`group relative bg-white border rounded-xl p-4 transition cursor-pointer select-none ${
         isDraft
           ? "border-dashed border-neutral-300 bg-neutral-50/70 hover:border-neutral-400"
-          : `hover:border-neutral-300 hover:shadow-sm ${dragging ? "opacity-40 scale-95 border-neutral-300" : "border-neutral-200"}`
+          : `${
+              isDragging
+                ? "opacity-40 scale-95 border-neutral-300"
+                : "border-neutral-200 hover:border-neutral-300 hover:shadow-sm"
+            }`
       }`}
+      style={{
+    touchAction: isDraft ? "auto" : "none",
+      }}
     >
-      {/* Drag grip — visible on hover, hidden for drafts */}
+      {/* Drag grip */}
       {!isDraft && (
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-300 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-300 opacity-0 group-hover:opacity-100 transition cursor-grab">
           <IconGrip />
         </div>
       )}
 
-      {/* Action menu — hidden for drafts, nothing to edit/delete until saved */}
+      {/* Action menu */}
       {!isDraft && (
-        <div className="absolute top-3 right-3" onClick={e => e.stopPropagation()}>
+        <div
+          className="absolute top-3 right-3"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             onClick={() => setMenuOpen(v => !v)}
             className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 opacity-0 group-hover:opacity-100 transition"
           >
             <IconDots />
           </button>
+
           {menuOpen && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setMenuOpen(false)}
+              />
+
               <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 text-sm">
-                <button onClick={() => { setMenuOpen(false); onEdit(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-neutral-700 hover:bg-neutral-50 transition">
-                  <IconEdit /> Edit
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onEdit(task);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-neutral-700 hover:bg-neutral-50 transition"
+                >
+                  <IconEdit />
+                  Edit
                 </button>
-                <button onClick={() => { setMenuOpen(false); onDelete(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition">
-                  <IconTrash /> Delete
+
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDelete(task);
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition"
+                >
+                  <IconTrash />
+                  Delete
                 </button>
               </div>
             </>
@@ -166,76 +210,133 @@ function TaskCard({ task, onView, onEdit, onDelete, onDragStart, onDragEnd }) {
         </div>
       )}
 
-      <p className={`text-sm font-medium pr-6 pl-4 leading-snug ${isDraft ? "text-neutral-600" : "text-neutral-900"}`}>{task.title}</p>
+      {/* Title */}
+      <p
+        className={`text-sm font-medium pr-6 pl-4 leading-snug ${
+          isDraft
+            ? "text-neutral-600"
+            : "text-neutral-900"
+        }`}
+      >
+        {task.title}
+      </p>
+
+      {/* Description */}
       {task.description && (
-        <p className="mt-1.5 text-xs text-neutral-500 line-clamp-2 leading-relaxed pl-4">{task.description}</p>
+        <p className="mt-1.5 text-xs text-neutral-500 line-clamp-2 leading-relaxed pl-4">
+          {task.description}
+        </p>
       )}
+
+      {/* Bottom info */}
       <div className="mt-3 flex items-center gap-2 pl-4">
         <PriorityBadge priority={task.priority} />
+
         {isDraft ? (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-neutral-100 text-neutral-500 border-neutral-200">
             Draft · unsaved
           </span>
         ) : (
-          <span className="text-[11px] text-neutral-400">#{task.id}</span>
+          <span className="text-[11px] text-neutral-400">
+            #{task.id}
+          </span>
         )}
       </div>
     </div>
   );
 }
-
 // ── Column panel (with drop zone) ────────────────────────────────────────────
-function ColumnPanel({ column, tasks, onAddTask, onEditColumn, onDeleteColumn, onViewTask, onEditTask, onDeleteTask, onDropTask, draggedTask }) {
-  const [dragOver, setDragOver] = useState(false);
-  const dragCounter = useRef(0);
-
-  const handleDragEnter = (e) => {
-    e.preventDefault();
-    dragCounter.current++;
-    if (draggedTask && draggedTask.column_id !== column.id) setDragOver(true);
-  };
-  const handleDragLeave = () => {
-    dragCounter.current--;
-    if (dragCounter.current === 0) setDragOver(false);
-  };
-  const handleDragOver = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; };
-  const handleDrop = (e) => {
-    e.preventDefault();
-    dragCounter.current = 0;
-    setDragOver(false);
-    const taskId = Number(e.dataTransfer.getData("taskId"));
-    if (taskId && draggedTask?.column_id !== column.id) onDropTask(taskId, column.id);
-  };
+function ColumnPanel({
+  column,
+  tasks,
+  onAddTask,
+  onEditColumn,
+  onDeleteColumn,
+  onViewTask,
+  onEditTask,
+  onDeleteTask,
+}) {
+  const {
+    ref,
+    isDropTarget,
+  } = useDroppable({
+    id: `column-${column.id}`,
+  });
 
   return (
     <div
-      className={`flex flex-col w-72 shrink-0 rounded-xl transition-all duration-150 ${dragOver ? "ring-2 ring-neutral-900 bg-neutral-100" : ""}`}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      ref={ref}
+      className={`flex flex-col w-72 shrink-0 rounded-xl transition-all duration-150 ${
+        isDropTarget
+          ? "ring-2 ring-neutral-900 bg-neutral-100"
+          : ""
+      }`}
     >
       {/* Column header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-neutral-900">{column.name}</span>
-          <span className="text-xs text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded-full font-medium">{tasks.length}</span>
+          <span className="text-sm font-semibold text-neutral-900">
+            {column.name}
+          </span>
+
+          <span className="text-xs text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded-full font-medium">
+            {tasks.length}
+          </span>
         </div>
+
         <div className="flex items-center gap-0.5">
-          <button onClick={() => onAddTask(column.id)} title="Add task" className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"><IconPlus size={13}/></button>
-          <button onClick={() => onEditColumn(column)} title="Rename" className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"><IconEdit /></button>
-          <button onClick={() => onDeleteColumn(column)} title="Delete" className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition"><IconTrash /></button>
+          <button
+            onClick={() => onAddTask(column.id)}
+            title="Add task"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+          >
+            <IconPlus size={13} />
+          </button>
+
+          <button
+            onClick={() => onEditColumn(column)}
+            title="Rename"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+          >
+            <IconEdit />
+          </button>
+
+          <button
+            onClick={() => onDeleteColumn(column)}
+            title="Delete"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition"
+          >
+            <IconTrash />
+          </button>
         </div>
       </div>
+
+      {/* Divider */}
       <div className="h-0.5 bg-neutral-200 rounded-full mb-3" />
 
       {/* Tasks */}
       <div className="flex flex-col gap-2 flex-1 min-h-[4rem]">
         {tasks.length === 0 ? (
-          <div className={`flex flex-col items-center justify-center py-8 text-center border border-dashed rounded-xl transition ${dragOver ? "border-neutral-400 bg-neutral-50" : "border-neutral-200"}`}>
-            <p className="text-xs text-neutral-400">{dragOver ? "Drop here" : "No tasks yet"}</p>
-            {!dragOver && (
-              <button onClick={() => onAddTask(column.id)} className="mt-2 text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2 transition">Add one</button>
+          <div
+            className={`flex flex-col items-center justify-center py-8 text-center border border-dashed rounded-xl transition ${
+              isDropTarget
+                ? "border-neutral-400 bg-neutral-50"
+                : "border-neutral-200"
+            }`}
+          >
+            <p className="text-xs text-neutral-400">
+              {isDropTarget
+                ? "Drop here"
+                : "No tasks yet"}
+            </p>
+
+            {!isDropTarget && (
+              <button
+                onClick={() => onAddTask(column.id)}
+                className="mt-2 text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2 transition"
+              >
+                Add one
+              </button>
             )}
           </div>
         ) : (
@@ -246,20 +347,18 @@ function ColumnPanel({ column, tasks, onAddTask, onEditColumn, onDeleteColumn, o
               onView={onViewTask}
               onEdit={onEditTask}
               onDelete={onDeleteTask}
-              onDragStart={() => {}}
-              onDragEnd={() => {}}
-              draggedTask={draggedTask}
             />
           ))
         )}
       </div>
 
-      {/* Add task at bottom */}
+      {/* Add task */}
       <button
         onClick={() => onAddTask(column.id)}
         className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-lg border border-dashed border-neutral-200 text-xs text-neutral-400 hover:border-neutral-400 hover:text-neutral-600 hover:bg-white transition"
       >
-        <IconPlus size={12}/> Add task
+        <IconPlus size={12} />
+        Add task
       </button>
     </div>
   );
@@ -277,8 +376,7 @@ export default function BoardDetail() {
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
 
-  // Drag state
-  const [draggedTask, setDraggedTask] = useState(null);
+ 
 
   // Detail panel
   const [detailTask, setDetailTask] = useState(null);
@@ -389,22 +487,63 @@ export default function BoardDetail() {
     }
   };
 
-  // ── Drag & drop move task between columns ──────────────────────────────────
-  const handleDropTask = async (taskId, newColumnId) => {
-    const task = tasks.find(t => t.id === taskId);
-    if (!task || task.column_id === newColumnId) return;
-    // Optimistic update
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, column_id: newColumnId } : t));
-    try {
-      await api.put(`/tasks/${taskId}`, { column_id: newColumnId });
-      showToast("Task moved.");
-    } catch {
-      // Revert on failure
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, column_id: task.column_id } : t));
-      showToast("Move failed.", "error");
-    }
-  };
+  // ── Move task to another column ────────────────────────────────────────────
+const handleDropTask = async (taskId, newColumnId) => {
+  const task = tasks.find(t => t.id === taskId);
 
+  if (!task || task.column_id === newColumnId) {
+    return;
+  }
+
+  // Optimistic UI update
+  setTasks(prev =>
+    prev.map(t =>
+      t.id === taskId
+        ? { ...t, column_id: newColumnId }
+        : t
+    )
+  );
+
+  try {
+    await api.put(`/tasks/${taskId}`, {
+      column_id: newColumnId,
+    });
+
+    showToast("Task moved.");
+  } catch (error) {
+    // Revert if API request fails
+    setTasks(prev =>
+      prev.map(t =>
+        t.id === taskId
+          ? { ...t, column_id: task.column_id }
+          : t
+      )
+    );
+
+    showToast("Move failed.", "error");
+  }
+};
+  // ── Drag & drop move task between columns ──────────────────────────────────
+// ── Drag & drop end ────────────────────────────────────────────────────────
+const handleDragEnd = (event) => {
+  if (event.canceled) return;
+
+  const { source, target } = event.operation;
+
+  if (!source || !target) return;
+
+  const taskId = Number(
+    String(source.id).replace("task-", "")
+  );
+
+  const newColumnId = Number(
+    String(target.id).replace("column-", "")
+  );
+
+  if (!taskId || !newColumnId) return;
+
+  handleDropTask(taskId, newColumnId);
+};
   // ── AI chat → board bridge ───────────────────────────────────────────────
   // Every AI response that drafts/edits/clears tasks sends back the
   // COMPLETE resulting set (never a diff), so we always fully replace
@@ -525,8 +664,41 @@ export default function BoardDetail() {
       )}
 
       {/* Kanban canvas */}
-      <div className="flex-1 min-w-0 overflow-x-auto">
-        <div className="flex gap-4 p-4 sm:p-6" style={{ minWidth: "max-content", minHeight: "calc(100vh - 64px)" }}>
+      <DragDropProvider
+        sensors={(defaults) => [
+    ...defaults.filter(
+      (sensor) => sensor !== PointerSensor
+    ),
+
+    PointerSensor.configure({
+      activationConstraints: (event) => {
+        if (event.pointerType === "touch") {
+          return [
+            new PointerActivationConstraints.Delay({
+              value: 400,
+              tolerance: 8,
+            }),
+          ];
+        }
+
+        return [
+          new PointerActivationConstraints.Distance({
+            value: 5,
+          }),
+        ];
+      },
+    }),
+  ]}
+  onDragEnd={handleDragEnd}
+>
+  <div className="flex-1 min-w-0 overflow-x-auto">
+    <div
+      className="flex gap-4 p-4 sm:p-6"
+      style={{
+        minWidth: "max-content",
+        minHeight: "calc(100vh - 64px)",
+      }}
+    >
 
           {/* Loading */}
           {loading && [1,2,3].map(i => (
@@ -564,18 +736,28 @@ export default function BoardDetail() {
           {/* Columns */}
           {!loading && !fetchError && columns.map(col => (
             <ColumnPanel
-              key={col.id}
-              column={col}
-              tasks={tasks.filter(t => t.column_id === col.id)}
-              draggedTask={draggedTask}
-              onAddTask={(colId) => { setEditingTask(null); setDefaultColId(colId); setTaskModalOpen(true); }}
-              onEditColumn={(col) => { setEditingColumn(col); setColModalOpen(true); }}
-              onDeleteColumn={setDeleteColTarget}
-              onViewTask={setDetailTask}
-              onEditTask={(task) => { setEditingTask(task); setTaskModalOpen(true); }}
-              onDeleteTask={setDeleteTaskTarget}
-              onDropTask={handleDropTask}
-            />
+  key={col.id}
+  column={col}
+  tasks={tasks.filter(
+    t => t.column_id === col.id
+  )}
+  onAddTask={(colId) => {
+    setEditingTask(null);
+    setDefaultColId(colId);
+    setTaskModalOpen(true);
+  }}
+  onEditColumn={(col) => {
+    setEditingColumn(col);
+    setColModalOpen(true);
+  }}
+  onDeleteColumn={setDeleteColTarget}
+  onViewTask={setDetailTask}
+  onEditTask={(task) => {
+    setEditingTask(task);
+    setTaskModalOpen(true);
+  }}
+  onDeleteTask={setDeleteTaskTarget}
+/>
           ))}
 
           {/* Trailing add-column lane */}
@@ -591,7 +773,7 @@ export default function BoardDetail() {
           )}
         </div>
       </div>
-
+</DragDropProvider>
       {/* ── Task detail panel ── */}
       {detailTask && (
         <TaskDetail
