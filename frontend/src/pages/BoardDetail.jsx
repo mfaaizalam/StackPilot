@@ -51,8 +51,124 @@ function PriorityBadge({ priority }) {
   );
 }
 
+// ── Traceability: where this task came from in the SRS ──────────────────────
+const isDoneCol = (name) => /^done$/i.test((name || "").trim());
+
+function TraceSection({ boardId, task }) {
+  const [trace, setTrace] = useState(null);
+  const [state, setState] = useState("idle"); // idle | loading | ok | error
+
+  useEffect(() => {
+    if (!task?.requirement_id) { setTrace(null); setState("idle"); return; }
+    let cancelled = false;
+    setState("loading");
+    api.get(`/boards/${boardId}/tasks/${task.id}/trace`)
+      .then(({ data }) => { if (!cancelled) { setTrace(data); setState("ok"); } })
+      .catch(() => { if (!cancelled) setState("error"); });
+    return () => { cancelled = true; };
+  }, [boardId, task?.id, task?.requirement_id]);
+
+  if (!task?.requirement_id) return null;
+  const box = "bg-neutral-50 rounded-xl p-3 border border-neutral-100";
+  const label = "text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5";
+
+  if (state === "loading") return <div className="h-24 bg-neutral-50 border border-neutral-100 rounded-xl animate-pulse" />;
+  if (state === "error" || !trace) return <p className="text-xs text-neutral-400">Could not load the requirement details.</p>;
+  if (!trace.linked) return <p className="text-xs text-neutral-400">{trace.reason}</p>;
+
+  const r = trace.requirement;
+  const waiting = (trace.depends_on || []).filter(d => d.column && !isDoneCol(d.column));
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide">Traceability</p>
+        <span className="text-[11px] font-medium text-neutral-500 bg-neutral-100 border border-neutral-200 rounded-full px-2 py-0.5">
+          {trace.requirement_id} · SRS v{trace.srs_version}
+        </span>
+      </div>
+
+      {!trace.srs_is_latest && (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          Generated from SRS v{trace.srs_version}; a newer version exists. Use "Add missing" in SRS Studio to pick up new requirements.
+        </p>
+      )}
+      {trace.note && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">{trace.note}</p>}
+
+      {r && (
+        <div className={box}>
+          <p className={label}>Requirement{r.actor ? ` · ${r.actor}` : r.category ? ` · ${r.category}` : ""}</p>
+          <p className="text-sm text-neutral-800 leading-relaxed">{r.statement}</p>
+          {r.metric && <p className="text-xs text-neutral-500 mt-1.5"><span className="font-medium">Target:</span> {r.metric}</p>}
+          {r.acceptance_criteria?.length > 0 && (
+            <ul className="mt-2 space-y-1 text-xs text-neutral-600 list-disc pl-4">
+              {r.acceptance_criteria.map((c, i) => <li key={i}>{c}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {trace.use_cases?.length > 0 && (
+        <div className={box}>
+          <p className={label}>Use case{trace.use_cases.length > 1 ? "s" : ""}</p>
+          <div className="space-y-2">
+            {trace.use_cases.map(u => (
+              <details key={u.id} className="group">
+                <summary className="cursor-pointer text-sm text-neutral-800 font-medium list-none flex items-center justify-between">
+                  <span>{u.id} · {u.name}</span>
+                  <span className="text-[11px] text-neutral-400 font-normal">{u.actor}</span>
+                </summary>
+                <ol className="mt-1.5 list-decimal pl-5 space-y-0.5 text-xs text-neutral-600">
+                  {u.main_flow.map((step, i) => <li key={i}>{step}</li>)}
+                </ol>
+              </details>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(trace.depends_on?.length > 0 || trace.blocks?.length > 0) && (
+        <div className={box}>
+          {trace.depends_on?.length > 0 && (
+            <>
+              <p className={label}>Suggested to start after</p>
+              {waiting.length > 0 && (
+                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 mb-2">
+                  Waiting on {waiting.length} unfinished task{waiting.length > 1 ? "s" : ""}.
+                </p>
+              )}
+              <ul className="space-y-1.5">
+                {trace.depends_on.map(d => (
+                  <li key={d.requirement_id} className="flex items-center justify-between gap-2 text-xs text-neutral-700">
+                    <span className="truncate">{d.requirement_id} {d.title}</span>
+                    <span className={`shrink-0 px-2 py-0.5 rounded-full border text-[11px] ${d.column ? (isDoneCol(d.column) ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-neutral-100 text-neutral-500 border-neutral-200") : "bg-neutral-50 text-neutral-400 border-neutral-200"}`}>
+                      {d.column || "no task"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {trace.blocks?.length > 0 && (
+            <div className={trace.depends_on?.length > 0 ? "mt-3 pt-3 border-t border-neutral-200" : ""}>
+              <p className={label}>Unblocks</p>
+              <ul className="space-y-1.5">
+                {trace.blocks.map(d => (
+                  <li key={d.requirement_id} className="flex items-center justify-between gap-2 text-xs text-neutral-700">
+                    <span className="truncate">{d.requirement_id} {d.title}</span>
+                    <span className="shrink-0 px-2 py-0.5 rounded-full border text-[11px] bg-neutral-100 text-neutral-500 border-neutral-200">{d.column || "no task"}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Task Detail slide-over panel ─────────────────────────────────────────────
-function TaskDetail({ task, columns, onClose, onEdit, onDelete }) {
+function TaskDetail({ boardId, task, columns, onClose, onEdit, onDelete }) {
   if (!task) return null;
   const col = columns.find(c => c.id === task.column_id);
   return (
@@ -96,7 +212,15 @@ function TaskDetail({ task, columns, onClose, onEdit, onDelete }) {
               <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5">Column</p>
               <p className="text-sm font-medium text-neutral-900">{col?.name || "—"}</p>
             </div>
+            {task.estimate_points ? (
+              <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 col-span-2">
+                <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5">Estimate</p>
+                <p className="text-sm font-medium text-neutral-900">{task.estimate_points} story point{task.estimate_points === 1 ? "" : "s"} <span className="text-xs text-neutral-400 font-normal">· relative size, edit freely</span></p>
+              </div>
+            ) : null}
           </div>
+
+          <TraceSection boardId={boardId} task={task} />
         </div>
       </div>
     </>
@@ -178,6 +302,11 @@ function TaskCard({ task, onView, onEdit, onDelete, onDragStart, onDragEnd }) {
         ) : (
           <span className="text-[11px] text-neutral-400">#{task.id}</span>
         )}
+        {!isDraft && task.estimate_points ? (
+          <span title="Estimated story points (relative size)" className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-neutral-50 text-neutral-500 border-neutral-200">
+            {task.estimate_points} pt{task.estimate_points === 1 ? "" : "s"}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -594,6 +723,7 @@ export default function BoardDetail() {
       {/* ── Task detail panel ── */}
       {detailTask && (
         <TaskDetail
+          boardId={boardId}
           task={detailTask}
           columns={columns}
           onClose={() => setDetailTask(null)}
@@ -640,6 +770,15 @@ export default function BoardDetail() {
           {toast.msg}
         </div>
       )}
+
+      {/* SRS Studio launcher — sits above the analyze button. */}
+      <button
+        onClick={() => navigate(`/boards/${boardId}/srs`)}
+        title="SRS Studio"
+        className="fixed bottom-20 left-5 z-40 h-12 px-4 rounded-full shadow-lg flex items-center justify-center text-sm font-semibold bg-white text-neutral-900 border border-neutral-200 hover:bg-neutral-100 transition"
+      >
+        SRS
+      </button>
 
       {/* Analyze-your-project launcher — mirrors the chat launcher, bottom-left. */}
       <button

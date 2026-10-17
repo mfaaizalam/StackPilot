@@ -6,6 +6,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Boards from "./pages/Boards.jsx";
 import BoardDetail from "./pages/BoardDetail.jsx";
 import ProjectAnalysis from "./pages/ProjectAnalysis.jsx";
+import SrsStudio from "./pages/SrsStudio.jsx";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -47,6 +48,14 @@ export default function App() {
         element={
           <PrivateRoute>
             <ProjectAnalysis />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/boards/:boardId/srs"
+        element={
+          <PrivateRoute>
+            <SrsStudio />
           </PrivateRoute>
         }
       />

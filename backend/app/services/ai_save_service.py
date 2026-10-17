@@ -48,12 +48,16 @@ def save_project(
             column_map[column_name] = column.id
 
         # Create Tasks
+        fallback_column_id = next(iter(column_map.values()), None)
         for task in data.tasks:
+            column_id = column_map.get(task.column_name, fallback_column_id)
+            if column_id is None:
+                continue
             new_task = Task(
                 title=task.title,
                 description=task.description,
                 priority=task.priority,
-                column_id=column_map[task.column_name],
+                column_id=column_id,
                 created_by=user_id
             )
 
@@ -75,5 +79,5 @@ def save_project(
         db.rollback()
         raise HTTPException(
         status_code=500,
-        detail=str(e)
+        detail="The project could not be saved. Please try again."
     )

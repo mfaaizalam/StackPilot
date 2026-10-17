@@ -4,6 +4,7 @@ from app.core.database import get_db
 from app.models.board import Board
 from app.schemas.board import BoardCreate
 from app.routes.auth import get_current_user
+from app.core.deps import get_owned_board
 router = APIRouter(prefix="/boards",tags = ["Boards"])
 
 # Create
@@ -39,37 +40,20 @@ def get_boards(
 @router.get("/{board_id}")
 def get_board(
     board_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    board = (
-        db.query(Board)
-        .filter(Board.id == board_id)
-        .first()
-    )
-
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail="Board not found"
-        )
-
-    return board
+    return get_owned_board(db, board_id, current_user)
 
 # Upade boared
 @router.put("/{board_id}")
 def update_board(
     board_id:int,
     board_data:BoardCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    board = (
-        db.query(Board).filter(Board.id == board_id).first()
-    )
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail="Board not Found"
-        )
+    board = get_owned_board(db, board_id, current_user)
     board.name = board_data.name
     board.description = board_data.description
     db.commit()
@@ -79,18 +63,10 @@ def update_board(
 @router.delete("/{board_id}")
 def delete_board(
      board_id: int,
-     db: Session = Depends(get_db)
+     db: Session = Depends(get_db),
+     current_user = Depends(get_current_user)
 ):
-    board = (
-        db.query(Board)
-        .filter(Board.id == board_id)
-        .first()
-    )
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail="Board not found"
-        )
+    board = get_owned_board(db, board_id, current_user)
     db.delete(board)
     db.commit()
 

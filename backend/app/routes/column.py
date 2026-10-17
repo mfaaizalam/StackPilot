@@ -6,6 +6,7 @@ from app.models.column import BoardColumn
 from app.models.board import Board
 from app.schemas.column import ColumnCreate
 from app.routes.auth import get_current_user
+from app.core.deps import get_owned_board, get_owned_column
 
 router = APIRouter(
     prefix="/columns",
@@ -16,16 +17,10 @@ router = APIRouter(
 @router.post("/")
 def create_column(
     column:ColumnCreate,
-    db:Session =Depends(get_db)
+    db:Session =Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    board= (
-        db.query(Board).filter(Board.id ==column.board_id ).first()
-    )
-    if not board:
-        raise HTTPException(
-            status_code=404,
-            detail="Board not found"
-        )
+    board = get_owned_board(db, column.board_id, current_user)
     new_column = BoardColumn(
         name = column.name,
         board_id = column.board_id
@@ -49,33 +44,21 @@ def get_columns(
 @router.get('/{column_id}')
 def get_column(
     column_id:int,
-    db:Session =Depends(get_db)
+    db:Session =Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    column =(
-        db.query(BoardColumn).filter(BoardColumn.id ==column_id).first()
-
-    )
-    if not column :
-        raise HTTPException(
-            status_code=404,
-            detail="Column not found"
-        )
-    return column
+    return get_owned_column(db, column_id, current_user)
 
 @router.put("/{column_id}")
 def update_column(
     column_id : int,
     column_data:ColumnCreate,
-    db:Session =Depends(get_db)
+    db:Session =Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    column = (
-        db.query(BoardColumn).filter(BoardColumn.id == column_id).first()
-    )
-    if not column:
-        raise HTTPException(
-            status_code=404,
-            detail="Column not found"
-        )
+    column = get_owned_column(db, column_id, current_user)
+    # moving a column to another board also requires owning that board
+    get_owned_board(db, column_data.board_id, current_user)
     column.name = column_data.name
     column.board_id = column_data.board_id
     db.commit()
@@ -86,16 +69,10 @@ def update_column(
 @router.delete("/{column_id}")
 def delete_column(
     column_id:int,
-    db:Session = Depends(get_db)
+    db:Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    column = (
-        db.query(BoardColumn).filter(BoardColumn.id==column_id).first()
-    )
-    if not column:
-        raise HTTPException(
-            status_code=404,
-            detail="column not found"
-        )
+    column = get_owned_column(db, column_id, current_user)
     db.delete(column)
     db.commit()
     return {

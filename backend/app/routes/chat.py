@@ -4,6 +4,7 @@ from app.core.database import get_db
 from app.schemas.chat import ChatResponse, ChatRequest
 from app.routes.auth import get_current_user
 from app.services.gemini_chat_service import ask_ai
+from app.core.deps import get_owned_board
 
 router = APIRouter(
     prefix="/boards",
@@ -21,6 +22,7 @@ def chat(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
+    get_owned_board(db, board_id, current_user)
     try:
         result = ask_ai(
             db=db,
@@ -36,8 +38,10 @@ def chat(
             action=result["action"]
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="Chat assistance is temporarily unavailable. Please try again."
         )
