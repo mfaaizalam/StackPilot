@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../api/axios.js";
+import { useBoards, KEYS } from "../api/queries.js";
 import BoardModal from "../components/BoardModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
@@ -106,11 +108,20 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
 // ── Main Boards page ────────────────────────────────────────────────────────
 export default function Boards() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  const [boards, setBoards] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState("");
+  // Cached list: switching Home <-> Boards no longer refetches within the cache window.
+  const {
+    data: boards = [],
+    isLoading: loading,
+    error,
+    refetch: fetchBoards,
+  } = useBoards();
+
+  const fetchError = error
+    ? error?.response?.data?.detail || "Failed to load boards. Is the backend running?"
+    : "";
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -123,23 +134,13 @@ export default function Boards() {
   // Toast
   const [toast, setToast] = useState(null);
 
-  // ── Data fetching ─────────────────────────────────────────────────────────
-  const fetchBoards = useCallback(async () => {
-    setLoading(true);
-    setFetchError("");
-    try {
-      const { data } = await api.get("/boards/");
-      setBoards(data);
-    } catch (err) {
-      setFetchError(
-        err?.response?.data?.detail || "Failed to load boards. Is the backend running?"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchBoards(); }, [fetchBoards]);
+  // ── Cache helpers ─────────────────────────────────────────────────────────
+  // Update the cached list immediately and mark the dashboard counts stale
+  // so Home shows correct numbers next time it opens.
+  const syncAfterChange = (updater) => {
+    queryClient.setQueryData(KEYS.boards, updater);
+    queryClient.invalidateQueries({ queryKey: KEYS.dashboardSummary });
+  };
 
   // ── Toast helper ──────────────────────────────────────────────────────────
   const showToast = (msg, type = "success") => {
@@ -150,13 +151,13 @@ export default function Boards() {
   // ── CRUD handlers ─────────────────────────────────────────────────────────
   const handleCreate = async (form) => {
     const { data } = await api.post("/boards/", form);
-    setBoards((prev) => [data, ...prev]);
+    syncAfterChange((prev = []) => [data, ...prev]);
     showToast("Board created.");
   };
 
   const handleEdit = async (form) => {
     const { data } = await api.put(`/boards/${editingBoard.id}`, form);
-    setBoards((prev) => prev.map((b) => (b.id === data.id ? data : b)));
+    syncAfterChange((prev = []) => prev.map((b) => (b.id === data.id ? data : b)));
     showToast("Board updated.");
   };
 
@@ -165,7 +166,7 @@ export default function Boards() {
     setDeleteLoading(true);
     try {
       await api.delete(`/boards/${deleteTarget.id}`);
-      setBoards((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+      syncAfterChange((prev = []) => prev.filter((b) => b.id !== deleteTarget.id));
       showToast("Board deleted.");
       setDeleteTarget(null);
     } catch (err) {
@@ -175,16 +176,15 @@ export default function Boards() {
     }
   };
 
-  // ── Open board → navigate to board detail (future page) ──────────────────
+  // ── Open board → navigate to board detail ────────────────────────────────
   const handleOpenBoard = (board) => {
-    // Will navigate to /boards/:id when that page exists
-    // For now, a no-op so clicking the card doesn't trigger edit/delete
     navigate(`/boards/${board.id}`);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    queryClient.clear(); // don't leak cached data to the next user on this browser
     navigate("/login");
   };
 
@@ -201,74 +201,62 @@ export default function Boards() {
             StackPilot
           </div>
 
-          
-<div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Desktop Navigation */}
+            <nav className="hidden sm:flex items-center gap-1">
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="text-sm px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition"
+              >
+                Home
+              </button>
 
-  {/* Desktop Navigation */}
-  <nav className="hidden sm:flex items-center gap-1">
-    <button
-      onClick={() => navigate("/dashboard")}
-      className="text-sm px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition"
-    >
-      Home
-    </button>
+              <button className="text-sm px-3 py-1.5 rounded-md bg-neutral-100 text-neutral-900 font-medium">
+                Boards
+              </button>
+            </nav>
 
-    <button
-      className="text-sm px-3 py-1.5 rounded-md bg-neutral-100 text-neutral-900 font-medium"
-    >
-      Boards
-    </button>
-  </nav>
+            {/* Mobile Home Button */}
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="sm:hidden flex items-center gap-1 text-sm px-2 py-1.5 rounded-md text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition"
+            >
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                <path
+                  d="M10 12L6 8l4-4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Home
+            </button>
 
-  {/* Mobile Home Button */}
-  <button
-    onClick={() => navigate("/dashboard")}
-    className="sm:hidden flex items-center gap-1 text-sm px-2 py-1.5 rounded-md text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition"
-  >
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 16 16"
-      fill="none"
-    >
-      <path
-        d="M10 12L6 8l4-4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-    Home
-  </button>
+            {/* User */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm">
+                {user?.name?.charAt(0) || "U"}
+              </div>
 
-  {/* User */}
-  <div className="flex items-center gap-2 sm:gap-3">
-    <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm">
-      {user?.name?.charAt(0) || "U"}
-    </div>
+              <div className="hidden sm:block">
+                <p className="text-sm font-medium leading-none">
+                  {user?.name || "User"}
+                </p>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  {user?.email || ""}
+                </p>
+              </div>
+            </div>
 
-    <div className="hidden sm:block">
-      <p className="text-sm font-medium leading-none">
-        {user?.name || "User"}
-      </p>
-      <p className="text-xs text-neutral-500 mt-0.5">
-        {user?.email || ""}
-      </p>
-    </div>
-  </div>
-
-  {/* Sign out */}
-  <button
-    onClick={logout}
-    className="text-sm px-2.5 sm:px-3.5 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition"
-  >
-    Sign out
-  </button>
-
-</div>
-
-
+            {/* Sign out */}
+            <button
+              onClick={logout}
+              className="text-sm px-2.5 sm:px-3.5 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -313,7 +301,7 @@ export default function Boards() {
             </p>
             <div className="mt-4">
               <button
-                onClick={fetchBoards}
+                onClick={() => fetchBoards()}
                 className="text-sm text-neutral-600 hover:text-neutral-900 underline underline-offset-2"
               >
                 Try again

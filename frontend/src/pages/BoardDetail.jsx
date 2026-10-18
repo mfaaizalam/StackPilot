@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/axios.js";
 import ColumnModal from "../components/ColumnModal.jsx";
 import TaskModal from "../components/TaskModal.jsx";
@@ -65,25 +66,26 @@ function PriorityBadge({ priority }) {
 const isDoneCol = (name) => /^done$/i.test((name || "").trim());
 
 function TraceSection({ boardId, task }) {
-  const [trace, setTrace] = useState(null);
-  const [state, setState] = useState("idle"); // idle | loading | ok | error
-
-  useEffect(() => {
-    if (!task?.requirement_id) { setTrace(null); setState("idle"); return; }
-    let cancelled = false;
-    setState("loading");
-    api.get(`/boards/${boardId}/tasks/${task.id}/trace`)
-      .then(({ data }) => { if (!cancelled) { setTrace(data); setState("ok"); } })
-      .catch(() => { if (!cancelled) setState("error"); });
-    return () => { cancelled = true; };
-  }, [boardId, task?.id, task?.requirement_id]);
+  // Cached per task: re-opening the same task does not hit the API again.
+  // Any write request (see axios interceptor) marks ["trace"] stale, so
+  // dependency statuses refresh after a task is moved or edited.
+  const {
+    data: trace,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["trace", boardId, task?.id],
+    queryFn: () =>
+      api.get(`/boards/${boardId}/tasks/${task.id}/trace`).then((r) => r.data),
+    enabled: !!task?.requirement_id,
+  });
 
   if (!task?.requirement_id) return null;
   const box = "bg-neutral-50 rounded-xl p-3 border border-neutral-100";
   const label = "text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5";
 
-  if (state === "loading") return <div className="h-24 bg-neutral-50 border border-neutral-100 rounded-xl animate-pulse" />;
-  if (state === "error" || !trace) return <p className="text-xs text-neutral-400">Could not load the requirement details.</p>;
+  if (isLoading) return <div className="h-24 bg-neutral-50 border border-neutral-100 rounded-xl animate-pulse" />;
+  if (isError || !trace) return <p className="text-xs text-neutral-400">Could not load the requirement details.</p>;
   if (!trace.linked) return <p className="text-xs text-neutral-400">{trace.reason}</p>;
 
   const r = trace.requirement;
@@ -493,15 +495,21 @@ function ColumnPanel({
 export default function BoardDetail() {
   const { boardId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  const [board, setBoard]     = useState(null);
-  const [columns, setColumns] = useState([]);
-  const [tasks, setTasks]     = useState([]);
-  const [loading, setLoading] = useState(true);
+  // If this board was opened recently, start from the cached copy so the page
+  // appears instantly instead of flashing skeletons.
+  const cacheKey = ["board-data", boardId];
+  const cached = queryClient.getQueryData(cacheKey);
+
+  const [board, setBoard]     = useState(cached?.board ?? null);
+  const [columns, setColumns] = useState(cached?.columns ?? []);
+  const [tasks, setTasks]     = useState(cached?.tasks ?? []);
+  const [loading, setLoading] = useState(!cached);
   const [fetchError, setFetchError] = useState("");
 
- 
+
 
   // Detail panel
   const [detailTask, setDetailTask] = useState(null);
@@ -533,26 +541,44 @@ export default function BoardDetail() {
   const [savingDrafts, setSavingDrafts] = useState(false);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
+  // Cached for 60 s. Any write request anywhere in the app (see the axios
+  // interceptor) marks "board-data" stale, so coming back after creating,
+  // moving or generating tasks always refetches. A plain page switch does not.
+  // NOTE: this still downloads ALL columns/tasks and filters here. A backend
+  // endpoint like GET /boards/{id}/full would remove that over-fetching.
+  const fetchAll = useCallback(async (force = false) => {
+    const key = ["board-data", boardId];
+    const hasCache = !!queryClient.getQueryData(key);
+    if (!hasCache || force) setLoading(true);
     setFetchError("");
     try {
-      const [boardRes, colsRes, tasksRes] = await Promise.all([
-        api.get(`/boards/${boardId}`),
-        api.get("/columns/"),
-        api.get("/tasks/"),
-      ]);
-      setBoard(boardRes.data);
-      const boardCols = colsRes.data.filter(c => c.board_id === Number(boardId));
-      setColumns(boardCols);
-      const colIds = new Set(boardCols.map(c => c.id));
-      setTasks(tasksRes.data.filter(t => colIds.has(t.column_id)));
+      const result = await queryClient.fetchQuery({
+        queryKey: key,
+        staleTime: force ? 0 : 60_000,
+        queryFn: async () => {
+          const [boardRes, colsRes, tasksRes] = await Promise.all([
+            api.get(`/boards/${boardId}`),
+            api.get("/columns/"),
+            api.get("/tasks/"),
+          ]);
+          const boardCols = colsRes.data.filter(c => c.board_id === Number(boardId));
+          const colIds = new Set(boardCols.map(c => c.id));
+          return {
+            board: boardRes.data,
+            columns: boardCols,
+            tasks: tasksRes.data.filter(t => colIds.has(t.column_id)),
+          };
+        },
+      });
+      setBoard(result.board);
+      setColumns(result.columns);
+      setTasks(result.tasks);
     } catch (err) {
       setFetchError(err?.response?.data?.detail || "Failed to load. Is the backend running?");
     } finally {
       setLoading(false);
     }
-  }, [boardId]);
+  }, [boardId, queryClient]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -741,6 +767,7 @@ const handleDragEnd = (event) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    queryClient.clear(); // don't leak cached data to the next user on this browser
     navigate("/login");
   };
 
@@ -841,7 +868,7 @@ const handleDragEnd = (event) => {
             <div className="flex items-center justify-center w-full py-24">
               <div className="text-center">
                 <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">{fetchError}</p>
-                <button onClick={fetchAll} className="mt-4 text-sm text-neutral-600 hover:text-neutral-900 underline underline-offset-2">Try again</button>
+                <button onClick={() => fetchAll(true)} className="mt-4 text-sm text-neutral-600 hover:text-neutral-900 underline underline-offset-2">Try again</button>
               </div>
             </div>
           )}

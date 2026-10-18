@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios.js";
+import { useQueryClient } from "@tanstack/react-query";
+import { useDashboardSummary } from "../api/queries.js";
 
 function IconBoards() {
   return (
@@ -39,38 +39,21 @@ function IconArrow() {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  const [stats, setStats] = useState({ boards: null, columns: null, tasks: null });
-  const [recentBoards, setRecentBoards] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // One cached query replaces the old useState/useEffect + 3 calls on every visit.
+  const { data, isLoading: loading, isError } = useDashboardSummary();
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [boardsRes, colsRes, tasksRes] = await Promise.all([
-          api.get("/boards/"),
-          api.get("/columns/"),
-          api.get("/tasks/"),
-        ]);
-        setStats({
-          boards: boardsRes.data.length,
-          columns: colsRes.data.length,
-          tasks: tasksRes.data.length,
-        });
-        setRecentBoards(boardsRes.data.slice(-4).reverse());
-      } catch {
-        setStats({ boards: "—", columns: "—", tasks: "—" });
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const stats = isError
+    ? { boards: "—", columns: "—", tasks: "—" }
+    : { boards: data?.boards, columns: data?.columns, tasks: data?.tasks };
+  const recentBoards = data?.recent ?? [];
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    queryClient.clear(); // don't leak cached data to the next user on this browser
     navigate("/login");
   };
 
