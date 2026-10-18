@@ -5,10 +5,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import api from "../api/axios.js";
 import DiagramsPanel from "../components/DiagramsPanel.jsx";
-import CostPanel from "../components/CostPanel.jsx";
 import ComingSoon from "../components/ComingSoon.jsx";
 
-/* ───────────────────────── helpers ───────────────────────── */
+/* ───────────────────────── helpers s───────────────────────── */
 const errText = (e, fallback = "Something went wrong. Please try again.") => {
   const d = e?.response?.data?.detail;
   if (typeof d === "string") return d;
@@ -531,7 +530,7 @@ export default function SrsStudio() {
 
   const newGeneration = () => { setDescription(doc?.description || description); setQuestions([]); setError(""); setStep("describe"); };
 
-  const TABS = [["srs", "SRS document"], ["req", "Requirements"], ["quality", "Quality checks"], ["diagrams", "Diagrams"], ["cost", "Cost"], ["analysis", "Analysis"]];
+  const TABS = [["srs", "SRS document"], ["req", "Requirements"], ["quality", "Quality checks"], ["diagrams", "Diagrams"], ["analysis", "Analysis"]];
   const issueCount = doc?.issues?.length || 0;
 
   return (
@@ -637,11 +636,6 @@ export default function SrsStudio() {
             {visited.diagrams && (
               <div className={tab === "diagrams" ? "" : "hidden"}>
                 <DiagramsPanel boardId={boardId} srsId={doc.id} version={doc.version} />
-              </div>
-            )}
-            {visited.cost && (
-              <div className={tab === "cost" ? "" : "hidden"}>
-                <CostPanel key={doc.id} boardId={boardId} srsId={doc.id} version={doc.version} />
               </div>
             )}
             {tab === "analysis" && (

@@ -61,7 +61,6 @@ export default function App() {
 
         {/* Not built yet */}
         <Route path="/boards/:boardId/sdd" element={<ComingSoonPage title="SDD" description="Software Design Document generation is on its way." />} />
-        <Route path="/boards/:boardId/analysis" element={<ComingSoonPage title="Analysis" description="Gap analysis, risk analysis and improvement suggestions are on their way." />} />
         <Route path="/boards/:boardId/settings" element={<ComingSoonPage title="Settings" description="Project settings are on their way." />} />
       </Route>
 

@@ -81,11 +81,10 @@ function IconFolder() {
 
 const SECTIONS = [
   { to: "kanban", label: "Kanban Board", icon: <IconKanban /> },
-  { to: "srs", label: "SRS", icon: <IconSrs /> },
+  { to: "srs", label: "SRS Document", icon: <IconSrs /> },
   { to: "diagrams", label: "Diagrams", icon: <IconDiagrams /> },
-  { to: "costing", label: "Costing", icon: <IconCosting /> },
-  { to: "sdd", label: "SDD", icon: <IconSdd />, soon: true },
-  { to: "analysis", label: "Analysis", icon: <IconAnalysis />, soon: true },
+  { to: "sdd", label: "Design Document", icon: <IconSdd />, soon: true },
+  { to: "costing", label: "Deployment Document", icon: <IconCosting /> },
   { to: "settings", label: "Settings", icon: <IconSettings />, soon: true },
 ];
 const SECTION_KEYS = SECTIONS.map((s) => s.to);
