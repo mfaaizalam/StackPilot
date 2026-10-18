@@ -135,19 +135,19 @@ export default function Sidebar({ open, onClose }) {
       {/* Mobile backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-neutral-950/30 md:hidden print:hidden"
+          className="fixed inset-0 z-30 bg-overlay/50 md:hidden print:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-40 w-60 bg-white border-r border-neutral-200 flex flex-col transition-transform duration-200 print:hidden ${
+        className={`fixed left-0 top-0 bottom-0 z-40 w-60 bg-canvas text-ink border-r border-line flex flex-col transition-transform duration-200 print:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
         {/* Logo */}
-        <div className="h-14 px-4 flex items-center gap-2 font-semibold tracking-tight border-b border-neutral-100 shrink-0">
-          <div className="w-7 h-7 rounded-md bg-neutral-950 text-white flex items-center justify-center font-bold text-sm">
+        <div className="h-14 px-4 flex items-center gap-2 font-semibold tracking-tight border-b border-line shrink-0">
+          <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">
             S
           </div>
           StackPilot
@@ -156,20 +156,20 @@ export default function Sidebar({ open, onClose }) {
         <div className="flex-1 overflow-y-auto p-3 space-y-4">
           {/* Projects row (current project + switcher) */}
           <div className="relative">
-            <p className="px-1 mb-1.5 text-[11px] text-neutral-400 font-medium uppercase tracking-wide">
+            <p className="px-1 mb-1.5 text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide">
               Projects
             </p>
             <button
               onClick={() => setSwitcherOpen((v) => !v)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 transition text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-line bg-surface hover:bg-surface-2 transition text-left"
             >
-              <span className="text-neutral-500 shrink-0">
+              <span className="text-ink-muted shrink-0">
                 <IconFolder />
               </span>
-              <span className="flex-1 min-w-0 text-sm font-medium text-neutral-900 truncate">
+              <span className="flex-1 min-w-0 text-sm font-medium text-ink truncate">
                 {currentBoard?.name || "Select a project"}
               </span>
-              <span className="text-neutral-400 shrink-0">
+              <span className="text-ink-muted/70 shrink-0">
                 <IconChevron />
               </span>
             </button>
@@ -177,19 +177,19 @@ export default function Sidebar({ open, onClose }) {
             {switcherOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setSwitcherOpen(false)} />
-                <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-white border border-neutral-200 rounded-lg shadow-lg py-1">
+                <div className="absolute left-0 right-0 top-full mt-1 z-20 bg-surface border border-line rounded-lg shadow-lg py-1">
                   <div className="max-h-64 overflow-y-auto">
                     {boards.length === 0 ? (
-                      <p className="px-3 py-2 text-xs text-neutral-400">No projects yet.</p>
+                      <p className="px-3 py-2 text-xs text-ink-muted/70">No projects yet.</p>
                     ) : (
                       boards.map((b) => (
                         <button
                           key={b.id}
                           onClick={() => switchTo(b)}
-                          className={`w-full text-left px-3 py-2 text-sm truncate hover:bg-neutral-50 transition ${
+                          className={`w-full text-left px-3 py-2 text-sm truncate hover:bg-surface-2 transition ${
                             String(b.id) === String(activeId)
-                              ? "font-medium text-neutral-900 bg-neutral-50"
-                              : "text-neutral-600"
+                              ? "font-medium text-ink bg-surface-2"
+                              : "text-ink-muted"
                           }`}
                         >
                           {b.name}
@@ -197,14 +197,14 @@ export default function Sidebar({ open, onClose }) {
                       ))
                     )}
                   </div>
-                  <div className="border-t border-neutral-100 mt-1 pt-1">
+                  <div className="border-t border-line mt-1 pt-1">
                     <button
                       onClick={() => {
                         setSwitcherOpen(false);
                         navigate("/boards");
                         onClose?.();
                       }}
-                      className="w-full text-left px-3 py-2 text-xs text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 transition"
+                      className="w-full text-left px-3 py-2 text-xs text-ink-muted hover:text-ink hover:bg-surface-2 transition"
                     >
                       Manage projects / New project
                     </button>
@@ -225,15 +225,15 @@ export default function Sidebar({ open, onClose }) {
                   className={({ isActive }) =>
                     `${linkBase} ${
                       isActive
-                        ? "bg-neutral-100 text-neutral-900 font-medium"
-                        : "text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100"
+                        ? "bg-surface-2 text-ink font-medium"
+                        : "text-ink-muted hover:text-ink hover:bg-surface-2"
                     }`
                   }
                 >
                   {icon}
                   {label}
                   {soon && (
-                    <span className="ml-auto text-[10px] font-medium text-neutral-400 bg-neutral-100 border border-neutral-200 rounded-full px-1.5 py-0.5">
+                    <span className="ml-auto text-[10px] font-medium text-ink-muted/70 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
                       Soon
                     </span>
                   )}
@@ -242,12 +242,12 @@ export default function Sidebar({ open, onClose }) {
                 <span
                   key={to}
                   title="Select a project first"
-                  className={`${linkBase} text-neutral-300 cursor-not-allowed`}
+                  className={`${linkBase} text-ink-muted/50 cursor-not-allowed`}
                 >
                   {icon}
                   {label}
                   {soon && (
-                    <span className="ml-auto text-[10px] font-medium text-neutral-300 bg-neutral-50 border border-neutral-200 rounded-full px-1.5 py-0.5">
+                    <span className="ml-auto text-[10px] font-medium text-ink-muted/50 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
                       Soon
                     </span>
                   )}
@@ -258,19 +258,19 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         {/* User + sign out */}
-        <div className="border-t border-neutral-100 p-3 shrink-0">
+        <div className="border-t border-line p-3 shrink-0">
           <div className="flex items-center gap-2.5 mb-3 px-1">
-            <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm shrink-0">
+            <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm shrink-0">
               {user?.name?.charAt(0) || "U"}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium leading-none truncate">{user?.name || "User"}</p>
-              <p className="text-xs text-neutral-500 mt-1 truncate">{user?.email || ""}</p>
+              <p className="text-xs text-ink-muted mt-1 truncate">{user?.email || ""}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full text-sm px-3 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition"
+            className="w-full text-sm px-3 py-2 rounded-lg border border-line hover:bg-surface-2 transition"
           >
             Sign out
           </button>

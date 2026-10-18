@@ -28,7 +28,7 @@ function TypingDots() {
   return (
     <div className="flex items-center gap-1 px-3.5 py-2.5">
       {[0, 1, 2].map(i => (
-        <span key={i} className="w-1.5 h-1.5 rounded-full bg-neutral-400 animate-bounce" style={{ animationDelay: `${i * 0.12}s` }} />
+        <span key={i} className="w-1.5 h-1.5 rounded-full bg-ink-muted/70 animate-bounce" style={{ animationDelay: `${i * 0.12}s` }} />
       ))}
     </div>
   );
@@ -39,7 +39,7 @@ function ChatBubble({ role, message, error }) {
   if (role === "system") {
     return (
       <div className="flex justify-center">
-        <div className="flex items-center gap-1.5 bg-neutral-900 text-white text-[11px] font-medium px-3 py-1.5 rounded-full text-center">
+        <div className="flex items-center gap-1.5 bg-surface-2 text-ink border border-line text-[11px] font-medium px-3 py-1.5 rounded-full text-center">
           <IconCheck /> {message}
         </div>
       </div>
@@ -52,10 +52,10 @@ function ChatBubble({ role, message, error }) {
       <div
         className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-sm leading-relaxed ${
           isUser
-            ? "bg-neutral-950 text-white"
+            ? "bg-brand text-brand-fg"
             : error
-            ? "bg-red-50 text-red-700 border border-red-100"
-            : "bg-neutral-100 text-neutral-800"
+            ? "bg-danger-soft text-danger border border-danger/20"
+            : "bg-surface-2 text-ink"
         }`}
       >
         <ReactMarkdown
@@ -249,12 +249,12 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
         onClick={() => setOpen(v => !v)}
         title="Ask the project assistant"
         className={`fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition ${
-          open ? "bg-white border border-neutral-200 text-neutral-700" : "bg-neutral-950 text-white hover:bg-neutral-800"
+          open ? "bg-surface border border-line text-ink" : "bg-brand text-brand-fg hover:bg-brand-hover"
         }`}
       >
         {open ? <IconClose /> : <IconChat />}
         {!open && pendingTasks.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-danger text-white text-[10px] font-bold flex items-center justify-center">
             {pendingTasks.length}
           </span>
         )}
@@ -262,28 +262,28 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-20 right-5 z-40 w-[23rem] max-w-[calc(100vw-2.5rem)] h-[32rem] max-h-[calc(100vh-8rem)] bg-white border border-neutral-200 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed bottom-20 right-5 z-40 w-[23rem] max-w-[calc(100vw-2.5rem)] h-[32rem] max-h-[calc(100vh-8rem)] bg-surface text-ink border border-line rounded-card shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100 shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-line shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-md bg-neutral-950 text-white flex items-center justify-center">
+              <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center">
                 <IconSparkle />
               </div>
               <div>
-                <p className="text-sm font-semibold text-neutral-900 leading-none">Stack Pilot Assistant</p>
-                <p className="text-[11px] text-neutral-400 mt-0.5">Stack Pilot Assistant can make mistakes.</p>
+                <p className="text-sm font-semibold text-ink leading-none">Stack Pilot Assistant</p>
+                <p className="text-[11px] text-ink-muted/70 mt-0.5">Stack Pilot Assistant can make mistakes.</p>
               </div>
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+              className="w-7 h-7 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-ink hover:bg-surface-2 transition"
             >
               <IconClose />
             </button>
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-neutral-50">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-canvas">
             {loadingHistory && messages.length === 0 && (
               <div className="h-full flex items-center justify-center">
                 <TypingDots />
@@ -292,11 +292,11 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
 
             {!loadingHistory && messages.length === 0 && (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mb-3 text-neutral-400">
+                <div className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center mb-3 text-ink-muted/70">
                   <IconSparkle size={16} />
                 </div>
-                <p className="text-sm font-medium text-neutral-700">Ask about this board</p>
-                <p className="mt-1 text-xs text-neutral-400 leading-relaxed">
+                <p className="text-sm font-medium text-ink">Ask about this board</p>
+                <p className="mt-1 text-xs text-ink-muted/70 leading-relaxed">
                   Try "create the whole board" or "add a task for CI setup".
                 </p>
               </div>
@@ -308,7 +308,7 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
 
             {sending && (
               <div className="flex justify-start">
-                <div className="bg-neutral-100 rounded-xl">
+                <div className="bg-surface-2 rounded-xl">
                   <TypingDots />
                 </div>
               </div>
@@ -319,22 +319,22 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
               composer, inside the chat panel, and only shows while there
               are actually unsaved drafts on the board. */}
           {pendingTasks.length > 0 && (
-            <div className="px-4 py-3 border-t border-neutral-100 bg-amber-50/60 shrink-0">
-              <p className="text-sm text-neutral-800 font-medium">
+            <div className="px-4 py-3 border-t border-line bg-warning-soft/60 shrink-0">
+              <p className="text-sm text-ink font-medium">
                 Would you like to save {pendingTasks.length === 1 ? "this task" : `these ${pendingTasks.length} tasks`}?
               </p>
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={handleConfirmSave}
                   disabled={confirming}
-                  className="px-3 py-1.5 rounded-lg bg-neutral-950 text-white text-xs font-medium hover:bg-neutral-800 disabled:opacity-50 transition"
+                  className="px-3 py-1.5 rounded-lg bg-brand text-brand-fg text-xs font-medium hover:bg-brand-hover disabled:opacity-50 transition"
                 >
                   {confirming ? "Saving…" : "Yes"}
                 </button>
                 <button
                   onClick={handleWantChanges}
                   disabled={confirming}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-300 text-neutral-700 text-xs font-medium hover:bg-white disabled:opacity-50 transition"
+                  className="px-3 py-1.5 rounded-lg border border-line text-ink text-xs font-medium hover:bg-surface-2 disabled:opacity-50 transition"
                 >
                   Want to add some changes
                 </button>
@@ -343,7 +343,7 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
           )}
 
           {/* Composer */}
-          <div className="border-t border-neutral-100 p-3 shrink-0 bg-white">
+          <div className="border-t border-line p-3 shrink-0 bg-surface">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -352,18 +352,18 @@ export default function ChatWidget({ boardId, pendingTasks = [], onTasksDrafted,
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about tasks, priorities, progress…"
-                className="flex-1 resize-none max-h-24 text-sm px-3 py-2.5 rounded-lg border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-neutral-900/10 focus:border-neutral-400 transition placeholder:text-neutral-400"
+                className="flex-1 resize-none max-h-24 text-sm text-ink bg-surface px-3 py-2.5 rounded-lg border border-line focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-ink-muted/60 transition placeholder:text-ink-muted/60"
               />
               <button
                 onClick={send}
                 disabled={sending || !input.trim()}
                 title="Send"
-                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-neutral-950 text-white hover:bg-neutral-800 disabled:opacity-40 disabled:hover:bg-neutral-950 transition"
+                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-lg bg-brand text-brand-fg hover:bg-brand-hover disabled:opacity-40 disabled:hover:bg-brand transition"
               >
                 <IconSend />
               </button>
             </div>
-            {loadError && <p className="mt-1.5 text-[11px] text-red-500">{loadError}</p>}
+            {loadError && <p className="mt-1.5 text-[11px] text-danger">{loadError}</p>}
           </div>
         </div>
       )}

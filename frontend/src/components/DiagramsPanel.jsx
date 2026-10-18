@@ -19,7 +19,7 @@ const errText = (e, fallback = "Something went wrong. Please try again.") => {
 };
 
 function Spinner() {
-  return <span className="inline-block w-4 h-4 border-2 border-neutral-300 border-t-neutral-900 rounded-full animate-spin" />;
+  return <span className="inline-block w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />;
 }
 
 export default function DiagramsPanel({ boardId, srsId, version }) {
@@ -77,35 +77,35 @@ export default function DiagramsPanel({ boardId, srsId, version }) {
   const running = progress !== null;
   const pct = progress?.total ? Math.round((progress.done / progress.total) * 100) : 4;
 
-  if (!loaded) return <div className="h-40 bg-white border border-neutral-200 rounded-2xl animate-pulse print:hidden" />;
+  if (!loaded) return <div className="h-40 bg-surface border border-line rounded-card animate-pulse print:hidden" />;
 
   return (
     <div className="print:hidden">
-      {error && <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>}
+      {error && <p className="mb-4 text-sm text-danger bg-danger-soft border border-danger/20 rounded-card px-4 py-3">{error}</p>}
 
       {running && (
-        <div className="mb-5 bg-white border border-neutral-200 rounded-2xl px-5 py-4">
-          <div className="flex items-center gap-2 text-sm text-neutral-700 mb-2.5">
+        <div className="mb-5 bg-surface border border-line rounded-card px-5 py-4">
+          <div className="flex items-center gap-2 text-sm text-ink mb-2.5">
             <Spinner /> Drawing diagrams{progress.total ? ` (${progress.done} of ${progress.total})` : "…"}
           </div>
-          <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden"><div className="h-full bg-neutral-900 transition-all duration-500" style={{ width: `${pct}%` }} /></div>
+          <div className="h-1.5 bg-line rounded-full overflow-hidden"><div className="h-full bg-brand transition-all duration-500" style={{ width: `${pct}%` }} /></div>
         </div>
       )}
 
       {!diagrams.length && !running ? (
-        <div className="bg-white border border-neutral-200 rounded-2xl px-8 py-14 text-center">
-          <h2 className="text-lg font-semibold text-neutral-900">Turn this SRS into UML diagrams</h2>
-          <p className="text-sm text-neutral-500 mt-2 max-w-md mx-auto">
+        <div className="bg-surface border border-line rounded-card px-8 py-14 text-center">
+          <h2 className="text-lg font-semibold text-ink">Turn this SRS into UML diagrams</h2>
+          <p className="text-sm text-ink-muted mt-2 max-w-md mx-auto">
             We draw a use case diagram, a class diagram, sequence and activity diagrams for your most important use cases, and state diagrams for anything with a lifecycle, and a deployment diagram of the system. Version {version}.
           </p>
-          <button onClick={generate} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-lg bg-neutral-950 text-white hover:bg-neutral-800 transition">Generate diagrams</button>
+          <button onClick={generate} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-lg bg-brand text-brand-fg hover:bg-brand-hover transition">Generate diagrams</button>
         </div>
       ) : (
         <>
           {stale && !running && (
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm bg-amber-50 border border-amber-100 text-amber-800 rounded-xl px-4 py-3">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm bg-warning-soft border border-warning/20 text-warning rounded-card px-4 py-3">
               <span>The requirements changed after these diagrams were drawn.</span>
-              <button onClick={generate} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-800 text-white hover:bg-amber-900 transition">Regenerate</button>
+              <button onClick={generate} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-warning text-canvas hover:bg-warning/90 transition">Regenerate</button>
             </div>
           )}
 
@@ -113,13 +113,13 @@ export default function DiagramsPanel({ boardId, srsId, version }) {
             <div className="flex flex-wrap gap-2">
               {TYPES.filter(([k]) => counts[k] > 0).map(([k, label]) => (
                 <button key={k} onClick={() => setActive(k)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition ${active === k ? "bg-neutral-950 text-white border-neutral-950" : "bg-white text-neutral-700 border-neutral-200 hover:bg-neutral-100"}`}>
+                  className={`text-xs px-3 py-1.5 rounded-full border transition ${active === k ? "bg-brand text-brand-fg border-brand" : "bg-surface text-ink border-line hover:bg-surface-2"}`}>
                   {label} <span className="opacity-60">{counts[k]}</span>
                 </button>
               ))}
             </div>
             {!running && !stale && (
-              <button onClick={generate} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition">Regenerate all</button>
+              <button onClick={generate} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-line hover:bg-surface-2 transition">Regenerate all</button>
             )}
           </div>
 
