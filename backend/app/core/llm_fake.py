@@ -4,6 +4,7 @@ from app.schemas.diagrams import (
 )
 from app.schemas.cost import CostExplanation
 from app.schemas.srs import QuestionList, Requirements
+from app.schemas.sdd import DesignModel
 
 
 def sample_requirements() -> Requirements:
@@ -113,6 +114,9 @@ def _fake_diagram(schema):
 def fake_response(schema):
     if schema is Requirements:
         return sample_requirements()
+    if schema is DesignModel:
+        from app.services.sdd_fallbacks import build_design
+        return build_design(sample_requirements(), {})
     if schema is QuestionList:
         return QuestionList.model_validate({"questions": [
             {"id": "q1", "question": "Who will use the system?", "options": ["Students", "Staff", "Both"]},

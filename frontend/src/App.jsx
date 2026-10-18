@@ -11,6 +11,7 @@ import ComingSoonPage from "./pages/ComingSoonPage.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import AppLayout from "./components/AppLayout.jsx";
 import { useBoards } from "./api/queries.js";
+import SddPage from "./pages/SddPage.jsx";
 
 // Auth gate + sidebar layout for every logged-in page.
 function PrivateLayout() {
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/boards/:boardId" element={<Navigate to="kanban" replace />} />
         <Route path="/boards/:boardId/kanban" element={<BoardDetail />} />
         <Route path="/boards/:boardId/srs" element={<SrsStudio />} />
+        <Route path="/boards/:boardId/sdd" element={<SddPage />} />
         <Route path="/boards/:boardId/diagrams" element={<DiagramsPage />} />
         <Route path="/boards/:boardId/costing" element={<CostingPage />} />
 

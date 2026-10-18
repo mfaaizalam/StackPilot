@@ -1,4 +1,3 @@
-# app/main.py
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -7,9 +6,11 @@ from app.core.database import Base, engine
 from app.core.config import settings
 # Import models so SQLAlchemy can detect them
 from app.routes.auth import router as auth_router
+from app.routes.sdd import router as sdd_router 
 from app.models.user import User
 from app.models.otp import OTP
 from app.models.srs import SRSDocument, SRSJob, Diagram, DiagramJob, CostEstimate
+from app.models.sdd import SDDDocument, SDDJob          
 from app.routes.board import router as Board_router
 from app.routes.column import router as Column_router
 from app.routes.task import router as task_router
@@ -61,7 +62,6 @@ app.include_router(task_router)
 app.include_router(ai_router)
 # Get AI assistance
 app.include_router(ai_chat)
-
 
 
 # SRS generation (questions -> requirements -> SRS document)
