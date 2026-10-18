@@ -12,6 +12,7 @@ from app.routes.auth import get_current_user
 from app.schemas.srs import GenerateRequest, Issue, QuestionsRequest, Requirements
 from app.services.srs_docx import build_docx
 from app.services import srs_service
+from app.services.activity_service import log_activity
 from app.services.srs_validator import validate_requirements
 
 router = APIRouter(prefix="/boards/{board_id}/srs", tags=["SRS"])
@@ -38,7 +39,7 @@ def _get_doc(db: Session, board_id: int, version: int | None) -> SRSDocument:
 @router.post("/questions")
 def questions(board_id: int, body: QuestionsRequest, db: Session = Depends(get_db),
               current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "project_manager")
     try:
         return srs_service.generate_questions(body.description)
     except LLMError as e:
@@ -48,7 +49,7 @@ def questions(board_id: int, body: QuestionsRequest, db: Session = Depends(get_d
 @router.post("/generate", status_code=202)
 def generate(board_id: int, body: GenerateRequest, background: BackgroundTasks,
              db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "project_manager")
 
     active = db.query(SRSJob).filter(SRSJob.board_id == board_id,
                                      SRSJob.status.in_(["queued", "running"]),
@@ -64,12 +65,13 @@ def generate(board_id: int, body: GenerateRequest, background: BackgroundTasks,
     job = srs_service.create_job(db, board_id, current_user.id, body.description,
                                  [a.model_dump() for a in body.answers])
     background.add_task(srs_service.run_srs_job, job.id)
+    log_activity(db, board_id, current_user.id, "srs.generated", "started generating the SRS", "srs_job")
     return {"job_id": job.id}
 
 
 @router.get("/jobs/{job_id}")
 def job_status(board_id: int, job_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     job = db.query(SRSJob).filter(SRSJob.id == job_id, SRSJob.board_id == board_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -78,7 +80,7 @@ def job_status(board_id: int, job_id: str, db: Session = Depends(get_db), curren
 
 @router.get("/versions")
 def versions(board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     rows = (db.query(SRSDocument).filter(SRSDocument.board_id == board_id)
             .order_by(SRSDocument.version.desc()).all())
     return [{"id": r.id, "version": r.version, "created_at": r.created_at} for r in rows]
@@ -87,7 +89,7 @@ def versions(board_id: int, db: Session = Depends(get_db), current_user=Depends(
 @router.get("/export.md")
 def export_md(board_id: int, version: int | None = None, db: Session = Depends(get_db),
               current_user=Depends(get_current_user)):
-    board = get_owned_board(db, board_id, current_user)
+    board = get_owned_board(db, board_id, current_user, "viewer")
     doc = _get_doc(db, board_id, version)
     name = "".join(c if c.isalnum() else "_" for c in board.name)[:40] or "srs"
     return Response(doc.markdown, media_type="text/markdown",
@@ -97,7 +99,7 @@ def export_md(board_id: int, version: int | None = None, db: Session = Depends(g
 @router.get("/export.docx")
 def export_docx(board_id: int, version: int | None = None, db: Session = Depends(get_db),
                 current_user=Depends(get_current_user)):
-    board = get_owned_board(db, board_id, current_user)
+    board = get_owned_board(db, board_id, current_user, "viewer")
     doc = _get_doc(db, board_id, version)
     data = build_docx(Requirements.model_validate(doc.requirements),
                       [Issue.model_validate(i) for i in (doc.issues or [])], doc.version)
@@ -110,7 +112,7 @@ def export_docx(board_id: int, version: int | None = None, db: Session = Depends
 @router.get("/")
 def latest(board_id: int, version: int | None = None, db: Session = Depends(get_db),
            current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     return _doc_out(_get_doc(db, board_id, version))
 
 
@@ -118,8 +120,9 @@ def latest(board_id: int, version: int | None = None, db: Session = Depends(get_
 def edit_requirements(board_id: int, body: Requirements, db: Session = Depends(get_db),
                       current_user=Depends(get_current_user)):
     """User edited the requirements: re-validate, re-render and store as a new version."""
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "project_manager")
     base = _get_doc(db, board_id, None)
     issues = validate_requirements(body)
     doc = srs_service.save_srs(db, board_id, base.description, base.answers or [], body, issues)
+    log_activity(db, board_id, current_user.id, "srs.edited", f"edited the requirements (SRS v{doc.version})", "srs", doc.id)
     return _doc_out(doc)

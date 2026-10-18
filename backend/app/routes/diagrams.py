@@ -9,6 +9,7 @@ from app.models.srs import DiagramJob, SRSDocument
 from app.routes.auth import get_current_user
 from app.schemas.diagrams import DIAGRAM_TYPES, DiagramGenerateRequest
 from app.services import diagram_service
+from app.services.activity_service import log_activity
 
 router = APIRouter(prefix="/boards/{board_id}/srs/diagrams", tags=["Diagrams"])
 
@@ -26,7 +27,7 @@ def _get_srs(db: Session, board_id: int, srs_id: int | None) -> SRSDocument:
 @router.post("/generate", status_code=202)
 def generate(board_id: int, body: DiagramGenerateRequest, background: BackgroundTasks,
              db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "project_manager")
     doc = _get_srs(db, board_id, body.srs_id)
 
     active = db.query(DiagramJob).filter(DiagramJob.board_id == board_id, DiagramJob.srs_id == doc.id,
@@ -42,12 +43,13 @@ def generate(board_id: int, body: DiagramGenerateRequest, background: Background
 
     job = diagram_service.create_job(db, board_id, current_user.id, doc.id, body.types or list(DIAGRAM_TYPES))
     background.add_task(diagram_service.run_diagram_job, job.id)
+    log_activity(db, board_id, current_user.id, "diagrams.generated", "started generating UML diagrams", "diagram_job")
     return {"job_id": job.id, "srs_id": doc.id}
 
 
 @router.get("/jobs/{job_id}")
 def job_status(board_id: int, job_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     job = db.query(DiagramJob).filter(DiagramJob.id == job_id, DiagramJob.board_id == board_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -57,6 +59,6 @@ def job_status(board_id: int, job_id: str, db: Session = Depends(get_db), curren
 @router.get("")
 def list_for_srs(board_id: int, srs_id: int | None = None, db: Session = Depends(get_db),
                  current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     doc = _get_srs(db, board_id, srs_id)
     return {"srs_id": doc.id, "version": doc.version, "diagrams": diagram_service.list_diagrams(db, doc.id)}

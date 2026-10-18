@@ -23,7 +23,7 @@ def chat(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     try:
         result = ask_ai(
             db=db,
@@ -50,9 +50,12 @@ def chat(
 @router.get("/{board_id}/chat")
 def get_board_chat(
     board_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
 ):
-    chats = get_chat_messages(db, board_id)
+    get_owned_board(db, board_id, current_user, "viewer")
+    # each member sees only their own conversation with the assistant
+    chats = [c for c in get_chat_messages(db, board_id) if c.user_id == current_user.id]
 
     return [
         {

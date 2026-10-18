@@ -10,7 +10,8 @@ from app.rag.embedding_service import create_embedding
 from app.rag.qdrant_service import qdrant
 from app.models.board import Board
 from app.models.column import BoardColumn
-from app.core.deps import get_owned_column, get_owned_task
+from app.core.deps import accessible_board_ids, get_owned_column, get_owned_task
+from app.services.activity_service import log_activity
 router = APIRouter(
     prefix="/tasks",
     tags =["Task"]
@@ -23,7 +24,7 @@ def create_column(
     db:Session =Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    column = get_owned_column(db, task.column_id, current_user)
+    column = get_owned_column(db, task.column_id, current_user, "editor")
     new_task = Task(
         title = task.title,
         description =task.description,
@@ -34,6 +35,8 @@ def create_column(
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
+    log_activity(db, column.board_id, current_user.id, "task.created",
+                 f"created the task “{new_task.title}” in {column.name}", "task", new_task.id)
 
     # Adding vector db
     text =f"""
@@ -65,8 +68,10 @@ def get_tasks(
     db:Session =Depends(get_db),
     current_user =Depends(get_current_user)
 ):
-    task = db.query(Task).filter(Task.column.has(BoardColumn.board.has(owner_id=current_user.id))).all()
-    return task
+    ids = accessible_board_ids(db, current_user)
+    if not ids:
+        return []
+    return db.query(Task).filter(Task.column.has(BoardColumn.board_id.in_(ids))).all()
 
 
 @router.get("/{task_id}")
@@ -75,7 +80,7 @@ def get_task(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    return get_owned_task(db, task_id, current_user)
+    return get_owned_task(db, task_id, current_user, "viewer")
 
 # Update 
 @router.put("/{task_id}")
@@ -85,9 +90,12 @@ def update_task(
     db:Session=Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    task = get_owned_task(db, task_id, current_user)
+    task = get_owned_task(db, task_id, current_user, "editor")
+    old_column = task.column
+    old_title = task.title
+    new_column = None
     if task_data.column_id is not None:
-        get_owned_column(db, task_data.column_id, current_user)
+        new_column = get_owned_column(db, task_data.column_id, current_user, "editor")
     if task_data.title is not  None:
         task.title = task_data.title
     if task_data.description is not None:
@@ -100,6 +108,12 @@ def update_task(
 
     db.commit()
     db.refresh(task)
+    if new_column is not None and new_column.id != old_column.id:
+        log_activity(db, new_column.board_id, current_user.id, "task.moved",
+                     f"moved “{task.title}” from {old_column.name} to {new_column.name}", "task", task.id)
+    else:
+        log_activity(db, old_column.board_id, current_user.id, "task.updated",
+                     f"updated the task “{old_title}”", "task", task.id)
 
     #Update Vector Db
     column =(
@@ -136,9 +150,11 @@ def delete_task(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    task = get_owned_task(db, task_id, current_user)
+    task = get_owned_task(db, task_id, current_user, "editor")
+    board_id, title = task.column.board_id, task.title
     db.delete(task)
     db.commit()
+    log_activity(db, board_id, current_user.id, "task.deleted", f"deleted the task “{title}”", "task", task_id)
     qdrant.delete_vector(task_id)
     return {
         "message":"Task Deleted Successfully"

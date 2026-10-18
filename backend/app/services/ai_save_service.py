@@ -13,11 +13,7 @@ def save_project(
 ):
     try:
         # found Board
-        board = db.query(Board).filter(
-            Board.id == board_id,
-            Board.owner_id == user_id
-        ).first()
-
+        board = db.query(Board).filter(Board.id == board_id).first()
         if not board:
             raise HTTPException(
                 status_code=404,

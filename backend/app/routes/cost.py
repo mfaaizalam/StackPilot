@@ -7,6 +7,7 @@ from app.models.srs import CostEstimate
 from app.routes.auth import get_current_user
 from app.schemas.cost import CostRequest
 from app.services import cost_service
+from app.services.activity_service import log_activity
 from app.services.cost_rates import RatesError, load_rates, unverified_items
 
 router = APIRouter(prefix="/boards/{board_id}/srs/cost", tags=["Cost estimation"])
@@ -22,7 +23,7 @@ def _get_row(db: Session, board_id: int, estimate_id: int) -> CostEstimate:
 @router.get("/rates")
 def rates(board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """The rate table the engine uses (shown in the UI so assumptions are visible)."""
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     try:
         t = load_rates()
     except RatesError as e:
@@ -33,13 +34,15 @@ def rates(board_id: int, db: Session = Depends(get_db), current_user=Depends(get
 @router.post("/estimate")
 def estimate(board_id: int, body: CostRequest, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """Deterministic and instant (no AI), so it runs inside the request."""
-    get_owned_board(db, board_id, current_user)
-    return cost_service.create_estimate(db, board_id, current_user.id, body)
+    get_owned_board(db, board_id, current_user, "project_manager")
+    result = cost_service.create_estimate(db, board_id, current_user.id, body)
+    log_activity(db, board_id, current_user.id, "cost.estimated", "created a cost estimate", "cost")
+    return result
 
 
 @router.get("/")
 def latest(board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     row = (db.query(CostEstimate).filter(CostEstimate.board_id == board_id)
            .order_by(CostEstimate.id.desc()).first())
     if not row:
@@ -49,5 +52,5 @@ def latest(board_id: int, db: Session = Depends(get_db), current_user=Depends(ge
 
 @router.post("/{estimate_id}/explain")
 def explain(board_id: int, estimate_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "project_manager")
     return cost_service.explain(db, _get_row(db, board_id, estimate_id), current_user.id)
