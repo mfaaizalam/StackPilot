@@ -9,7 +9,7 @@ from app.models.column import BoardColumn
 from app.models.task import Task
 
 client = genai.Client(
-    api_key=settings.GEMINI_API_KEY_2
+    api_key=settings.GEMINI_API_KEY
 )
 
 DONE_KEYWORDS = ("done", "complete", "completed", "deployed", "shipped", "live", "released")
@@ -113,7 +113,7 @@ def analyze_project(db, board_id: int) -> ProjectInsightsResponse:
     context = _build_context(board, columns, tasks, stats)
 
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model=settings.GEMINI_MODEL,
         contents=[SYSTEM_PROMPT, context],
     )
 

@@ -1,25 +1,51 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-html, body, #root { height: 100%; }
-body { @apply bg-white text-neutral-900 font-sans antialiased; }
+@import "tailwindcss";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background-color: #ffffff;
+  color: #171717;
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
 
 /* ---- Landing page motion ---- */
 
 @keyframes float-slow {
-  0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
-  50% { transform: translateY(-14px) rotate(var(--tilt, 0deg)); }
+  0%, 100% {
+    transform: translateY(0) rotate(var(--tilt, 0deg));
+  }
+
+  50% {
+    transform: translateY(-14px) rotate(var(--tilt, 0deg));
+  }
 }
 
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .animate-float {
@@ -31,6 +57,7 @@ body { @apply bg-white text-neutral-900 font-sans antialiased; }
   transform: translateY(28px);
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
+
 .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
@@ -39,6 +66,7 @@ body { @apply bg-white text-neutral-900 font-sans antialiased; }
 .marquee-track {
   animation: marquee 28s linear infinite;
 }
+
 .marquee-track:hover {
   animation-play-state: paused;
 }

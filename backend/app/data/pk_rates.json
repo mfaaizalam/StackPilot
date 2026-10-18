@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "currency": "PKR",
+    "version": "2026.10-draft",
+    "last_updated": "2026-10-17",
+    "notes": "INDICATIVE STARTING VALUES. Every item below has verified=false. Before the exhibition, replace each value with current local data (job portals, PSEB / market salary surveys, quotes from 2-3 software houses, your accountant for tax), set verified=true, and update last_updated and source. The cost engine never invents rates: it only reads this file."
+  },
+  "scenarios": {
+    "optimistic":  {"label": "Optimistic",  "effort_factor": 0.8, "salary_point": 0.0},
+    "likely":      {"label": "Likely",      "effort_factor": 1.0, "salary_point": 0.5},
+    "pessimistic": {"label": "Pessimistic", "effort_factor": 1.5, "salary_point": 1.0}
+  },
+  "model": {
+    "loc_per_function_point": 45,
+    "hours_per_person_month": 152,
+    "ucp_hours_per_point": 20,
+    "platform_multiplier": {"web": 1.0, "desktop": 1.1, "mobile": 1.15, "web_mobile": 1.4}
+  },
+  "roles": {
+    "junior_dev": {"label": "Junior Developer", "monthly_min": 70000,  "monthly_max": 120000, "allocation": 0.15, "source": "Placeholder: Pakistan junior software engineer range, verify on Rozee.pk / LinkedIn", "last_updated": "2026-10-17", "verified": false},
+    "mid_dev":    {"label": "Mid-level Developer", "monthly_min": 150000, "monthly_max": 250000, "allocation": 0.25, "source": "Placeholder: verify on Rozee.pk / LinkedIn", "last_updated": "2026-10-17", "verified": false},
+    "senior_dev": {"label": "Senior Developer", "monthly_min": 300000, "monthly_max": 500000, "allocation": 0.12, "source": "Placeholder: verify on Rozee.pk / LinkedIn", "last_updated": "2026-10-17", "verified": false},
+    "qa":         {"label": "QA Engineer", "monthly_min": 80000,  "monthly_max": 180000, "allocation": 0.15, "source": "Placeholder: verify with local software houses", "last_updated": "2026-10-17", "verified": false},
+    "ui_ux":      {"label": "UI/UX Designer", "monthly_min": 100000, "monthly_max": 220000, "allocation": 0.10, "source": "Placeholder: verify with local software houses", "last_updated": "2026-10-17", "verified": false},
+    "pm":         {"label": "Project Manager", "monthly_min": 250000, "monthly_max": 450000, "allocation": 0.13, "source": "Placeholder: verify with local software houses", "last_updated": "2026-10-17", "verified": false},
+    "devops":     {"label": "DevOps Engineer", "monthly_min": 200000, "monthly_max": 400000, "allocation": 0.10, "source": "Placeholder: verify with local software houses", "last_updated": "2026-10-17", "verified": false}
+  },
+  "overheads": [
+    {"id": "office",    "label": "Office rent and utilities", "pct": 0.08, "source": "Placeholder: share of labour cost, verify with your own office costs", "last_updated": "2026-10-17", "verified": false},
+    {"id": "equipment", "label": "Laptops and equipment (depreciation)", "pct": 0.05, "source": "Placeholder: verify with current laptop prices", "last_updated": "2026-10-17", "verified": false},
+    {"id": "admin",     "label": "Admin, HR and accounting", "pct": 0.04, "source": "Placeholder", "last_updated": "2026-10-17", "verified": false}
+  ],
+  "monthly_costs": [
+    {"id": "hosting", "label": "Cloud hosting (staging + production)", "pkr_per_month": 25000, "per_head": false, "source": "Placeholder: verify with your hosting plan (convert from USD)", "last_updated": "2026-10-17", "verified": false},
+    {"id": "tools",   "label": "Dev tools and licences (per team member)", "pkr_per_month": 6000, "per_head": true, "source": "Placeholder: verify with tool subscriptions", "last_updated": "2026-10-17", "verified": false},
+    {"id": "ai_api",  "label": "AI / third-party API usage", "pkr_per_month": 15000, "per_head": false, "source": "Placeholder: verify with provider pricing", "last_updated": "2026-10-17", "verified": false}
+  ],
+  "one_time_costs": [
+    {"id": "setup", "label": "Domain, SSL and initial setup", "pkr": 15000, "source": "Placeholder", "last_updated": "2026-10-17", "verified": false}
+  ],
+  "contingency": {"label": "Contingency reserve", "pct": 0.15, "source": "Placeholder: common 10-20% reserve for software projects", "last_updated": "2026-10-17", "verified": false},
+  "tax": {"label": "Sales tax on IT services", "pct": 0.16, "source": "Placeholder: provincial sales tax on services differs by province; confirm with your tax advisor", "last_updated": "2026-10-17", "verified": false},
+  "maintenance": {"label": "Yearly running and maintenance cost (share of build cost)", "annual_pct_of_build": 0.18, "source": "Placeholder: common 15-20% rule of thumb", "last_updated": "2026-10-17", "verified": false}
+}

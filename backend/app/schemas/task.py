@@ -15,6 +15,11 @@ class TaskUpdate(BaseModel):
 class TaskResponse(TaskCreate):
     id: int
     created_by: int
+    # Phase 4 (None for tasks that were not generated from an SRS)
+    requirement_id: str | None = None
+    estimate_points: int | None = None
+    depends_on: list[str] | None = None
+    srs_id: int | None = None
 
     class Config:
         from_attributes = True

@@ -103,7 +103,7 @@ def ask_ai(
     """
 
     response = client.models.generate_content(
-        model="gemini-3.6-flash",
+        model=settings.GEMINI_MODEL,
         contents=[
             SYSTEM_PROMPT,
             prompt

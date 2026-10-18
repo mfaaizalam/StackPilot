@@ -12,6 +12,7 @@ from app.schemas.ai_save import SaveProjectRequest
 from app.services.ai_save_service import save_project
 from app.routes.auth import get_current_user
 from app.models.user import User
+from app.core.deps import get_owned_board
 router = APIRouter(
     prefix="/ai",
     tags=["AI"]
@@ -22,7 +23,8 @@ router = APIRouter(
     response_model=ProjectGenerateResponse
 )
 def generate_project_route(
-    request:ProjectGenerateRequest
+    request:ProjectGenerateRequest,
+    current_user: User = Depends(get_current_user)
 ):
     try:
         project = generate_project(
@@ -31,10 +33,12 @@ def generate_project_route(
             project_type=request.project_type
         )
         return project
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="AI generation is temporarily unavailable. Please try again or load an offline demo."
         )
 
 @router.post("/boards/{board_id}/save-project")
@@ -44,6 +48,7 @@ def save_project_route(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    get_owned_board(db, board_id, current_user)
     try:
 
         result = save_project(
@@ -55,8 +60,10 @@ def save_project_route(
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=str(e)
+            detail="The project could not be saved. Please try again."
         )
