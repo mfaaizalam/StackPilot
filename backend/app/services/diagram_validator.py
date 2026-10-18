@@ -8,11 +8,12 @@ sanitize_*  -> (clean_spec | None, warnings); ALWAYS returns something that
 from collections import deque
 
 from app.schemas.diagrams import (
-    MAX_ACTIVITY_NODES, MAX_CLASSES, MAX_CLASS_MEMBERS, MAX_FRAGMENTS, MAX_LABEL,
+    MAX_ACTIVITY_NODES, MAX_CLASSES, MAX_CLASS_MEMBERS, MAX_DEPLOY_ARTIFACTS, MAX_DEPLOY_LINKS,
+    MAX_DEPLOY_NODES, MAX_FRAGMENTS, MAX_LABEL,
     MAX_MESSAGES, MAX_PARTICIPANTS, MAX_RELATIONS, MAX_STATES, MAX_TRANSITIONS,
     MAX_UC_RELATIONS, ActEdge, ActivityModel, ActNode, ClassModel, ClassNode,
-    ClassRelation, Fragment, Message, Rel, SequenceModel, StateModel, Transition,
-    UseCaseModel,
+    ClassRelation, DeploymentModel, DeployLink, DeployNode, Fragment, Message, Rel, SequenceModel,
+    StateModel, Transition, UseCaseModel,
 )
 from app.schemas.srs import Issue
 
@@ -299,7 +300,66 @@ def sanitize_state(m: StateModel) -> tuple[StateModel | None, list[str]]:
         return None, warns
     return StateModel(entity=clip(m.entity, 24), states=list(names.values()), initial=initial,
                       finals=finals, transitions=trans), warns
+# ========================================================= deployment diagram
+def validate_deployment(m: DeploymentModel) -> list[Issue]:
+    out: list[Issue] = []
+    ids = [n.id for n in m.nodes]
+    if len(m.nodes) < 2 or not m.links:
+        out.append(_err("DEPLOY_TOO_SMALL", "Need at least 2 nodes and 1 link."))
+    if len(m.nodes) > MAX_DEPLOY_NODES:
+        out.append(_err("TOO_MANY_DEPLOY_NODES", f"Use at most {MAX_DEPLOY_NODES} nodes (found {len(m.nodes)})."))
+    if len(set(ids)) != len(ids):
+        out.append(_err("DUP_DEPLOY_NODE", "Node ids must be unique."))
+    if len(m.links) > MAX_DEPLOY_LINKS:
+        out.append(_err("TOO_MANY_DEPLOY_LINKS", f"Use at most {MAX_DEPLOY_LINKS} links."))
+    known = set(ids)
+    for l in m.links:
+        for end in (l.source, l.target):
+            if end not in known:
+                out.append(_err("UNKNOWN_DEPLOY_NODE", f"Link refers to node '{end}' which is not defined."))
+    linked = {l.source for l in m.links} | {l.target for l in m.links}
+    for n in m.nodes:
+        if n.id not in linked:
+            out.append(_err("DEPLOY_ISOLATED", f"Node '{n.name}' is not connected to anything."))
+    return out
 
+
+def sanitize_deployment(m: DeploymentModel) -> tuple[DeploymentModel | None, list[str]]:
+    warns: list[str] = []
+    nodes: dict[str, DeployNode] = {}
+    for n in m.nodes:
+        if not n.id or n.id in nodes or not str(n.name).strip():
+            continue
+        arts = [clip(a, 24) for a in n.artifacts if str(a).strip()][:MAX_DEPLOY_ARTIFACTS]
+        nodes[n.id] = DeployNode(id=n.id, name=clip(n.name), kind=n.kind,
+                                 technology=clip(n.technology), artifacts=arts or [clip(n.name, 24)])
+    if len(nodes) > MAX_DEPLOY_NODES:
+        nodes = dict(list(nodes.items())[:MAX_DEPLOY_NODES])
+        warns.append(f"Showing the first {MAX_DEPLOY_NODES} nodes only.")
+
+    links: list[DeployLink] = []
+    seen: set[frozenset] = set()
+    dropped = 0
+    for l in m.links:
+        pair = frozenset((l.source, l.target))
+        if l.source not in nodes or l.target not in nodes or l.source == l.target or pair in seen:
+            dropped += 1
+            continue
+        seen.add(pair)
+        links.append(DeployLink(source=l.source, target=l.target, protocol=clip(l.protocol, 20)))
+    if dropped:
+        warns.append(f"Removed {dropped} invalid or duplicate link(s).")
+    if len(links) > MAX_DEPLOY_LINKS:
+        links = links[:MAX_DEPLOY_LINKS]
+        warns.append(f"Showing the first {MAX_DEPLOY_LINKS} links only.")
+
+    linked = {l.source for l in links} | {l.target for l in links}  # drop nodes that float alone
+    if len(linked) < len(nodes):
+        warns.append(f"Removed {len(nodes) - len(linked)} unconnected node(s).")
+    nodes = {i: n for i, n in nodes.items() if i in linked}
+    if len(nodes) < 2 or not links:
+        return None, warns
+    return DeploymentModel(nodes=list(nodes.values()), links=links), warns
 
 # ============================================== use-case include / extend
 def sanitize_uc_relations(includes: list[Rel], extends: list[Rel], model: UseCaseModel) -> tuple[list[Rel], list[Rel]]:

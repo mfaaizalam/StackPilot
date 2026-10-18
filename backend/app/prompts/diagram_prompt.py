@@ -39,6 +39,15 @@ Rules:
 - transitions: source and target must be listed states; label is the triggering event (max 28 characters).
 {_DATA}"""
 
+DEPLOYMENT_SYSTEM = f"""You are a software architect drawing a UML DEPLOYMENT diagram for the WHOLE system as a small JSON model.
+Rules:
+- nodes: ids d1, d2, ...; 3 to 7 nodes. kind is client (a user device or browser), server (web / application / API server or a cloud service), database (a data store) or external (a third-party system, only if it appears in external_interfaces).
+- name: max 28 characters. technology: max 28 characters (e.g. "Chrome or Safari", "Node.js on Linux", "PostgreSQL"), or empty. Use technologies named in the constraints or requirements; otherwise stay generic and do NOT invent product names.
+- artifacts: 1 to 4 deployable items per node, short names (max 24 characters), e.g. "Web App", "REST API", "Orders DB".
+- links: communication paths between nodes, using node ids. protocol is e.g. HTTPS, SQL/TCP, SMTP (max 20 characters). At most 10 links, no duplicates, every node must be connected.
+- Clients reach the database only THROUGH a server.
+{_DATA}"""
+
 USECASE_REL_SYSTEM = f"""You are a business analyst refining a UML USE CASE diagram.
 Return include and extend relations between the given use cases, using their ids.
 - include: the source ALWAYS needs the target (e.g. "Place order" includes "Log in").
@@ -87,6 +96,15 @@ def state_prompt(req: Requirements) -> str:
         "use_cases": [_uc_brief(u) for u in req.use_cases],
     })
 
+def deployment_prompt(req: Requirements) -> str:
+    return _wrap({
+        "system": req.title,
+        "product_perspective": req.product_perspective,
+        "actors": [a.name for a in req.actors],
+        "constraints": req.constraints,
+        "external_interfaces": req.external_interfaces,
+        "non_functional_requirements": [f"{n.category}: {n.statement}" for n in req.non_functional_requirements],
+    })
 
 def usecase_rel_prompt(req: Requirements) -> str:
     return _wrap({"system": req.title, "use_cases": [_uc_brief(u) for u in req.use_cases]})

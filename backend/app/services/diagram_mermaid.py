@@ -1,9 +1,7 @@
 """Deterministic converters: validated diagram model -> Mermaid text.
 No AI involved. All user/AI text is scrubbed so it cannot break Mermaid syntax."""
 import re
-
-from app.schemas.diagrams import ActivityModel, ClassModel, SequenceModel, StateModel
-
+from app.schemas.diagrams import ActivityModel, ClassModel, DeploymentModel, SequenceModel, StateModel
 _BAD = re.compile(r'[;#"`{}<>\\|~\n\r\t]')
 
 
@@ -131,6 +129,33 @@ def state_to_mermaid(m: StateModel) -> str:
         L.append(f"  {sid[f]} --> [*]")
     return "\n".join(L)
 
+# ------------------------------------------------------------- deployment
+_STEREO = {"client": "device", "server": "server", "database": "database", "external": "external"}
+_NODE_STYLE = {
+    "client": "fill:#eff6ff,stroke:#3b82f6,color:#171717",
+    "server": "fill:#f5f5f5,stroke:#737373,color:#171717",
+    "database": "fill:#ecfdf5,stroke:#10b981,color:#171717",
+    "external": "fill:#fef3c7,stroke:#d97706,color:#171717",
+}
+
+
+def deployment_to_mermaid(m: DeploymentModel) -> str:
+    nid = {n.id: f"d{i}" for i, n in enumerate(m.nodes, start=1)}
+    L = ["flowchart LR"]
+    for n in m.nodes:
+        i = nid[n.id]
+        tech = f" ({_txt(n.technology)})" if _txt(n.technology) else ""
+        L.append(f'  subgraph {i}["«{_STEREO[n.kind]}» {_txt(n.name)}{tech}"]')
+        for k, a in enumerate(n.artifacts, start=1):
+            L.append(f'    {i}_a{k}["{_txt(a)}"]:::artifactNode')
+        L.append("  end")
+    for l in m.links:
+        lab = _txt(l.protocol)
+        L.append(f'  {nid[l.source]} ---|"{lab}"| {nid[l.target]}' if lab else f"  {nid[l.source]} --- {nid[l.target]}")
+    for n in m.nodes:
+        L.append(f"  style {nid[n.id]} {_NODE_STYLE[n.kind]}")
+    L.append("  classDef artifactNode fill:#ffffff,stroke:#737373,color:#171717")
+    return "\n".join(L)
 
 def to_mermaid(dtype: str, spec: dict, actors: set[str] | None = None) -> str | None:
     if dtype == "class":
@@ -141,4 +166,6 @@ def to_mermaid(dtype: str, spec: dict, actors: set[str] | None = None) -> str | 
         return activity_to_mermaid(ActivityModel.model_validate(spec))
     if dtype == "state":
         return state_to_mermaid(StateModel.model_validate(spec))
+    if dtype == "deployment":
+        return deployment_to_mermaid(DeploymentModel.model_validate(spec))
     return None  # use-case diagrams are drawn by diagram_usecase_svg

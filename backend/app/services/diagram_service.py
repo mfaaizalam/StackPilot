@@ -15,8 +15,10 @@ from app.core.llm import LLMError, llm_json
 from app.models.srs import Diagram, DiagramJob, SRSDocument
 from app.prompts import diagram_prompt as P
 from app.schemas.diagrams import (
-    DIAGRAM_TYPES, ActivityModel, ClassModel, SequenceModel, StateModelSet, UseCaseRelations,
+        DIAGRAM_TYPES, ActivityModel, ClassModel, DeploymentModel, SequenceModel, StateModelSet,
+    UseCaseRelations,
 )
+import logging
 from app.schemas.srs import Requirements
 from app.services import diagram_fallbacks as F
 from app.services import diagram_validator as V
@@ -24,6 +26,7 @@ from app.services.diagram_mermaid import to_mermaid
 from app.services.diagram_usecase_svg import render_usecase_svg
 from app.schemas.diagrams import UseCaseModel
 
+log = logging.getLogger("stackpilot.diagrams")
 TYPE_ORDER = {t: i for i, t in enumerate(DIAGRAM_TYPES)}
 N_SEQUENCE = 4   # top use cases that get a sequence diagram (plan: 3-5)
 N_ACTIVITY = 3   # major workflows that get an activity diagram
@@ -103,6 +106,19 @@ def make_activity(req: Requirements, uc) -> Result:
     spec, warns = V.sanitize_activity(F.activity_from_usecase(uc))
     return (spec.model_dump() if spec else None), [AI_DOWN] + warns, "fallback"
 
+def make_deployment(req: Requirements) -> Result:
+    reason = AI_DOWN
+    try:
+        spec, warns = _ai_model(P.deployment_prompt(req), DeploymentModel, P.DEPLOYMENT_SYSTEM,
+                                V.validate_deployment, V.sanitize_deployment)
+        if spec:
+            return spec.model_dump(), warns, "ai"
+        log.warning("Deployment diagram: the AI answered but nothing usable was left after cleanup: %s", warns)
+        reason = "The AI's answer could not be used, so this diagram was drawn directly from the requirements."
+    except LLMError as e:
+        log.warning("Deployment diagram: AI call failed: %s", e)
+    spec, warns = V.sanitize_deployment(F.deployment_from_requirements(req))
+    return (spec.model_dump() if spec else None), [reason] + warns, "fallback"
 
 def make_state_set(req: Requirements) -> list[tuple[str, Result]]:
     """May yield 0..3 diagrams (only entities with a lifecycle). Returns [(title, result)]."""
@@ -136,6 +152,8 @@ def plan_tasks(req: Requirements, types: list[str]) -> list[Task]:
     if "activity" in types:
         for uc in ranked[:N_ACTIVITY]:
             tasks.append(Task("activity", f"Activity: {uc.name}", lambda uc=uc: make_activity(req, uc)))
+    if "deployment" in types:
+        tasks.append(Task("deployment", "Deployment diagram", lambda: make_deployment(req)))
     return tasks
 
 

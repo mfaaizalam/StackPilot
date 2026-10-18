@@ -17,8 +17,10 @@ MAX_ACTIVITY_NODES = 18
 MAX_STATES = 8
 MAX_TRANSITIONS = 14
 MAX_UC_RELATIONS = 6
-
-DIAGRAM_TYPES = ["usecase", "class", "sequence", "activity", "state"]
+MAX_DEPLOY_NODES = 8
+MAX_DEPLOY_ARTIFACTS = 4
+MAX_DEPLOY_LINKS = 12
+DIAGRAM_TYPES = ["usecase", "class", "sequence", "activity", "state", "deployment"]
 
 
 # ---- class ----------------------------------------------------------------
@@ -99,7 +101,24 @@ class StateModel(BaseModel):
 class StateModelSet(BaseModel):
     machines: list[StateModel]
 
+# ---- deployment -----------------------------------------------------------
+class DeployNode(BaseModel):
+    id: str = Field(description="d1, d2, ...")
+    name: str = Field(description='Short node name, max 28 characters, e.g. "Web Server"')
+    kind: Literal["client", "server", "database", "external"]
+    technology: str = Field(description='Runtime / platform, e.g. "Ubuntu + Nginx", max 28 characters, or empty')
+    artifacts: list[str] = Field(description='Software deployed on this node, e.g. "Web App". 1 to 4 items')
 
+
+class DeployLink(BaseModel):
+    source: str = Field(description="Node id, e.g. d1")
+    target: str = Field(description="Node id, e.g. d2")
+    protocol: str = Field(description='e.g. "HTTPS" or "SQL/TCP", max 20 characters, or empty')
+
+
+class DeploymentModel(BaseModel):
+    nodes: list[DeployNode]
+    links: list[DeployLink]
 # ---- use case -------------------------------------------------------------
 class Rel(BaseModel):
     source: str = Field(description="Use case id, e.g. UC-002")
@@ -133,4 +152,4 @@ class UseCaseModel(BaseModel):
 # ---- API ------------------------------------------------------------------
 class DiagramGenerateRequest(BaseModel):
     srs_id: int | None = None
-    types: list[Literal["usecase", "class", "sequence", "activity", "state"]] | None = None
+    types: list[Literal["usecase", "class", "sequence", "activity", "state", "deployment"]] | None = None

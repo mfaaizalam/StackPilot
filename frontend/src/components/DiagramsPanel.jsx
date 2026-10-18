@@ -8,6 +8,7 @@ const TYPES = [
   ["sequence", "Sequence"],
   ["activity", "Activity"],
   ["state", "State"],
+  ["deployment", "Deployment"],
 ];
 
 const errText = (e, fallback = "Something went wrong. Please try again.") => {
@@ -95,7 +96,7 @@ export default function DiagramsPanel({ boardId, srsId, version }) {
         <div className="bg-white border border-neutral-200 rounded-2xl px-8 py-14 text-center">
           <h2 className="text-lg font-semibold text-neutral-900">Turn this SRS into UML diagrams</h2>
           <p className="text-sm text-neutral-500 mt-2 max-w-md mx-auto">
-            We draw a use case diagram, a class diagram, sequence and activity diagrams for your most important use cases, and state diagrams for anything with a lifecycle. Version {version}.
+            We draw a use case diagram, a class diagram, sequence and activity diagrams for your most important use cases, and state diagrams for anything with a lifecycle, and a deployment diagram of the system. Version {version}.
           </p>
           <button onClick={generate} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-lg bg-neutral-950 text-white hover:bg-neutral-800 transition">Generate diagrams</button>
         </div>

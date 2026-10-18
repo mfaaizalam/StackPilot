@@ -5,7 +5,7 @@ import re
 
 from app.schemas.diagrams import (
     MAX_CLASSES, ActEdge, ActivityModel, ActNode, ClassModel, ClassNode, ClassRelation,
-    Message, SequenceModel, UCActor, UCNode, UseCaseModel,
+    DeploymentModel, DeployLink, DeployNode, Message, SequenceModel, UCActor, UCNode, UseCaseModel,
 )
 from app.schemas.srs import Entity, Requirements, UseCase
 from app.services.diagram_validator import clip
@@ -149,6 +149,25 @@ def sequence_from_usecase(uc: UseCase) -> SequenceModel:
                             kind="return" if system_acts else "sync"))
     return SequenceModel(participants=parts, messages=msgs, fragments=[])
 
+# ------------------------------------------------------------ deployment
+def deployment_from_requirements(req: Requirements) -> DeploymentModel:
+    """Generic 3-tier layout plus one external node per named external interface."""
+    nodes = [
+        DeployNode(id="d1", name="Client Device", kind="client", technology="Web browser",
+                   artifacts=["Web UI"]),
+        DeployNode(id="d2", name="Application Server", kind="server", technology="",
+                   artifacts=["Web App", "REST API"]),
+        DeployNode(id="d3", name="Database Server", kind="database", technology="",
+                   artifacts=["Database"]),
+    ]
+    links = [DeployLink(source="d1", target="d2", protocol="HTTPS"),
+             DeployLink(source="d2", target="d3", protocol="SQL/TCP")]
+    for i, text in enumerate(req.external_interfaces[:3], start=4):
+        name = clip(re.split(r"\s[-–—:(]|[:(]", str(text), maxsplit=1)[0].strip() or str(text))
+        nodes.append(DeployNode(id=f"d{i}", name=name, kind="external", technology="",
+                                artifacts=["External API"]))
+        links.append(DeployLink(source="d2", target=f"d{i}", protocol="HTTPS"))
+    return DeploymentModel(nodes=nodes, links=links)
 
 # -------------------------------------------------------------- activity
 def activity_from_usecase(uc: UseCase) -> ActivityModel:
