@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import api from "../api/axios.js";
@@ -382,8 +383,13 @@ function BoardDialog({ state, busy, onClose, onChoose, onOpenBoard }) {
 export default function SrsStudio() {
   const { boardId } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [step, setStep] = useState("loading"); // loading|describe|questions|progress|result|demo
+  // If this board's SRS was opened recently, start from the cached copy so the
+  // page appears instantly instead of showing a skeleton and re-downloading it.
+  const cachedLatest = queryClient.getQueryData(["srs", boardId, "latest"]);
+
+  const [step, setStep] = useState(cachedLatest ? "result" : "loading"); // loading|describe|questions|progress|result|demo
   const [demoData, setDemoData] = useState(null);
   const [demoNotice, setDemoNotice] = useState("");
   const jobStartedAt = useRef(0);
@@ -394,9 +400,13 @@ export default function SrsStudio() {
   const [error, setError] = useState("");
   const [stage, setStage] = useState("requirements");
   const [jobError, setJobError] = useState("");
-  const [doc, setDoc] = useState(null);
-  const [versions, setVersions] = useState([]);
+  const [doc, setDoc] = useState(cachedLatest ?? null);
+  const [versions, setVersions] = useState(queryClient.getQueryData(["srs-versions", boardId]) ?? []);
   const [tab, setTab] = useState("srs");
+  // Heavy tabs (Diagrams, Cost) are mounted the first time they are opened and then
+  // kept mounted (just hidden), so opening the page does not fetch them and switching
+  // tabs back and forth does not refetch them.
+  const [visited, setVisited] = useState({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const [boardDialog, setBoardDialog] = useState(null); // null | {kind: exists|done|error, ...}
@@ -406,28 +416,58 @@ export default function SrsStudio() {
   const flash = (m) => { setToast(m); setTimeout(() => setToast(""), 2500); };
   const stopPolling = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
 
-  const loadVersions = useCallback(async () => {
-    try { const { data } = await api.get(`/boards/${boardId}/srs/versions`); setVersions(data); } catch { /* ignore */ }
-  }, [boardId]);
+  const openTab = (k) => {
+    setTab(k);
+    setVisited((v) => (v[k] ? v : { ...v, [k]: true }));
+  };
 
-  const loadDoc = useCallback(async (version) => {
-    const { data } = await api.get(`/boards/${boardId}/srs/`, { params: version ? { version } : {} });
-    setDoc(data); setStep("result"); setTab("srs");
-    loadVersions();
-  }, [boardId, loadVersions]);
+  // Cached for 60 s. Any write request in the app (axios interceptor) marks these stale.
+  const loadVersions = useCallback(async (force = false) => {
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: ["srs-versions", boardId],
+        staleTime: force ? 0 : 60_000,
+        queryFn: () => api.get(`/boards/${boardId}/srs/versions`).then((r) => r.data),
+      });
+      setVersions(data);
+    } catch { /* ignore */ }
+  }, [boardId, queryClient]);
+
+  const loadDoc = useCallback(async (version, force = false) => {
+    const data = await queryClient.fetchQuery({
+      queryKey: ["srs", boardId, version ?? "latest"],
+      staleTime: force ? 0 : 60_000,
+      queryFn: () =>
+        api.get(`/boards/${boardId}/srs/`, { params: version ? { version } : {} }).then((r) => r.data),
+    });
+    setDoc(data); setStep("result"); setTab("srs"); setVisited({});
+    loadVersions(force);
+  }, [boardId, loadVersions, queryClient]);
 
   useEffect(() => {
     (async () => {
       try { await loadDoc(); return; } catch (e) { if (e?.response?.status !== 404) setError(errText(e)); }
-      try { const { data } = await api.get(`/boards/${boardId}`); if (data?.description) setDescription(data.description); } catch { /* ignore */ }
+      try {
+        const b = await queryClient.fetchQuery({
+          queryKey: ["board", boardId],
+          staleTime: 5 * 60_000,
+          queryFn: () => api.get(`/boards/${boardId}`).then((r) => r.data),
+        });
+        if (b?.description) setDescription(b.description);
+      } catch { /* ignore */ }
       setStep("describe");
     })();
     return stopPolling;
-  }, [boardId, loadDoc]);
+  }, [boardId, loadDoc, queryClient]);
 
+  // Demo fixtures are static, so they are cached for the whole session.
   const loadDemo = async (name = "hospital", reason = "") => {
     try {
-      const { data } = await api.get(`/demo/${name}`);
+      const data = await queryClient.fetchQuery({
+        queryKey: ["demo", name],
+        staleTime: Infinity,
+        queryFn: () => api.get(`/demo/${name}`).then((r) => r.data),
+      });
       setDemoData(data);
       setDemoNotice(reason || "Offline exhibition example loaded. This is prebuilt sample data, not a live AI result.");
       setStep("demo");
@@ -467,7 +507,7 @@ export default function SrsStudio() {
           if (Date.now() - jobStartedAt.current > 60000) { stopPolling(); await loadDemo("hospital", "Live generation took longer than 60 seconds. Switched to the offline exhibition example."); return; }
           const { data: st } = await api.get(`/boards/${boardId}/srs/jobs/${data.job_id}`);
           setStage(st.stage);
-          if (st.status === "done") { stopPolling(); await loadDoc(); }
+          if (st.status === "done") { stopPolling(); await loadDoc(undefined, true); } // force: a new version now exists
           if (st.status === "failed") { stopPolling(); await loadDemo("hospital", `Live generation failed: ${st.error || "Generation failed."} Showing the offline exhibition example instead.`); }
         } catch (e) {
           if ([401, 404].includes(e?.response?.status)) { stopPolling(); setJobError(errText(e)); }
@@ -486,7 +526,12 @@ export default function SrsStudio() {
     setSaving(true);
     try {
       const { data } = await api.patch(`/boards/${boardId}/srs/requirements`, req);
-      setDoc(data); loadVersions(); flash(`Saved as version ${data.version}`);
+      setDoc(data);
+      // keep the cache in step with what the server just saved
+      queryClient.setQueryData(["srs", boardId, "latest"], data);
+      queryClient.setQueryData(["srs", boardId, data.version], data);
+      loadVersions(true);
+      flash(`Saved as version ${data.version}`);
     } catch (e) { flash(errText(e, "Could not save changes.")); }
     setSaving(false);
   };
@@ -599,7 +644,7 @@ export default function SrsStudio() {
           <>
             <div className="flex gap-1 border-b border-neutral-200 mb-6 print:hidden overflow-x-auto">
               {TABS.map(([k, label]) => (
-                <button key={k} onClick={() => setTab(k)}
+                <button key={k} onClick={() => openTab(k)}
                   className={`px-4 py-2.5 text-sm whitespace-nowrap border-b-2 -mb-px transition ${tab === k ? "border-neutral-900 text-neutral-900 font-medium" : "border-transparent text-neutral-500 hover:text-neutral-900"}`}>
                   {label}{k === "quality" && issueCount > 0 && <span className="ml-1.5 text-[10px] bg-amber-100 text-amber-800 rounded-full px-1.5 py-0.5">{issueCount}</span>}
                 </button>
@@ -614,11 +659,18 @@ export default function SrsStudio() {
             {tab === "req" && <RequirementsTab req={doc.requirements} onSave={saveEdits} saving={saving} />}
             {tab === "trace" && <TraceabilityTab req={doc.requirements} />}
             {tab === "quality" && <QualityTab issues={doc.issues || []} />}
-            {/* always mounted (just hidden) so a running diagram job keeps polling when you switch tabs */}
-            <div className={tab === "diagrams" ? "" : "hidden"}>
-              <DiagramsPanel boardId={boardId} srsId={doc.id} version={doc.version} />
-            </div>
-            {tab === "cost" && <CostPanel key={doc.id} boardId={boardId} srsId={doc.id} version={doc.version} />}
+            {/* Mounted on first open, then kept mounted (hidden) so a running diagram job
+                keeps polling and neither panel refetches when you switch tabs. */}
+            {visited.diagrams && (
+              <div className={tab === "diagrams" ? "" : "hidden"}>
+                <DiagramsPanel boardId={boardId} srsId={doc.id} version={doc.version} />
+              </div>
+            )}
+            {visited.cost && (
+              <div className={tab === "cost" ? "" : "hidden"}>
+                <CostPanel key={doc.id} boardId={boardId} srsId={doc.id} version={doc.version} />
+              </div>
+            )}
           </>
         )}
       </main>
