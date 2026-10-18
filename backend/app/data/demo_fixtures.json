@@ -1,0 +1,917 @@
+{
+  "hospital": {
+    "name": "hospital",
+    "title": "Hospital Management System",
+    "description": "Hospital Management System covers the core hospital activities and reporting.",
+    "requirements": {
+      "title": "Hospital Management System",
+      "purpose": "Provide a reliable hospital workflow for its users.",
+      "scope": "Hospital Management System covers the core hospital activities and reporting.",
+      "product_perspective": "A web application with a browser-based interface and API backend.",
+      "definitions": [
+        {
+          "term": "SRS",
+          "definition": "Software Requirements Specification"
+        },
+        {
+          "term": "RBAC",
+          "definition": "Role-based access control"
+        }
+      ],
+      "actors": [
+        {
+          "name": "Administrator",
+          "description": "Manages users and configuration"
+        },
+        {
+          "name": "End User",
+          "description": "Uses the main application workflow"
+        }
+      ],
+      "functional_requirements": [
+        {
+          "id": "FR-001",
+          "title": "Manage appointments",
+          "statement": "The system shall allow patients to request and view appointments.",
+          "priority": "must",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "A patient can submit an appointment request"
+          ]
+        },
+        {
+          "id": "FR-002",
+          "title": "Maintain patient records",
+          "statement": "The system shall allow authorized staff to maintain patient records.",
+          "priority": "must",
+          "actor": "Administrator",
+          "acceptance_criteria": [
+            "An authorized staff member can update a record"
+          ]
+        },
+        {
+          "id": "FR-003",
+          "title": "Manage prescriptions",
+          "statement": "The system shall allow doctors to record prescriptions.",
+          "priority": "should",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "A doctor can save a prescription"
+          ]
+        },
+        {
+          "id": "FR-004",
+          "title": "View reports",
+          "statement": "The system shall provide summary reports to administrators.",
+          "priority": "could",
+          "actor": "Administrator",
+          "acceptance_criteria": [
+            "An administrator can open a summary report"
+          ]
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "id": "NFR-001",
+          "category": "security",
+          "statement": "The system shall require authenticated access to protected pages.",
+          "metric": "100% of protected API routes require authentication"
+        },
+        {
+          "id": "NFR-002",
+          "category": "performance",
+          "statement": "The system shall respond to standard read requests within three seconds under normal demo load.",
+          "metric": "95% of read requests complete within 3 seconds"
+        },
+        {
+          "id": "NFR-003",
+          "category": "reliability",
+          "statement": "The system shall show a useful error message when a service is unavailable.",
+          "metric": "100% of handled service failures show a user-safe message"
+        }
+      ],
+      "use_cases": [
+        {
+          "id": "UC-001",
+          "name": "Manage appointments",
+          "actor": "End User",
+          "description": "allow patients to request and view appointments",
+          "fr_ids": [
+            "FR-001"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-002",
+          "name": "Maintain patient records",
+          "actor": "Administrator",
+          "description": "allow authorized staff to maintain patient records",
+          "fr_ids": [
+            "FR-002"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-003",
+          "name": "Manage prescriptions",
+          "actor": "End User",
+          "description": "allow doctors to record prescriptions",
+          "fr_ids": [
+            "FR-003"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-004",
+          "name": "View reports",
+          "actor": "Administrator",
+          "description": "provide summary reports to administrators",
+          "fr_ids": [
+            "FR-004"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        }
+      ],
+      "entities": [
+        {
+          "name": "User",
+          "description": "An authenticated application user",
+          "attributes": [
+            "id",
+            "email",
+            "role"
+          ],
+          "relations": [
+            "Project"
+          ]
+        },
+        {
+          "name": "Project",
+          "description": "A managed project record",
+          "attributes": [
+            "id",
+            "name",
+            "status"
+          ],
+          "relations": [
+            "User"
+          ]
+        }
+      ],
+      "constraints": [
+        "The application is accessed through a modern web browser."
+      ],
+      "assumptions": [
+        "Users have a supported browser."
+      ],
+      "external_interfaces": [
+        "HTTPS JSON API"
+      ],
+      "open_issues": [
+        "Confirm production hosting and retention requirements."
+      ]
+    },
+    "issues": [
+      {
+        "level": "warning",
+        "code": "DEMO_FIXTURE",
+        "message": "This is a prebuilt exhibition example, not a live AI-generated specification."
+      }
+    ],
+    "markdown": "# Hospital Management System\n\n## 1. Introduction\n\n**Purpose:** Provide a reliable hospital workflow for its users.\n\n**Scope:** Hospital Management System covers the core hospital activities and reporting.\n\n## 2. Overall description\n\nA web application with a browser-based interface and API backend. Primary actors are Administrator and End User.\n\n## 3. Specific requirements\n\n### 3.1 Functional requirements\n\n- **FR-001 \u2014 Manage appointments:** The system shall allow patients to request and view appointments (Priority: must).\n- **FR-002 \u2014 Maintain patient records:** The system shall allow authorized staff to maintain patient records (Priority: must).\n- **FR-003 \u2014 Manage prescriptions:** The system shall allow doctors to record prescriptions (Priority: should).\n- **FR-004 \u2014 View reports:** The system shall provide summary reports to administrators (Priority: could).\n\n### 3.2 Non-functional requirements\n\n- **NFR-001 Security:** Protected routes require authentication.\n- **NFR-002 Performance:** 95% of read requests complete within 3 seconds under normal demo load.\n- **NFR-003 Reliability:** Handled failures show user-safe messages.\n\n## 4. Use cases\n\n### UC-001: Manage appointments\n\nActor: End User. allow patients to request and view appointments\n### UC-002: Maintain patient records\n\nActor: Administrator. allow authorized staff to maintain patient records\n### UC-003: Manage prescriptions\n\nActor: End User. allow doctors to record prescriptions\n### UC-004: View reports\n\nActor: Administrator. provide summary reports to administrators\n\n## 5. Data entities\n\n- **User:** id, email, role.\n- **Project:** id, name, status.\n\n## 6. Appendix\n\nRequirements are linked to their use cases by matching IDs. Open issue: confirm production hosting and retention requirements.\n",
+    "diagrams": [
+      {
+        "type": "usecase",
+        "title": "Use case overview",
+        "source": "Demo fixture",
+        "mermaid": "flowchart LR\n  Admin[Administrator] --> UC1((Manage configuration))\n  User[End User] --> UC2((Use core workflow))"
+      },
+      {
+        "type": "class",
+        "title": "Core data model",
+        "source": "Demo fixture",
+        "mermaid": "classDiagram\n  class User { +id +email +role }\n  class Project { +id +name +status }\n  User --> Project : manages"
+      },
+      {
+        "type": "sequence",
+        "title": "Main workflow",
+        "source": "Demo fixture",
+        "mermaid": "sequenceDiagram\n  actor User\n  participant UI\n  participant API\n  User->>UI: Submit request\n  UI->>API: Send validated input\n  API-->>UI: Return result\n  UI-->>User: Show result"
+      }
+    ],
+    "board": {
+      "columns": [
+        "Backlog",
+        "Ready",
+        "In Progress",
+        "Testing",
+        "Done"
+      ],
+      "tasks": [
+        {
+          "id": "DEMO-001",
+          "title": "[FR-001] Manage appointments",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-001",
+          "acceptance_criteria": [
+            "A patient can submit an appointment request"
+          ]
+        },
+        {
+          "id": "DEMO-002",
+          "title": "[FR-002] Maintain patient records",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-002",
+          "acceptance_criteria": [
+            "An authorized staff member can update a record"
+          ]
+        },
+        {
+          "id": "DEMO-003",
+          "title": "[FR-003] Manage prescriptions",
+          "status": "Backlog",
+          "priority": "medium",
+          "story_points": 3,
+          "requirement_id": "FR-003",
+          "acceptance_criteria": [
+            "A doctor can save a prescription"
+          ]
+        },
+        {
+          "id": "DEMO-004",
+          "title": "[FR-004] View reports",
+          "status": "Backlog",
+          "priority": "low",
+          "story_points": 3,
+          "requirement_id": "FR-004",
+          "acceptance_criteria": [
+            "An administrator can open a summary report"
+          ]
+        }
+      ]
+    },
+    "cost": {
+      "currency": "PKR",
+      "optimistic": 1800000,
+      "likely": 3200000,
+      "pessimistic": 5400000,
+      "duration_months": 6.9,
+      "team_size": 2,
+      "disclaimer": "Illustrative exhibition figures only. Replace rate placeholders with verified Pakistani market data before using estimates for real decisions."
+    }
+  },
+  "ecommerce": {
+    "name": "ecommerce",
+    "title": "E-commerce Store",
+    "description": "E-commerce Store covers the core e-commerce activities and reporting.",
+    "requirements": {
+      "title": "E-commerce Store",
+      "purpose": "Provide a reliable e-commerce workflow for its users.",
+      "scope": "E-commerce Store covers the core e-commerce activities and reporting.",
+      "product_perspective": "A web application with a browser-based interface and API backend.",
+      "definitions": [
+        {
+          "term": "SRS",
+          "definition": "Software Requirements Specification"
+        },
+        {
+          "term": "RBAC",
+          "definition": "Role-based access control"
+        }
+      ],
+      "actors": [
+        {
+          "name": "Administrator",
+          "description": "Manages users and configuration"
+        },
+        {
+          "name": "End User",
+          "description": "Uses the main application workflow"
+        }
+      ],
+      "functional_requirements": [
+        {
+          "id": "FR-001",
+          "title": "Browse catalogue",
+          "statement": "The system shall display searchable products and product details.",
+          "priority": "must",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "A user can search and open a product"
+          ]
+        },
+        {
+          "id": "FR-002",
+          "title": "Manage cart",
+          "statement": "The system shall allow users to add and remove products from a cart.",
+          "priority": "must",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "Cart totals update after quantity changes"
+          ]
+        },
+        {
+          "id": "FR-003",
+          "title": "Place orders",
+          "statement": "The system shall allow users to submit an order with delivery details.",
+          "priority": "must",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "A valid order receives an order reference"
+          ]
+        },
+        {
+          "id": "FR-004",
+          "title": "Track orders",
+          "statement": "The system shall show order status to customers.",
+          "priority": "should",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "A customer can view the current order status"
+          ]
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "id": "NFR-001",
+          "category": "security",
+          "statement": "The system shall require authenticated access to protected pages.",
+          "metric": "100% of protected API routes require authentication"
+        },
+        {
+          "id": "NFR-002",
+          "category": "performance",
+          "statement": "The system shall respond to standard read requests within three seconds under normal demo load.",
+          "metric": "95% of read requests complete within 3 seconds"
+        },
+        {
+          "id": "NFR-003",
+          "category": "reliability",
+          "statement": "The system shall show a useful error message when a service is unavailable.",
+          "metric": "100% of handled service failures show a user-safe message"
+        }
+      ],
+      "use_cases": [
+        {
+          "id": "UC-001",
+          "name": "Browse catalogue",
+          "actor": "End User",
+          "description": "display searchable products and product details",
+          "fr_ids": [
+            "FR-001"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-002",
+          "name": "Manage cart",
+          "actor": "End User",
+          "description": "allow users to add and remove products from a cart",
+          "fr_ids": [
+            "FR-002"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-003",
+          "name": "Place orders",
+          "actor": "End User",
+          "description": "allow users to submit an order with delivery details",
+          "fr_ids": [
+            "FR-003"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-004",
+          "name": "Track orders",
+          "actor": "End User",
+          "description": "show order status to customers",
+          "fr_ids": [
+            "FR-004"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        }
+      ],
+      "entities": [
+        {
+          "name": "User",
+          "description": "An authenticated application user",
+          "attributes": [
+            "id",
+            "email",
+            "role"
+          ],
+          "relations": [
+            "Project"
+          ]
+        },
+        {
+          "name": "Project",
+          "description": "A managed project record",
+          "attributes": [
+            "id",
+            "name",
+            "status"
+          ],
+          "relations": [
+            "User"
+          ]
+        }
+      ],
+      "constraints": [
+        "The application is accessed through a modern web browser."
+      ],
+      "assumptions": [
+        "Users have a supported browser."
+      ],
+      "external_interfaces": [
+        "HTTPS JSON API"
+      ],
+      "open_issues": [
+        "Confirm production hosting and retention requirements."
+      ]
+    },
+    "issues": [
+      {
+        "level": "warning",
+        "code": "DEMO_FIXTURE",
+        "message": "This is a prebuilt exhibition example, not a live AI-generated specification."
+      }
+    ],
+    "markdown": "# E-commerce Store\n\n## 1. Introduction\n\n**Purpose:** Provide a reliable e-commerce workflow for its users.\n\n**Scope:** E-commerce Store covers the core e-commerce activities and reporting.\n\n## 2. Overall description\n\nA web application with a browser-based interface and API backend. Primary actors are Administrator and End User.\n\n## 3. Specific requirements\n\n### 3.1 Functional requirements\n\n- **FR-001 \u2014 Browse catalogue:** The system shall display searchable products and product details (Priority: must).\n- **FR-002 \u2014 Manage cart:** The system shall allow users to add and remove products from a cart (Priority: must).\n- **FR-003 \u2014 Place orders:** The system shall allow users to submit an order with delivery details (Priority: must).\n- **FR-004 \u2014 Track orders:** The system shall show order status to customers (Priority: should).\n\n### 3.2 Non-functional requirements\n\n- **NFR-001 Security:** Protected routes require authentication.\n- **NFR-002 Performance:** 95% of read requests complete within 3 seconds under normal demo load.\n- **NFR-003 Reliability:** Handled failures show user-safe messages.\n\n## 4. Use cases\n\n### UC-001: Browse catalogue\n\nActor: End User. display searchable products and product details\n### UC-002: Manage cart\n\nActor: End User. allow users to add and remove products from a cart\n### UC-003: Place orders\n\nActor: End User. allow users to submit an order with delivery details\n### UC-004: Track orders\n\nActor: End User. show order status to customers\n\n## 5. Data entities\n\n- **User:** id, email, role.\n- **Project:** id, name, status.\n\n## 6. Appendix\n\nRequirements are linked to their use cases by matching IDs. Open issue: confirm production hosting and retention requirements.\n",
+    "diagrams": [
+      {
+        "type": "usecase",
+        "title": "Use case overview",
+        "source": "Demo fixture",
+        "mermaid": "flowchart LR\n  Admin[Administrator] --> UC1((Manage configuration))\n  User[End User] --> UC2((Use core workflow))"
+      },
+      {
+        "type": "class",
+        "title": "Core data model",
+        "source": "Demo fixture",
+        "mermaid": "classDiagram\n  class User { +id +email +role }\n  class Project { +id +name +status }\n  User --> Project : manages"
+      },
+      {
+        "type": "sequence",
+        "title": "Main workflow",
+        "source": "Demo fixture",
+        "mermaid": "sequenceDiagram\n  actor User\n  participant UI\n  participant API\n  User->>UI: Submit request\n  UI->>API: Send validated input\n  API-->>UI: Return result\n  UI-->>User: Show result"
+      }
+    ],
+    "board": {
+      "columns": [
+        "Backlog",
+        "Ready",
+        "In Progress",
+        "Testing",
+        "Done"
+      ],
+      "tasks": [
+        {
+          "id": "DEMO-001",
+          "title": "[FR-001] Browse catalogue",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-001",
+          "acceptance_criteria": [
+            "A user can search and open a product"
+          ]
+        },
+        {
+          "id": "DEMO-002",
+          "title": "[FR-002] Manage cart",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-002",
+          "acceptance_criteria": [
+            "Cart totals update after quantity changes"
+          ]
+        },
+        {
+          "id": "DEMO-003",
+          "title": "[FR-003] Place orders",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-003",
+          "acceptance_criteria": [
+            "A valid order receives an order reference"
+          ]
+        },
+        {
+          "id": "DEMO-004",
+          "title": "[FR-004] Track orders",
+          "status": "Backlog",
+          "priority": "medium",
+          "story_points": 3,
+          "requirement_id": "FR-004",
+          "acceptance_criteria": [
+            "A customer can view the current order status"
+          ]
+        }
+      ]
+    },
+    "cost": {
+      "currency": "PKR",
+      "optimistic": 1800000,
+      "likely": 3200000,
+      "pessimistic": 5400000,
+      "duration_months": 6.9,
+      "team_size": 2,
+      "disclaimer": "Illustrative exhibition figures only. Replace rate placeholders with verified Pakistani market data before using estimates for real decisions."
+    }
+  },
+  "university": {
+    "name": "university",
+    "title": "University Portal",
+    "description": "University Portal covers the core university activities and reporting.",
+    "requirements": {
+      "title": "University Portal",
+      "purpose": "Provide a reliable university workflow for its users.",
+      "scope": "University Portal covers the core university activities and reporting.",
+      "product_perspective": "A web application with a browser-based interface and API backend.",
+      "definitions": [
+        {
+          "term": "SRS",
+          "definition": "Software Requirements Specification"
+        },
+        {
+          "term": "RBAC",
+          "definition": "Role-based access control"
+        }
+      ],
+      "actors": [
+        {
+          "name": "Administrator",
+          "description": "Manages users and configuration"
+        },
+        {
+          "name": "End User",
+          "description": "Uses the main application workflow"
+        }
+      ],
+      "functional_requirements": [
+        {
+          "id": "FR-001",
+          "title": "Register courses",
+          "statement": "The system shall allow students to view and register for available courses.",
+          "priority": "must",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "A student can register for an available course"
+          ]
+        },
+        {
+          "id": "FR-002",
+          "title": "Publish marks",
+          "statement": "The system shall allow teachers to submit student marks.",
+          "priority": "must",
+          "actor": "Administrator",
+          "acceptance_criteria": [
+            "An authorized teacher can save marks"
+          ]
+        },
+        {
+          "id": "FR-003",
+          "title": "Track attendance",
+          "statement": "The system shall record and display course attendance.",
+          "priority": "should",
+          "actor": "End User",
+          "acceptance_criteria": [
+            "Attendance is visible for a selected course"
+          ]
+        },
+        {
+          "id": "FR-004",
+          "title": "Publish timetable",
+          "statement": "The system shall allow administrators to publish timetables.",
+          "priority": "could",
+          "actor": "Administrator",
+          "acceptance_criteria": [
+            "Students can view the current timetable"
+          ]
+        }
+      ],
+      "non_functional_requirements": [
+        {
+          "id": "NFR-001",
+          "category": "security",
+          "statement": "The system shall require authenticated access to protected pages.",
+          "metric": "100% of protected API routes require authentication"
+        },
+        {
+          "id": "NFR-002",
+          "category": "performance",
+          "statement": "The system shall respond to standard read requests within three seconds under normal demo load.",
+          "metric": "95% of read requests complete within 3 seconds"
+        },
+        {
+          "id": "NFR-003",
+          "category": "reliability",
+          "statement": "The system shall show a useful error message when a service is unavailable.",
+          "metric": "100% of handled service failures show a user-safe message"
+        }
+      ],
+      "use_cases": [
+        {
+          "id": "UC-001",
+          "name": "Register courses",
+          "actor": "End User",
+          "description": "allow students to view and register for available courses",
+          "fr_ids": [
+            "FR-001"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-002",
+          "name": "Publish marks",
+          "actor": "Administrator",
+          "description": "allow teachers to submit student marks",
+          "fr_ids": [
+            "FR-002"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-003",
+          "name": "Track attendance",
+          "actor": "End User",
+          "description": "record and display course attendance",
+          "fr_ids": [
+            "FR-003"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        },
+        {
+          "id": "UC-004",
+          "name": "Publish timetable",
+          "actor": "Administrator",
+          "description": "allow administrators to publish timetables",
+          "fr_ids": [
+            "FR-004"
+          ],
+          "preconditions": [
+            "User opens the application"
+          ],
+          "main_flow": [
+            "User submits the required information",
+            "System validates the request",
+            "System displays the result"
+          ],
+          "alternate_flows": [
+            "If validation fails, the system explains what needs to be corrected"
+          ]
+        }
+      ],
+      "entities": [
+        {
+          "name": "User",
+          "description": "An authenticated application user",
+          "attributes": [
+            "id",
+            "email",
+            "role"
+          ],
+          "relations": [
+            "Project"
+          ]
+        },
+        {
+          "name": "Project",
+          "description": "A managed project record",
+          "attributes": [
+            "id",
+            "name",
+            "status"
+          ],
+          "relations": [
+            "User"
+          ]
+        }
+      ],
+      "constraints": [
+        "The application is accessed through a modern web browser."
+      ],
+      "assumptions": [
+        "Users have a supported browser."
+      ],
+      "external_interfaces": [
+        "HTTPS JSON API"
+      ],
+      "open_issues": [
+        "Confirm production hosting and retention requirements."
+      ]
+    },
+    "issues": [
+      {
+        "level": "warning",
+        "code": "DEMO_FIXTURE",
+        "message": "This is a prebuilt exhibition example, not a live AI-generated specification."
+      }
+    ],
+    "markdown": "# University Portal\n\n## 1. Introduction\n\n**Purpose:** Provide a reliable university workflow for its users.\n\n**Scope:** University Portal covers the core university activities and reporting.\n\n## 2. Overall description\n\nA web application with a browser-based interface and API backend. Primary actors are Administrator and End User.\n\n## 3. Specific requirements\n\n### 3.1 Functional requirements\n\n- **FR-001 \u2014 Register courses:** The system shall allow students to view and register for available courses (Priority: must).\n- **FR-002 \u2014 Publish marks:** The system shall allow teachers to submit student marks (Priority: must).\n- **FR-003 \u2014 Track attendance:** The system shall record and display course attendance (Priority: should).\n- **FR-004 \u2014 Publish timetable:** The system shall allow administrators to publish timetables (Priority: could).\n\n### 3.2 Non-functional requirements\n\n- **NFR-001 Security:** Protected routes require authentication.\n- **NFR-002 Performance:** 95% of read requests complete within 3 seconds under normal demo load.\n- **NFR-003 Reliability:** Handled failures show user-safe messages.\n\n## 4. Use cases\n\n### UC-001: Register courses\n\nActor: End User. allow students to view and register for available courses\n### UC-002: Publish marks\n\nActor: Administrator. allow teachers to submit student marks\n### UC-003: Track attendance\n\nActor: End User. record and display course attendance\n### UC-004: Publish timetable\n\nActor: Administrator. allow administrators to publish timetables\n\n## 5. Data entities\n\n- **User:** id, email, role.\n- **Project:** id, name, status.\n\n## 6. Appendix\n\nRequirements are linked to their use cases by matching IDs. Open issue: confirm production hosting and retention requirements.\n",
+    "diagrams": [
+      {
+        "type": "usecase",
+        "title": "Use case overview",
+        "source": "Demo fixture",
+        "mermaid": "flowchart LR\n  Admin[Administrator] --> UC1((Manage configuration))\n  User[End User] --> UC2((Use core workflow))"
+      },
+      {
+        "type": "class",
+        "title": "Core data model",
+        "source": "Demo fixture",
+        "mermaid": "classDiagram\n  class User { +id +email +role }\n  class Project { +id +name +status }\n  User --> Project : manages"
+      },
+      {
+        "type": "sequence",
+        "title": "Main workflow",
+        "source": "Demo fixture",
+        "mermaid": "sequenceDiagram\n  actor User\n  participant UI\n  participant API\n  User->>UI: Submit request\n  UI->>API: Send validated input\n  API-->>UI: Return result\n  UI-->>User: Show result"
+      }
+    ],
+    "board": {
+      "columns": [
+        "Backlog",
+        "Ready",
+        "In Progress",
+        "Testing",
+        "Done"
+      ],
+      "tasks": [
+        {
+          "id": "DEMO-001",
+          "title": "[FR-001] Register courses",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-001",
+          "acceptance_criteria": [
+            "A student can register for an available course"
+          ]
+        },
+        {
+          "id": "DEMO-002",
+          "title": "[FR-002] Publish marks",
+          "status": "Ready",
+          "priority": "high",
+          "story_points": 3,
+          "requirement_id": "FR-002",
+          "acceptance_criteria": [
+            "An authorized teacher can save marks"
+          ]
+        },
+        {
+          "id": "DEMO-003",
+          "title": "[FR-003] Track attendance",
+          "status": "Backlog",
+          "priority": "medium",
+          "story_points": 3,
+          "requirement_id": "FR-003",
+          "acceptance_criteria": [
+            "Attendance is visible for a selected course"
+          ]
+        },
+        {
+          "id": "DEMO-004",
+          "title": "[FR-004] Publish timetable",
+          "status": "Backlog",
+          "priority": "low",
+          "story_points": 3,
+          "requirement_id": "FR-004",
+          "acceptance_criteria": [
+            "Students can view the current timetable"
+          ]
+        }
+      ]
+    },
+    "cost": {
+      "currency": "PKR",
+      "optimistic": 1800000,
+      "likely": 3200000,
+      "pessimistic": 5400000,
+      "duration_months": 6.9,
+      "team_size": 2,
+      "disclaimer": "Illustrative exhibition figures only. Replace rate placeholders with verified Pakistani market data before using estimates for real decisions."
+    }
+  }
+}

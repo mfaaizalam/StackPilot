@@ -10,7 +10,7 @@ from app.rag.embedding_service import create_embedding
 from app.rag.qdrant_service import qdrant
 from app.models.board import Board
 from app.models.column import BoardColumn
-from app.routes.auth import get_current_user
+from app.core.deps import get_owned_column, get_owned_task
 router = APIRouter(
     prefix="/tasks",
     tags =["Task"]
@@ -23,14 +23,7 @@ def create_column(
     db:Session =Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    column= (
-        db.query(BoardColumn).filter(BoardColumn.id ==task.column_id ).first()
-    )
-    if not column:
-        raise HTTPException(
-            status_code=404,
-            detail="Board not found"
-        )
+    column = get_owned_column(db, task.column_id, current_user)
     new_task = Task(
         title = task.title,
         description =task.description,
@@ -79,39 +72,22 @@ def get_tasks(
 @router.get("/{task_id}")
 def get_task(
     task_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    task = (
-        db.query(Task)
-        .filter(Task.id == task_id)
-        .first()
-    )
-
-    if not task:
-        raise HTTPException(
-            status_code=404,
-            detail="Task not found"
-        )
-
-    return task
+    return get_owned_task(db, task_id, current_user)
 
 # Update 
 @router.put("/{task_id}")
 def update_task(
     task_id:int,
     task_data:TaskUpdate,
-    db:Session=Depends(get_db)
+    db:Session=Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    task = (
-        db.query(Task)
-        .filter(Task.id == task_id)
-        .first()
-    )
-    if not task:
-        raise HTTPException(
-            status_code=404,
-            detail="Task not found"
-        )
+    task = get_owned_task(db, task_id, current_user)
+    if task_data.column_id is not None:
+        get_owned_column(db, task_data.column_id, current_user)
     if task_data.title is not  None:
         task.title = task_data.title
     if task_data.description is not None:
@@ -157,16 +133,10 @@ def update_task(
 @router.delete("/{task_id}")
 def delete_task(
     task_id:int,
-      db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
 ):
-    task = (
-        db.query(Task).filter(Task.id==task_id).first()
-    )
-    if not task:
-        raise HTTPException(
-            status_code=404,
-            detail="Task not found"
-        )
+    task = get_owned_task(db, task_id, current_user)
     db.delete(task)
     db.commit()
     qdrant.delete_vector(task_id)

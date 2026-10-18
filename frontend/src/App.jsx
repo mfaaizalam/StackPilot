@@ -6,7 +6,8 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Boards from "./pages/Boards.jsx";
 import BoardDetail from "./pages/BoardDetail.jsx";
 import ProjectAnalysis from "./pages/ProjectAnalysis.jsx";
-import NotFound from "./pages/NotFound.jsx";
+import SrsStudio from "./pages/SrsStudio.jsx";
+
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
@@ -50,7 +51,14 @@ export default function App() {
           </PrivateRoute>
         }
       />
-      <Route path="*" element={<NotFound />} />
+      <Route
+        path="/boards/:boardId/srs"
+        element={
+          <PrivateRoute>
+            <SrsStudio />
+          </PrivateRoute>
+        }
+      />
     </Routes>
   );
 }

@@ -19,3 +19,15 @@ class Board(Base):
         back_populates="board",
         cascade="all, delete-orphan"
     )
+    # Delete all SRS versions automatically when board is deleted
+    srs_documents = relationship(
+        "SRSDocument",
+        back_populates="board",
+        cascade="all, delete-orphan"
+    )
+    # Delete all cost estimates automatically when board is deleted
+    cost_estimates = relationship(
+        "CostEstimate",
+        back_populates="board",
+        cascade="all, delete-orphan"
+    )
