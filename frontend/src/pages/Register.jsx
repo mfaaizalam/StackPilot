@@ -1,13 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import AuthShell from "../components/AuthShell.jsx";
+import { safeNext, authQuery } from "../utils/safeNext.js";
 
 export default function Register() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next")); // e.g. /invite/<token>
   const [form, setForm] = useState({
     name: "",
-    email: "",
+    email: params.get("email") || "",
     password: "",
     otp: "",
   });
@@ -49,7 +52,9 @@ export default function Register() {
       const { data } = await api.post("/auth/register", form);
       if (data?.token) localStorage.setItem("token", data.token);
       if (data?.access_token) localStorage.setItem("token", data.access_token);
-      navigate("/dashboard");
+      // Register does not return a token, so send them to sign in, keeping the invite link.
+      if (data?.token || data?.access_token) navigate(next || "/dashboard");
+      else navigate(`/login${authQuery(next, form.email)}`);
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -69,7 +74,7 @@ export default function Register() {
         <>
           Already have an account?{" "}
           <Link
-            to="/login"
+            to={`/login${authQuery(next, params.get("email"))}`}
             className="text-neutral-900 font-medium hover:underline"
           >
             Sign in

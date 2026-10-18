@@ -10,6 +10,7 @@ import SrsStudio from "./pages/SrsStudio.jsx";
 import DiagramsPage from "./pages/DiagramsPage.jsx";
 import CostingPage from "./pages/CostingPage.jsx";
 import BoardSettings from "./pages/BoardSettings.jsx";
+import AcceptInvite from "./pages/AcceptInvite.jsx";
 import ComingSoonPage from "./pages/ComingSoonPage.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import AppLayout from "./components/AppLayout.jsx";
@@ -64,6 +65,8 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      {/* Public on purpose: the email link must work before login. Accepting needs a login. */}
+      <Route path="/invite/:token" element={<AcceptInvite />} />
 
       <Route element={<PrivateLayout />}>
         <Route path="/dashboard" element={<HomeRedirect />} />

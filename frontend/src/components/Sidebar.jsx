@@ -85,7 +85,7 @@ const SECTIONS = [
   { to: "diagrams", label: "Diagrams", icon: <IconDiagrams /> },
   { to: "sdd", label: "Design Document", icon: <IconSdd />, soon: true },
   { to: "costing", label: "Deployment Document", icon: <IconCosting /> },
-  { to: "settings", label: "Settings", icon: <IconSettings />, soon: true },
+  { to: "settings", label: "Settings", icon: <IconSettings /> },
 ];
 const SECTION_KEYS = SECTIONS.map((s) => s.to);
 

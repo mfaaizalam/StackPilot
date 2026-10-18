@@ -128,7 +128,7 @@ def invite(board_id: int, body: InviteIn, background: BackgroundTasks, db: Sessi
 
     log_activity(db, board_id, current_user.id, "member.invited",
                  f"invited {body.email} as {body.role}", "invitation", inv.id)
-    background.add_task(send_invite_email, inv.email, board.name, inv.role, current_user.name)
+    background.add_task(send_invite_email, inv.email, board.name, inv.role, current_user.name, inv.token)
     return InvitationOut(id=inv.id, board_id=board_id, board_name=board.name, email=inv.email,
                          role=inv.role, status=inv.status, expires_at=inv.expires_at)
 
@@ -167,23 +167,79 @@ def my_invitations(db: Session = Depends(get_db), current_user=Depends(get_curre
             for i in _my_pending(db, current_user)]
 
 
-@router.post("/invitations/{inv_id}/accept")
-def accept_invitation(inv_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    inv = _my_invitation(db, current_user, inv_id)
-    if not db.query(BoardMember.id).filter_by(board_id=inv.board_id, user_id=current_user.id).first():
-        db.add(BoardMember(board_id=inv.board_id, user_id=current_user.id, role=inv.role,
+def _join(db: Session, inv: BoardInvitation, user) -> dict:
+    """Turn a valid invitation into a membership (idempotent)."""
+    if not db.query(BoardMember.id).filter_by(board_id=inv.board_id, user_id=user.id).first():
+        db.add(BoardMember(board_id=inv.board_id, user_id=user.id, role=inv.role,
                            invited_by=inv.invited_by))
     inv.status = "accepted"
     board_id, role = inv.board_id, inv.role
     db.commit()
-    log_activity(db, board_id, current_user.id, "member.joined",
-                 f"joined the project as {role.replace('_', ' ')}", "member", current_user.id)
+    log_activity(db, board_id, user.id, "member.joined",
+                 f"joined the project as {role.replace('_', ' ')}", "member", user.id)
     return {"ok": True, "board_id": board_id}
+
+
+@router.post("/invitations/{inv_id}/accept")
+def accept_invitation(inv_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    return _join(db, _my_invitation(db, current_user, inv_id), current_user)
 
 
 @router.post("/invitations/{inv_id}/decline")
 def decline_invitation(inv_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     inv = _my_invitation(db, current_user, inv_id)
+    inv.status = "declined"
+    db.commit()
+    return {"ok": True}
+
+
+# ------------------------------------------------------------------ invitations (email link)
+def _by_token(db: Session, token: str) -> BoardInvitation:
+    inv = db.query(BoardInvitation).filter(BoardInvitation.token == token).first()
+    if not inv:
+        raise HTTPException(status_code=404, detail="This invitation link is not valid")
+    return inv
+
+
+def _usable(inv: BoardInvitation) -> BoardInvitation:
+    if inv.status != "pending":
+        raise HTTPException(status_code=410, detail=f"This invitation was already {inv.status}")
+    if _aware(inv.expires_at) <= _now():
+        raise HTTPException(status_code=410, detail="This invitation has expired. Ask the admin to send a new one")
+    return inv
+
+
+def _for_this_user(inv: BoardInvitation, user) -> BoardInvitation:
+    if (user.email or "").lower().strip() != inv.email:
+        raise HTTPException(
+            status_code=403,
+            detail=f"This invitation was sent to {inv.email}, but you are signed in as {user.email}. "
+                   f"Sign in with the invited email address.")
+    return inv
+
+
+@router.get("/invitations/token/{token}")
+def invitation_preview(token: str, db: Session = Depends(get_db)):
+    """Public (no login): lets the email link show what the invitation is for. The token is the secret."""
+    inv = _by_token(db, token)
+    inviter = db.get(User, inv.invited_by) if inv.invited_by else None
+    registered = bool(db.query(User.id).filter(func.lower(User.email) == inv.email).first())
+    expired = _aware(inv.expires_at) <= _now()
+    return {"board_name": inv.board.name if inv.board else None, "role": inv.role, "email": inv.email,
+            "invited_by": (inviter.name or inviter.email) if inviter else None,
+            "status": "expired" if inv.status == "pending" and expired else inv.status,
+            "registered": registered}
+
+
+@router.post("/invitations/token/{token}/accept")
+def accept_by_token(token: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    inv = _for_this_user(_usable(_by_token(db, token)), current_user)
+    return _join(db, inv, current_user)
+
+
+@router.post("/invitations/token/{token}/decline")
+def decline_by_token(token: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    inv = _for_this_user(_usable(_by_token(db, token)), current_user)
     inv.status = "declined"
     db.commit()
     return {"ok": True}
@@ -197,4 +253,4 @@ def activity(board_id: int, limit: int = 50, db: Session = Depends(get_db),
     rows = (db.query(BoardActivity).filter(BoardActivity.board_id == board_id)
               .order_by(BoardActivity.id.desc()).limit(max(1, min(limit, 200))).all())
     return [ActivityOut(id=a.id, user_name=(a.user.name or a.user.email) if a.user else "Someone",
-                        action=a.action, summary=a.summary, created_at=a.created_at) for a in rows]
+                        action=a.action, summary=a.summary, created_at=a.created_at) for a in rows]
