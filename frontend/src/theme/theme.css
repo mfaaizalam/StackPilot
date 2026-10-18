@@ -1,0 +1,68 @@
+/* 1. THE ONLY PLACE YOU EDIT COLORS */
+:root {
+  /* Surfaces */
+  --canvas: #ffffff;       /* page background */
+  --surface: #ffffff;      /* cards, modals */
+  --surface-2: #f5f5f5;    /* muted panels, table headers */
+  --line: #e5e5e5;         /* borders, dividers */
+
+  /* Text */
+  --ink: #171717;
+  --ink-muted: #737373;
+
+  /* Brand */
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
+  --brand-fg: #ffffff;     /* text on brand */
+  --brand-soft: #eef2ff;
+
+  /* Status */
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --info: #0284c7;
+
+  /* Shape and type */
+  --card-radius: 1rem;
+  --font-body: Arial, Helvetica, sans-serif;
+}
+
+/* Optional dark theme: <html data-theme="dark"> */
+[data-theme='dark'] {
+  --canvas: #0f1117;
+  --surface: #181b24;
+  --surface-2: #212530;
+  --line: #333846;
+  --ink: #f1f3f7;
+  --ink-muted: #949baa;
+  --brand-soft: #28265a;
+  --success-soft: #143723;
+  --warning-soft: #3c2d0f;
+  --danger-soft: #411919;
+}
+
+/* 2. EXPOSE THEM AS TAILWIND CLASSES (bg-canvas, text-ink, ...) */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --font-sans: var(--font-body);
+  --radius-card: var(--card-radius);
+}

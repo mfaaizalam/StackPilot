@@ -64,30 +64,30 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-canvas text-ink">
       {/* Header */}
-      <header className="border-b border-neutral-200 bg-white sticky top-0 z-10">
+      <header className="border-b border-line bg-surface sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 font-semibold tracking-tight">
-              <div className="w-7 h-7 rounded-md bg-neutral-950 text-white flex items-center justify-center font-bold text-sm">S</div>
+              <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">S</div>
               StackPilot
             </div>
             <nav className="hidden sm:flex items-center gap-1">
-              <button className="text-sm px-3 py-1.5 rounded-md bg-neutral-100 text-neutral-900 font-medium">Home</button>
-              <button onClick={() => navigate("/boards")} className="text-sm px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition">Boards</button>
+              <button className="text-sm px-3 py-1.5 rounded-md bg-surface-2 text-ink font-medium">Home</button>
+              <button onClick={() => navigate("/boards")} className="text-sm px-3 py-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition">Boards</button>
             </nav>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm">
+            <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm">
               {user?.name?.charAt(0) || "U"}
             </div>
             <div className="hidden sm:block">
               <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
-              <p className="text-xs text-neutral-500 mt-0.5">{user?.email || ""}</p>
+              <p className="text-xs text-ink-muted mt-0.5">{user?.email || ""}</p>
             </div>
-            <button onClick={logout} className="text-sm px-3.5 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition">
+            <button onClick={logout} className="text-sm px-3.5 py-2 rounded-lg border border-line hover:bg-surface-2 transition">
               Sign out
             </button>
           </div>
@@ -98,14 +98,14 @@ export default function Dashboard() {
         {/* Greeting */}
         <div className="flex items-start justify-between flex-wrap gap-4 mb-10">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">
               Welcome back{user?.name ? `, ${user.name}` : ""} 👋
             </h1>
-            <p className="mt-1 text-sm text-neutral-500">Here's what's happening across your workspace.</p>
+            <p className="mt-1 text-sm text-ink-muted">Here's what's happening across your workspace.</p>
           </div>
           <button
             onClick={() => navigate("/boards")}
-            className="flex items-center gap-2 bg-neutral-950 text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-neutral-800 transition"
+            className="flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
           >
             Go to Boards <IconArrow />
           </button>
@@ -117,15 +117,15 @@ export default function Dashboard() {
             <div
               key={key}
               onClick={() => route && navigate(route)}
-              className={`bg-white border border-neutral-200 rounded-xl p-6 flex items-center gap-4 hover:border-neutral-300 transition ${route ? "cursor-pointer" : ""}`}
+              className={`bg-surface border border-line rounded-card p-6 flex items-center gap-4 hover:border-ink-muted/40 transition ${route ? "cursor-pointer" : ""}`}
             >
-              <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-600 shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-surface-2 flex items-center justify-center text-ink-muted shrink-0">
                 {icon}
               </div>
               <div>
-                <p className="text-xs text-neutral-500 uppercase tracking-wide font-medium">{label}</p>
-                <p className="mt-0.5 text-2xl font-semibold tracking-tight text-neutral-900">
-                  {loading ? <span className="inline-block w-8 h-6 bg-neutral-100 rounded animate-pulse" /> : stats[key]}
+                <p className="text-xs text-ink-muted uppercase tracking-wide font-medium">{label}</p>
+                <p className="mt-0.5 text-2xl font-semibold tracking-tight text-ink">
+                  {loading ? <span className="inline-block w-8 h-6 bg-surface-2 rounded animate-pulse" /> : stats[key]}
                 </p>
               </div>
             </div>
@@ -135,22 +135,22 @@ export default function Dashboard() {
         {/* Recent boards */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-neutral-900">Recent boards</h2>
-            <button onClick={() => navigate("/boards")} className="text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2 transition flex items-center gap-1">
+            <h2 className="text-sm font-semibold text-ink">Recent boards</h2>
+            <button onClick={() => navigate("/boards")} className="text-xs text-ink-muted hover:text-ink underline underline-offset-2 transition flex items-center gap-1">
               View all <IconArrow />
             </button>
           </div>
 
           {loading && (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[1,2,3,4].map(i => <div key={i} className="h-24 bg-white border border-neutral-200 rounded-xl animate-pulse" />)}
+              {[1,2,3,4].map(i => <div key={i} className="h-24 bg-surface border border-line rounded-card animate-pulse" />)}
             </div>
           )}
 
           {!loading && recentBoards.length === 0 && (
-            <div className="py-12 text-center border border-dashed border-neutral-200 rounded-xl">
-              <p className="text-sm text-neutral-500">No boards yet.</p>
-              <button onClick={() => navigate("/boards")} className="mt-3 text-sm text-neutral-900 font-medium underline underline-offset-2">Create your first board</button>
+            <div className="py-12 text-center border border-dashed border-line rounded-card">
+              <p className="text-sm text-ink-muted">No boards yet.</p>
+              <button onClick={() => navigate("/boards")} className="mt-3 text-sm text-ink font-medium underline underline-offset-2">Create your first board</button>
             </div>
           )}
 
@@ -162,12 +162,12 @@ export default function Dashboard() {
                   <div
                     key={b.id}
                     onClick={() => navigate(`/boards/${b.id}`)}
-                    className="bg-white border border-neutral-200 rounded-xl p-4 hover:border-neutral-300 hover:shadow-sm transition cursor-pointer flex flex-col gap-3"
+                    className="bg-surface border border-line rounded-card p-4 hover:border-ink-muted/40 hover:shadow-sm transition cursor-pointer flex flex-col gap-3"
                   >
-                    <div className="w-8 h-8 rounded-md bg-neutral-950 text-white flex items-center justify-center text-xs font-semibold">{initials || "B"}</div>
+                    <div className="w-8 h-8 rounded-md bg-brand text-brand-fg flex items-center justify-center text-xs font-semibold">{initials || "B"}</div>
                     <div>
-                      <p className="text-sm font-medium text-neutral-900 truncate">{b.name}</p>
-                      {b.description && <p className="text-xs text-neutral-500 mt-0.5 truncate">{b.description}</p>}
+                      <p className="text-sm font-medium text-ink truncate">{b.name}</p>
+                      {b.description && <p className="text-xs text-ink-muted mt-0.5 truncate">{b.description}</p>}
                     </div>
                   </div>
                 );

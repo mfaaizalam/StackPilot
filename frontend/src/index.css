@@ -1,5 +1,5 @@
-
 @import "tailwindcss";
+@import "./theme/theme.css";
 
 html,
 body,
@@ -8,9 +8,9 @@ body,
 }
 
 body {
-  background-color: #ffffff;
-  color: #171717;
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 

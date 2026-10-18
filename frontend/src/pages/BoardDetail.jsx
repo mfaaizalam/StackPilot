@@ -40,9 +40,9 @@ function IconGrip() {
 
 // ── Priority badge ───────────────────────────────────────────────────────────
 const PRIORITY_STYLES = {
-  high:   "bg-red-50 text-red-600 border-red-100",
-  medium: "bg-amber-50 text-amber-600 border-amber-100",
-  low:    "bg-neutral-100 text-neutral-500 border-neutral-200",
+  high:   "bg-danger-soft text-danger border-danger/20",
+  medium: "bg-warning-soft text-warning border-warning/20",
+  low:    "bg-surface-2 text-ink-muted border-line",
 };
 function PriorityBadge({ priority }) {
   const p = (priority || "low").toLowerCase();
@@ -72,38 +72,38 @@ function TraceSection({ boardId, task }) {
   });
 
   if (!task?.requirement_id) return null;
-  const box = "bg-neutral-50 rounded-xl p-3 border border-neutral-100";
-  const label = "text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5";
+  const box = "bg-surface-2 rounded-card p-3 border border-line";
+  const label = "text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide mb-1.5";
 
-  if (isLoading) return <div className="h-24 bg-neutral-50 border border-neutral-100 rounded-xl animate-pulse" />;
-  if (isError || !trace) return <p className="text-xs text-neutral-400">Could not load the requirement details.</p>;
-  if (!trace.linked) return <p className="text-xs text-neutral-400">{trace.reason}</p>;
+  if (isLoading) return <div className="h-24 bg-surface-2 border border-line rounded-card animate-pulse" />;
+  if (isError || !trace) return <p className="text-xs text-ink-muted/70">Could not load the requirement details.</p>;
+  if (!trace.linked) return <p className="text-xs text-ink-muted/70">{trace.reason}</p>;
 
   const r = trace.requirement;
   const waiting = (trace.depends_on || []).filter(d => d.column && !isDoneCol(d.column));
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide">Traceability</p>
-        <span className="text-[11px] font-medium text-neutral-500 bg-neutral-100 border border-neutral-200 rounded-full px-2 py-0.5">
+        <p className="text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide">Traceability</p>
+        <span className="text-[11px] font-medium text-ink-muted bg-surface-2 border border-line rounded-full px-2 py-0.5">
           {trace.requirement_id} · SRS v{trace.srs_version}
         </span>
       </div>
 
       {!trace.srs_is_latest && (
-        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+        <p className="text-xs text-warning bg-warning-soft border border-warning/20 rounded-lg px-3 py-2">
           Generated from SRS v{trace.srs_version}; a newer version exists. Use "Add missing" in SRS Studio to pick up new requirements.
         </p>
       )}
-      {trace.note && <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">{trace.note}</p>}
+      {trace.note && <p className="text-xs text-warning bg-warning-soft border border-warning/20 rounded-lg px-3 py-2">{trace.note}</p>}
 
       {r && (
         <div className={box}>
           <p className={label}>Requirement{r.actor ? ` · ${r.actor}` : r.category ? ` · ${r.category}` : ""}</p>
-          <p className="text-sm text-neutral-800 leading-relaxed">{r.statement}</p>
-          {r.metric && <p className="text-xs text-neutral-500 mt-1.5"><span className="font-medium">Target:</span> {r.metric}</p>}
+          <p className="text-sm text-ink leading-relaxed">{r.statement}</p>
+          {r.metric && <p className="text-xs text-ink-muted mt-1.5"><span className="font-medium">Target:</span> {r.metric}</p>}
           {r.acceptance_criteria?.length > 0 && (
-            <ul className="mt-2 space-y-1 text-xs text-neutral-600 list-disc pl-4">
+            <ul className="mt-2 space-y-1 text-xs text-ink-muted list-disc pl-4">
               {r.acceptance_criteria.map((c, i) => <li key={i}>{c}</li>)}
             </ul>
           )}
@@ -116,11 +116,11 @@ function TraceSection({ boardId, task }) {
           <div className="space-y-2">
             {trace.use_cases.map(u => (
               <details key={u.id} className="group">
-                <summary className="cursor-pointer text-sm text-neutral-800 font-medium list-none flex items-center justify-between">
+                <summary className="cursor-pointer text-sm text-ink font-medium list-none flex items-center justify-between">
                   <span>{u.id} · {u.name}</span>
-                  <span className="text-[11px] text-neutral-400 font-normal">{u.actor}</span>
+                  <span className="text-[11px] text-ink-muted/70 font-normal">{u.actor}</span>
                 </summary>
-                <ol className="mt-1.5 list-decimal pl-5 space-y-0.5 text-xs text-neutral-600">
+                <ol className="mt-1.5 list-decimal pl-5 space-y-0.5 text-xs text-ink-muted">
                   {u.main_flow.map((step, i) => <li key={i}>{step}</li>)}
                 </ol>
               </details>
@@ -135,15 +135,15 @@ function TraceSection({ boardId, task }) {
             <>
               <p className={label}>Suggested to start after</p>
               {waiting.length > 0 && (
-                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1.5 mb-2">
+                <p className="text-xs text-warning bg-warning-soft border border-warning/20 rounded-lg px-2.5 py-1.5 mb-2">
                   Waiting on {waiting.length} unfinished task{waiting.length > 1 ? "s" : ""}.
                 </p>
               )}
               <ul className="space-y-1.5">
                 {trace.depends_on.map(d => (
-                  <li key={d.requirement_id} className="flex items-center justify-between gap-2 text-xs text-neutral-700">
+                  <li key={d.requirement_id} className="flex items-center justify-between gap-2 text-xs text-ink">
                     <span className="truncate">{d.requirement_id} {d.title}</span>
-                    <span className={`shrink-0 px-2 py-0.5 rounded-full border text-[11px] ${d.column ? (isDoneCol(d.column) ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-neutral-100 text-neutral-500 border-neutral-200") : "bg-neutral-50 text-neutral-400 border-neutral-200"}`}>
+                    <span className={`shrink-0 px-2 py-0.5 rounded-full border text-[11px] ${d.column ? (isDoneCol(d.column) ? "bg-success-soft text-success border-success/20" : "bg-surface text-ink-muted border-line") : "bg-surface text-ink-muted/70 border-line"}`}>
                       {d.column || "no task"}
                     </span>
                   </li>
@@ -152,13 +152,13 @@ function TraceSection({ boardId, task }) {
             </>
           )}
           {trace.blocks?.length > 0 && (
-            <div className={trace.depends_on?.length > 0 ? "mt-3 pt-3 border-t border-neutral-200" : ""}>
+            <div className={trace.depends_on?.length > 0 ? "mt-3 pt-3 border-t border-line" : ""}>
               <p className={label}>Unblocks</p>
               <ul className="space-y-1.5">
                 {trace.blocks.map(d => (
-                  <li key={d.requirement_id} className="flex items-center justify-between gap-2 text-xs text-neutral-700">
+                  <li key={d.requirement_id} className="flex items-center justify-between gap-2 text-xs text-ink">
                     <span className="truncate">{d.requirement_id} {d.title}</span>
-                    <span className="shrink-0 px-2 py-0.5 rounded-full border text-[11px] bg-neutral-100 text-neutral-500 border-neutral-200">{d.column || "no task"}</span>
+                    <span className="shrink-0 px-2 py-0.5 rounded-full border text-[11px] bg-surface text-ink-muted border-line">{d.column || "no task"}</span>
                   </li>
                 ))}
               </ul>
@@ -177,20 +177,20 @@ function TaskDetail({ boardId, task, columns, onClose, onEdit, onDelete }) {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-30 bg-neutral-950/20 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="fixed inset-0 z-30 bg-ink/20 backdrop-blur-[2px]" onClick={onClose} />
       {/* Panel */}
-      <div className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-sm bg-white border-l border-neutral-200 shadow-2xl flex flex-col">
+      <div className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-sm bg-surface border-l border-line shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
-          <span className="text-xs text-neutral-400 font-medium uppercase tracking-wide">Task #{task.id}</span>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-line">
+          <span className="text-xs text-ink-muted/70 font-medium uppercase tracking-wide">Task #{task.id}</span>
           <div className="flex items-center gap-1">
-            <button onClick={() => { onClose(); onEdit(task); }} className="flex items-center gap-1.5 text-xs text-neutral-600 hover:text-neutral-900 px-2.5 py-1.5 rounded-md hover:bg-neutral-100 transition font-medium">
+            <button onClick={() => { onClose(); onEdit(task); }} className="flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink px-2.5 py-1.5 rounded-md hover:bg-surface-2 transition font-medium">
               <IconEdit /> Edit
             </button>
-            <button onClick={() => { onClose(); onDelete(task); }} className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 px-2.5 py-1.5 rounded-md hover:bg-red-50 transition font-medium">
+            <button onClick={() => { onClose(); onDelete(task); }} className="flex items-center gap-1.5 text-xs text-danger hover:text-danger/80 px-2.5 py-1.5 rounded-md hover:bg-danger-soft transition font-medium">
               <IconTrash /> Delete
             </button>
-            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition ml-1">
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-ink hover:bg-surface-2 transition ml-1">
               <IconClose />
             </button>
           </div>
@@ -198,27 +198,27 @@ function TaskDetail({ boardId, task, columns, onClose, onEdit, onDelete }) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
-          <h2 className="text-lg font-semibold text-neutral-900 leading-snug">{task.title}</h2>
+          <h2 className="text-lg font-semibold text-ink leading-snug">{task.title}</h2>
 
           {task.description ? (
-            <p className="text-sm text-neutral-600 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+            <p className="text-sm text-ink-muted leading-relaxed whitespace-pre-wrap">{task.description}</p>
           ) : (
-            <p className="text-sm text-neutral-400 italic">No description provided.</p>
+            <p className="text-sm text-ink-muted/70 italic">No description provided.</p>
           )}
 
           <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-              <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5">Priority</p>
+            <div className="bg-surface-2 rounded-card p-3 border border-line">
+              <p className="text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide mb-1.5">Priority</p>
               <PriorityBadge priority={task.priority} />
             </div>
-            <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100">
-              <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5">Column</p>
-              <p className="text-sm font-medium text-neutral-900">{col?.name || "—"}</p>
+            <div className="bg-surface-2 rounded-card p-3 border border-line">
+              <p className="text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide mb-1.5">Column</p>
+              <p className="text-sm font-medium text-ink">{col?.name || "—"}</p>
             </div>
             {task.estimate_points ? (
-              <div className="bg-neutral-50 rounded-xl p-3 border border-neutral-100 col-span-2">
-                <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide mb-1.5">Estimate</p>
-                <p className="text-sm font-medium text-neutral-900">{task.estimate_points} story point{task.estimate_points === 1 ? "" : "s"} <span className="text-xs text-neutral-400 font-normal">· relative size, edit freely</span></p>
+              <div className="bg-surface-2 rounded-card p-3 border border-line col-span-2">
+                <p className="text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide mb-1.5">Estimate</p>
+                <p className="text-sm font-medium text-ink">{task.estimate_points} story point{task.estimate_points === 1 ? "" : "s"} <span className="text-xs text-ink-muted/70 font-normal">· relative size, edit freely</span></p>
               </div>
             ) : null}
           </div>
@@ -259,13 +259,13 @@ function TaskCard({
           onView(task);
         }
       }}
-      className={`group relative bg-white border rounded-xl p-4 transition cursor-pointer select-none ${
+      className={`group relative bg-surface border rounded-card p-4 transition cursor-pointer select-none ${
         isDraft
-          ? "border-dashed border-neutral-300 bg-neutral-50/70 hover:border-neutral-400"
+          ? "border-dashed border-ink-muted/40 bg-surface-2/70 hover:border-ink-muted/60"
           : `${
               isDragging
-                ? "opacity-40 scale-95 border-neutral-300"
-                : "border-neutral-200 hover:border-neutral-300 hover:shadow-sm"
+                ? "opacity-40 scale-95 border-ink-muted/40"
+                : "border-line hover:border-ink-muted/40 hover:shadow-sm"
             }`
       }`}
       style={{
@@ -274,7 +274,7 @@ function TaskCard({
     >
       {/* Drag grip */}
       {!isDraft && (
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-300 opacity-0 group-hover:opacity-100 transition cursor-grab">
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 text-ink-muted/50 opacity-0 group-hover:opacity-100 transition cursor-grab">
           <IconGrip />
         </div>
       )}
@@ -287,7 +287,7 @@ function TaskCard({
         >
           <button
             onClick={() => setMenuOpen(v => !v)}
-            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 opacity-0 group-hover:opacity-100 transition"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-ink-muted/50 hover:text-ink-muted hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition"
           >
             <IconDots />
           </button>
@@ -299,13 +299,13 @@ function TaskCard({
                 onClick={() => setMenuOpen(false)}
               />
 
-              <div className="absolute right-0 top-7 z-20 w-32 bg-white border border-neutral-200 rounded-lg shadow-lg py-1 text-sm">
+              <div className="absolute right-0 top-7 z-20 w-32 bg-surface border border-line rounded-lg shadow-lg py-1 text-sm">
                 <button
                   onClick={() => {
                     setMenuOpen(false);
                     onEdit(task);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-neutral-700 hover:bg-neutral-50 transition"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-ink hover:bg-surface-2 transition"
                 >
                   <IconEdit />
                   Edit
@@ -316,7 +316,7 @@ function TaskCard({
                     setMenuOpen(false);
                     onDelete(task);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 transition"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-danger hover:bg-danger-soft transition"
                 >
                   <IconTrash />
                   Delete
@@ -331,8 +331,8 @@ function TaskCard({
       <p
         className={`text-sm font-medium pr-6 pl-4 leading-snug ${
           isDraft
-            ? "text-neutral-600"
-            : "text-neutral-900"
+            ? "text-ink-muted"
+            : "text-ink"
         }`}
       >
         {task.title}
@@ -340,7 +340,7 @@ function TaskCard({
 
       {/* Description */}
       {task.description && (
-        <p className="mt-1.5 text-xs text-neutral-500 line-clamp-2 leading-relaxed pl-4">
+        <p className="mt-1.5 text-xs text-ink-muted line-clamp-2 leading-relaxed pl-4">
           {task.description}
         </p>
       )}
@@ -350,12 +350,12 @@ function TaskCard({
         <PriorityBadge priority={task.priority} />
 
         {isDraft && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-neutral-100 text-neutral-500 border-neutral-200">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-surface-2 text-ink-muted border-line">
             Draft · unsaved
           </span>
         )}
         {!isDraft && task.estimate_points ? (
-          <span title="Estimated story points (relative size)" className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-neutral-50 text-neutral-500 border-neutral-200">
+          <span title="Estimated story points (relative size)" className="ml-auto inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border bg-surface-2 text-ink-muted border-line">
             {task.estimate_points} pt{task.estimate_points === 1 ? "" : "s"}
           </span>
         ) : null}
@@ -385,20 +385,20 @@ function ColumnPanel({
   return (
     <div
       ref={ref}
-      className={`flex flex-col w-72 shrink-0 rounded-xl transition-all duration-150 ${
+      className={`flex flex-col w-72 shrink-0 rounded-card transition-all duration-150 ${
         isDropTarget
-          ? "ring-2 ring-neutral-900 bg-neutral-100"
+          ? "ring-2 ring-brand bg-surface-2"
           : ""
       }`}
     >
       {/* Column header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-neutral-900">
+          <span className="text-sm font-semibold text-ink">
             {column.name}
           </span>
 
-          <span className="text-xs text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded-full font-medium">
+          <span className="text-xs text-ink-muted/70 bg-surface-2 px-1.5 py-0.5 rounded-full font-medium">
             {tasks.length}
           </span>
         </div>
@@ -407,7 +407,7 @@ function ColumnPanel({
           <button
             onClick={() => onAddTask(column.id)}
             title="Add task"
-            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-ink hover:bg-surface-2 transition"
           >
             <IconPlus size={13} />
           </button>
@@ -415,7 +415,7 @@ function ColumnPanel({
           <button
             onClick={() => onEditColumn(column)}
             title="Rename"
-            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-ink hover:bg-surface-2 transition"
           >
             <IconEdit />
           </button>
@@ -423,7 +423,7 @@ function ColumnPanel({
           <button
             onClick={() => onDeleteColumn(column)}
             title="Delete"
-            className="w-6 h-6 flex items-center justify-center rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-danger hover:bg-danger-soft transition"
           >
             <IconTrash />
           </button>
@@ -431,19 +431,19 @@ function ColumnPanel({
       </div>
 
       {/* Divider */}
-      <div className="h-0.5 bg-neutral-200 rounded-full mb-3" />
+      <div className="h-0.5 bg-line rounded-full mb-3" />
 
       {/* Tasks */}
       <div className="flex flex-col gap-2 flex-1 min-h-[4rem]">
         {tasks.length === 0 ? (
           <div
-            className={`flex flex-col items-center justify-center py-8 text-center border border-dashed rounded-xl transition ${
+            className={`flex flex-col items-center justify-center py-8 text-center border border-dashed rounded-card transition ${
               isDropTarget
-                ? "border-neutral-400 bg-neutral-50"
-                : "border-neutral-200"
+                ? "border-ink-muted/60 bg-surface-2"
+                : "border-line"
             }`}
           >
-            <p className="text-xs text-neutral-400">
+            <p className="text-xs text-ink-muted/70">
               {isDropTarget
                 ? "Drop here"
                 : "No tasks yet"}
@@ -452,7 +452,7 @@ function ColumnPanel({
             {!isDropTarget && (
               <button
                 onClick={() => onAddTask(column.id)}
-                className="mt-2 text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2 transition"
+                className="mt-2 text-xs text-ink-muted hover:text-ink underline underline-offset-2 transition"
               >
                 Add one
               </button>
@@ -474,7 +474,7 @@ function ColumnPanel({
       {/* Add task */}
       <button
         onClick={() => onAddTask(column.id)}
-        className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-lg border border-dashed border-neutral-200 text-xs text-neutral-400 hover:border-neutral-400 hover:text-neutral-600 hover:bg-white transition"
+        className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-lg border border-dashed border-line text-xs text-ink-muted/70 hover:border-ink-muted/60 hover:text-ink-muted hover:bg-surface transition"
       >
         <IconPlus size={12} />
         Add task
@@ -756,22 +756,22 @@ export default function BoardDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col">
+    <div className="min-h-screen bg-canvas text-ink flex flex-col">
       {/* Page toolbar (global nav, user and sign out live in the sidebar) */}
-      <div className="border-b border-neutral-200 bg-white sticky top-0 z-10 shrink-0">
+      <div className="border-b border-line bg-surface sticky top-0 z-10 shrink-0">
         <div className="px-3 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-sm font-semibold text-neutral-900 truncate">
+            <h1 className="text-sm font-semibold text-ink truncate">
               {board?.name || "Kanban Board"}
             </h1>
             {board?.description && (
-              <p className="text-xs text-neutral-500 truncate">{board.description}</p>
+              <p className="text-xs text-ink-muted truncate">{board.description}</p>
             )}
           </div>
 
           <button
             onClick={() => { setEditingColumn(null); setColModalOpen(true); }}
-            className="shrink-0 flex items-center gap-1.5 sm:gap-2 bg-neutral-950 text-white text-sm font-medium px-2.5 sm:px-4 py-2 rounded-lg hover:bg-neutral-800 transition"
+            className="shrink-0 flex items-center gap-1.5 sm:gap-2 bg-brand text-brand-fg text-sm font-medium px-2.5 sm:px-4 py-2 rounded-lg hover:bg-brand-hover transition"
           >
             <IconPlus size={14}/> <span className="hidden sm:inline">Add column</span>
           </button>
@@ -815,10 +815,10 @@ export default function BoardDetail() {
             {/* Loading */}
             {loading && [1,2,3].map(i => (
               <div key={i} className="w-72 shrink-0">
-                <div className="h-6 bg-neutral-200 rounded-lg animate-pulse mb-3 w-28"/>
-                <div className="h-0.5 bg-neutral-200 rounded mb-3"/>
+                <div className="h-6 bg-line rounded-lg animate-pulse mb-3 w-28"/>
+                <div className="h-0.5 bg-line rounded mb-3"/>
                 <div className="space-y-2">
-                  {[1,2].map(j => <div key={j} className="h-24 bg-white border border-neutral-200 rounded-xl animate-pulse"/>)}
+                  {[1,2].map(j => <div key={j} className="h-24 bg-surface border border-line rounded-card animate-pulse"/>)}
                 </div>
               </div>
             ))}
@@ -827,8 +827,8 @@ export default function BoardDetail() {
             {!loading && fetchError && (
               <div className="flex items-center justify-center w-full py-24">
                 <div className="text-center">
-                  <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">{fetchError}</p>
-                  <button onClick={() => fetchAll(true)} className="mt-4 text-sm text-neutral-600 hover:text-neutral-900 underline underline-offset-2">Try again</button>
+                  <p className="text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-4 py-3">{fetchError}</p>
+                  <button onClick={() => fetchAll(true)} className="mt-4 text-sm text-ink-muted hover:text-ink underline underline-offset-2">Try again</button>
                 </div>
               </div>
             )}
@@ -836,10 +836,10 @@ export default function BoardDetail() {
             {/* Empty board */}
             {!loading && !fetchError && columns.length === 0 && (
               <div className="flex flex-col items-center justify-center w-full py-24 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-neutral-100 flex items-center justify-center mb-4"><IconPlus size={20}/></div>
-                <p className="text-base font-medium text-neutral-900">No columns yet</p>
-                <p className="mt-1.5 text-sm text-neutral-500">Add a column to start organising tasks.</p>
-                <button onClick={() => { setEditingColumn(null); setColModalOpen(true); }} className="mt-6 flex items-center gap-2 bg-neutral-950 text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-neutral-800 transition">
+                <div className="w-12 h-12 rounded-2xl bg-surface-2 flex items-center justify-center mb-4"><IconPlus size={20}/></div>
+                <p className="text-base font-medium text-ink">No columns yet</p>
+                <p className="mt-1.5 text-sm text-ink-muted">Add a column to start organising tasks.</p>
+                <button onClick={() => { setEditingColumn(null); setColModalOpen(true); }} className="mt-6 flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition">
                   <IconPlus size={14}/> Add first column
                 </button>
               </div>
@@ -875,7 +875,7 @@ export default function BoardDetail() {
               <div className="w-72 shrink-0">
                 <button
                   onClick={() => { setEditingColumn(null); setColModalOpen(true); }}
-                  className="w-full h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-neutral-300 rounded-xl text-neutral-400 hover:border-neutral-400 hover:text-neutral-600 hover:bg-white transition"
+                  className="w-full h-32 flex flex-col items-center justify-center gap-2 border border-dashed border-ink-muted/40 rounded-card text-ink-muted/70 hover:border-ink-muted/60 hover:text-ink-muted hover:bg-surface transition"
                 >
                   <IconPlus size={18}/><span className="text-sm font-medium">Add column</span>
                 </button>
@@ -931,7 +931,7 @@ export default function BoardDetail() {
 
       {/* Toast */}
       {toast && (
-        <div className={`fixed bottom-5 right-5 z-50 text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg border ${toast.type === "error" ? "bg-red-50 border-red-100 text-red-700" : "bg-white border-neutral-200 text-neutral-900"}`}>
+        <div className={`fixed bottom-5 right-5 z-50 text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg border ${toast.type === "error" ? "bg-danger-soft border-danger/20 text-danger" : "bg-surface border-line text-ink"}`}>
           {toast.msg}
         </div>
       )}

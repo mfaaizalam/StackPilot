@@ -40,11 +40,11 @@ function IconBoard() {
 }
 function IconEmpty() {
   return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="4" y="4" width="18" height="26" rx="3" stroke="#d4d4d4" strokeWidth="2"/>
-      <rect x="26" y="4" width="18" height="16" rx="3" stroke="#d4d4d4" strokeWidth="2"/>
-      <rect x="26" y="24" width="18" height="20" rx="3" stroke="#d4d4d4" strokeWidth="2"/>
-      <rect x="4" y="34" width="18" height="10" rx="3" stroke="#d4d4d4" strokeWidth="2"/>
+    <svg className="text-line" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="18" height="26" rx="3" stroke="currentColor" strokeWidth="2"/>
+      <rect x="26" y="4" width="18" height="16" rx="3" stroke="currentColor" strokeWidth="2"/>
+      <rect x="26" y="24" width="18" height="20" rx="3" stroke="currentColor" strokeWidth="2"/>
+      <rect x="4" y="34" width="18" height="10" rx="3" stroke="currentColor" strokeWidth="2"/>
     </svg>
   );
 }
@@ -59,7 +59,7 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
 
   return (
     <div
-      className="group relative bg-white border border-neutral-200 rounded-xl p-5 hover:border-neutral-300 hover:shadow-sm transition cursor-pointer flex flex-col gap-3"
+      className="group relative bg-surface border border-line rounded-card p-5 hover:border-ink-muted/40 hover:shadow-sm transition cursor-pointer flex flex-col gap-3"
       onClick={() => onClick(board)}
     >
       {/* Action buttons */}
@@ -69,14 +69,14 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
       >
         <button
           onClick={() => onEdit(board)}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition"
+          className="w-7 h-7 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-ink hover:bg-surface-2 transition"
           title="Edit board"
         >
           <IconEdit />
         </button>
         <button
           onClick={() => onDelete(board)}
-          className="w-7 h-7 flex items-center justify-center rounded-md text-neutral-400 hover:text-red-600 hover:bg-red-50 transition"
+          className="w-7 h-7 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-danger hover:bg-danger-soft transition"
           title="Delete board"
         >
           <IconTrash />
@@ -84,21 +84,21 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
       </div>
 
       {/* Avatar */}
-      <div className="w-10 h-10 rounded-lg bg-neutral-950 text-white flex items-center justify-center text-sm font-semibold tracking-tight shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-brand text-brand-fg flex items-center justify-center text-sm font-semibold tracking-tight shrink-0">
         {initials || "B"}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-neutral-900 truncate pr-10">
+        <p className="text-sm font-semibold text-ink truncate pr-10">
           {board.name}
         </p>
         {board.description ? (
-          <p className="mt-1 text-xs text-neutral-500 line-clamp-2 leading-relaxed">
+          <p className="mt-1 text-xs text-ink-muted line-clamp-2 leading-relaxed">
             {board.description}
           </p>
         ) : (
-          <p className="mt-1 text-xs text-neutral-400 italic">No description</p>
+          <p className="mt-1 text-xs text-ink-muted/70 italic">No description</p>
         )}
       </div>
     </div>
@@ -190,12 +190,12 @@ export default function Boards() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-canvas text-ink">
       {/* ── Header ── */}
-      <header className="border-b border-neutral-200 bg-white sticky top-0 z-10">
+      <header className="border-b border-line bg-surface sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 font-semibold tracking-tight">
-            <div className="w-7 h-7 rounded-md bg-neutral-950 text-white flex items-center justify-center font-bold text-sm">
+            <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">
               S
             </div>
             StackPilot
@@ -206,12 +206,12 @@ export default function Boards() {
             <nav className="hidden sm:flex items-center gap-1">
               <button
                 onClick={() => navigate("/dashboard")}
-                className="text-sm px-3 py-1.5 rounded-md text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition"
+                className="text-sm px-3 py-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition"
               >
                 Home
               </button>
 
-              <button className="text-sm px-3 py-1.5 rounded-md bg-neutral-100 text-neutral-900 font-medium">
+              <button className="text-sm px-3 py-1.5 rounded-md bg-surface-2 text-ink font-medium">
                 Boards
               </button>
             </nav>
@@ -219,7 +219,7 @@ export default function Boards() {
             {/* Mobile Home Button */}
             <button
               onClick={() => navigate("/dashboard")}
-              className="sm:hidden flex items-center gap-1 text-sm px-2 py-1.5 rounded-md text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 transition"
+              className="sm:hidden flex items-center gap-1 text-sm px-2 py-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition"
             >
               <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
                 <path
@@ -235,7 +235,7 @@ export default function Boards() {
 
             {/* User */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm">
+              <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm">
                 {user?.name?.charAt(0) || "U"}
               </div>
 
@@ -243,7 +243,7 @@ export default function Boards() {
                 <p className="text-sm font-medium leading-none">
                   {user?.name || "User"}
                 </p>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <p className="text-xs text-ink-muted mt-0.5">
                   {user?.email || ""}
                 </p>
               </div>
@@ -252,7 +252,7 @@ export default function Boards() {
             {/* Sign out */}
             <button
               onClick={logout}
-              className="text-sm px-2.5 sm:px-3.5 py-2 rounded-lg border border-neutral-200 hover:bg-neutral-100 transition"
+              className="text-sm px-2.5 sm:px-3.5 py-2 rounded-lg border border-line hover:bg-surface-2 transition"
             >
               Sign out
             </button>
@@ -265,10 +265,10 @@ export default function Boards() {
         {/* Page heading */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">
               Boards
             </h1>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-ink-muted">
               {boards.length > 0
                 ? `${boards.length} board${boards.length === 1 ? "" : "s"}`
                 : "Manage your project boards"}
@@ -277,7 +277,7 @@ export default function Boards() {
 
           <button
             onClick={() => { setEditingBoard(null); setModalOpen(true); }}
-            className="flex items-center gap-2 bg-neutral-950 text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-neutral-800 transition"
+            className="flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
           >
             <IconPlus />
             New board
@@ -288,7 +288,7 @@ export default function Boards() {
         {loading && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-40 bg-white border border-neutral-200 rounded-xl animate-pulse" />
+              <div key={i} className="h-40 bg-surface border border-line rounded-card animate-pulse" />
             ))}
           </div>
         )}
@@ -296,13 +296,13 @@ export default function Boards() {
         {/* ── Error ── */}
         {!loading && fetchError && (
           <div className="text-center py-20">
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3 inline-block">
+            <p className="text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-4 py-3 inline-block">
               {fetchError}
             </p>
             <div className="mt-4">
               <button
                 onClick={() => fetchBoards()}
-                className="text-sm text-neutral-600 hover:text-neutral-900 underline underline-offset-2"
+                className="text-sm text-ink-muted hover:text-ink underline underline-offset-2"
               >
                 Try again
               </button>
@@ -314,13 +314,13 @@ export default function Boards() {
         {!loading && !fetchError && boards.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <IconEmpty />
-            <p className="mt-5 text-base font-medium text-neutral-900">No boards yet</p>
-            <p className="mt-1.5 text-sm text-neutral-500 max-w-xs">
+            <p className="mt-5 text-base font-medium text-ink">No boards yet</p>
+            <p className="mt-1.5 text-sm text-ink-muted max-w-xs">
               Create your first board to start organising columns and tasks.
             </p>
             <button
               onClick={() => { setEditingBoard(null); setModalOpen(true); }}
-              className="mt-6 flex items-center gap-2 bg-neutral-950 text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-neutral-800 transition"
+              className="mt-6 flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
             >
               <IconPlus />
               Create a board
@@ -344,7 +344,7 @@ export default function Boards() {
             {/* "Add board" card */}
             <button
               onClick={() => { setEditingBoard(null); setModalOpen(true); }}
-              className="h-full min-h-[9rem] flex flex-col items-center justify-center gap-2 border border-dashed border-neutral-300 rounded-xl text-neutral-400 hover:border-neutral-400 hover:text-neutral-600 hover:bg-white transition"
+              className="h-full min-h-[9rem] flex flex-col items-center justify-center gap-2 border border-dashed border-ink-muted/40 rounded-card text-ink-muted/70 hover:border-ink-muted/60 hover:text-ink-muted hover:bg-surface transition"
             >
               <IconPlus />
               <span className="text-sm font-medium">New board</span>
@@ -375,8 +375,8 @@ export default function Boards() {
         <div
           className={`fixed bottom-5 right-5 z-50 text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg border transition-all ${
             toast.type === "error"
-              ? "bg-red-50 border-red-100 text-red-700"
-              : "bg-white border-neutral-200 text-neutral-900"
+              ? "bg-danger-soft border-danger/20 text-danger"
+              : "bg-surface border-line text-ink"
           }`}
         >
           {toast.msg}
