@@ -83,7 +83,7 @@ const SECTIONS = [
   { to: "kanban", label: "Kanban Board", icon: <IconKanban /> },
   { to: "srs", label: "SRS Document", icon: <IconSrs /> },
   { to: "diagrams", label: "Diagrams", icon: <IconDiagrams /> },
-  { to: "sdd", label: "Design Document", icon: <IconSdd />, soon: true },
+  { to: "sdd", label: "Design Document", icon: <IconSdd /> },
   { to: "costing", label: "Deployment Document", icon: <IconCosting /> },
   { to: "settings", label: "Settings", icon: <IconSettings />, soon: true },
 ];

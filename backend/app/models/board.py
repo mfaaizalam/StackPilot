@@ -31,3 +31,5 @@ class Board(Base):
         back_populates="board",
         cascade="all, delete-orphan"
     )
+    sdd_documents = relationship("SDDDocument", back_populates="board", cascade="all, delete-orphan")
+    
