@@ -81,7 +81,7 @@ app.include_router(srs_board_router)
 app.include_router(cost_router)
 app.include_router(demo_router)
 
-
+app.include_router(sdd_router)
 
 @app.exception_handler(Exception)
 async def safe_unexpected_error(request: Request, exc: Exception):

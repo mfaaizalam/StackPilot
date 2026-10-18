@@ -55,7 +55,7 @@ def _filename(board, doc: SDDDocument, ext: str) -> str:
 @router.post("/generate", status_code=202)
 def generate(board_id: int, body: SDDGenerateRequest, background: BackgroundTasks,
              db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "editor")
     srs = _get_srs(db, board_id, body.srs_id)
 
     active = db.query(SDDJob).filter(SDDJob.board_id == board_id, SDDJob.status.in_(["queued", "running"]),
@@ -75,7 +75,7 @@ def generate(board_id: int, body: SDDGenerateRequest, background: BackgroundTask
 
 @router.get("/jobs/{job_id}")
 def job_status(board_id: int, job_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     job = db.query(SDDJob).filter(SDDJob.id == job_id, SDDJob.board_id == board_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -84,7 +84,7 @@ def job_status(board_id: int, job_id: str, db: Session = Depends(get_db), curren
 
 @router.get("/versions")
 def versions(board_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     rows = db.query(SDDDocument).filter(SDDDocument.board_id == board_id).order_by(SDDDocument.version.desc()).all()
     return [{"id": r.id, "version": r.version, "srs_version": r.srs_version, "source": r.source,
              "created_at": r.created_at} for r in rows]
@@ -93,7 +93,7 @@ def versions(board_id: int, db: Session = Depends(get_db), current_user=Depends(
 @router.get("/export.md")
 def export_md(board_id: int, version: int | None = None, db: Session = Depends(get_db),
               current_user=Depends(get_current_user)):
-    board = get_owned_board(db, board_id, current_user)
+    board = get_owned_board(db, board_id, current_user, "viewer")
     doc = _get_sdd(db, board_id, version)
     return Response(doc.markdown, media_type="text/markdown",
                     headers={"Content-Disposition": _filename(board, doc, "md")})
@@ -102,7 +102,7 @@ def export_md(board_id: int, version: int | None = None, db: Session = Depends(g
 @router.get("/export.docx")
 def export_docx(board_id: int, version: int | None = None, db: Session = Depends(get_db),
                 current_user=Depends(get_current_user)):
-    board = get_owned_board(db, board_id, current_user)
+    board = get_owned_board(db, board_id, current_user, "viewer")
     doc = _get_sdd(db, board_id, version)
     srs = db.query(SRSDocument).filter(SRSDocument.id == doc.srs_id).first()
     if not srs:
@@ -116,5 +116,5 @@ def export_docx(board_id: int, version: int | None = None, db: Session = Depends
 @router.get("")
 def latest(board_id: int, version: int | None = None, db: Session = Depends(get_db),
            current_user=Depends(get_current_user)):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "viewer")
     return _out(db, _get_sdd(db, board_id, version))
