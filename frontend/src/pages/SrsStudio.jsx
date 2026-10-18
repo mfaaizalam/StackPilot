@@ -539,12 +539,7 @@ export default function SrsStudio() {
       <div className="border-b border-neutral-200 bg-white sticky top-0 z-10 print:hidden">
         <div className="max-w-5xl mx-auto px-6 min-h-14 py-2 flex flex-wrap gap-2 items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-semibold text-neutral-900">SRS</h1>
-            <div className="flex gap-1">
-              <button onClick={() => loadDemo("hospital")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-300 hover:bg-neutral-100">Hospital demo</button>
-              <button onClick={() => loadDemo("ecommerce")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-300 hover:bg-neutral-100">Store demo</button>
-              <button onClick={() => loadDemo("university")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-300 hover:bg-neutral-100">University demo</button>
-            </div>
+            <h1 className="text-sm font-semibold text-neutral-900">Software Requirement Specifications</h1>
           </div>
           {step === "result" && doc && (
             <div className="flex flex-wrap items-center gap-2">
