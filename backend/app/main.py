@@ -22,6 +22,8 @@ from app.routes.srs_board import router as srs_board_router
 from app.routes.cost import router as cost_router
 from app.routes.demo import router as demo_router
 from app.core.migrate import ensure_task_columns
+from app.routes.members import router as members_router
+from app.models import rbac  # noqa: F401
 import logging
 app = FastAPI(
     title="AI Project Management API",
@@ -63,6 +65,8 @@ app.include_router(ai_router)
 # Get AI assistance
 app.include_router(ai_chat)
 
+# include member router
+app.include_router(members_router)
 
 # SRS generation (questions -> requirements -> SRS document)
 app.include_router(srs_router)

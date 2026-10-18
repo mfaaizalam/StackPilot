@@ -1,4 +1,7 @@
-export default function ConfirmDialog({ open, onClose, onConfirm, title, message, loading }) {
+export default function ConfirmDialog({
+  open, onClose, onConfirm, title, message, loading,
+  confirmLabel = "Delete", loadingLabel = "Deleting…",
+}) {
   if (!open) return null;
 
   return (
@@ -19,7 +22,7 @@ export default function ConfirmDialog({ open, onClose, onConfirm, title, message
             disabled={loading}
             className="flex-1 py-2.5 rounded-lg bg-danger text-white text-sm font-medium hover:bg-danger/90 disabled:opacity-50 transition"
           >
-            {loading ? "Deleting…" : "Delete"}
+            {loading ? loadingLabel : confirmLabel}
           </button>
         </div>
       </div>

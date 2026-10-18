@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import AuthShell from "../components/AuthShell.jsx";
+import { safeNext, authQuery } from "../utils/safeNext.js";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [params] = useSearchParams();
+  const next = safeNext(params.get("next")); // e.g. /invite/<token>
+  const [form, setForm] = useState({ email: params.get("email") || "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,7 +24,7 @@ export default function Login() {
       if (data?.token) localStorage.setItem("token", data.token);
       if (data?.access_token) localStorage.setItem("token", data.access_token);
       if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
-      navigate("/dashboard");
+      navigate(next || "/dashboard", { replace: true });
     } catch (err) {
       setError(
         err?.response?.data?.message ||
@@ -41,7 +44,7 @@ export default function Login() {
         <>
           Don&apos;t have an account?{" "}
           <Link
-            to="/register"
+            to={`/register${authQuery(next, params.get("email"))}`}
             className="text-neutral-900 font-medium hover:underline"
           >
             Create one

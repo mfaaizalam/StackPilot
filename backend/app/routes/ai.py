@@ -48,7 +48,7 @@ def save_project_route(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    get_owned_board(db, board_id, current_user)
+    get_owned_board(db, board_id, current_user, "project_manager")
     try:
 
         result = save_project(

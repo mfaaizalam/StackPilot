@@ -5,6 +5,7 @@ import api from "../api/axios.js";
 import { useBoards, KEYS } from "../api/queries.js";
 import BoardModal from "../components/BoardModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import PendingInvitations from "../components/PendingInvitations.jsx";
 
 // ── Icons (inline SVG, no extra deps) ──────────────────────────────────────
 function IconPlus() {
@@ -193,6 +194,8 @@ export default function Boards() {
               : "Manage your projects"}
           </p>
         </div>
+
+        <PendingInvitations />
 
         {/* ── Loading ── */}
         {loading && (
