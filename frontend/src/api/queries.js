@@ -35,3 +35,12 @@ export const useDashboardSummary = () =>
       };
     },
   });
+
+export const useLatestSrs = (boardId) =>
+  useQuery({
+    queryKey: ["srs", boardId, "latest"],
+    queryFn: () =>
+      api.get(`/boards/${boardId}/srs/`).then((r) => r.data),
+    staleTime: 60_000,
+    retry: (count, err) => err?.response?.status !== 404 && count < 1,
+  });

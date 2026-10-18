@@ -1,14 +1,14 @@
 import { QueryClient } from "@tanstack/react-query";
 
-// Shared cache for the whole app.
-// staleTime: data counts as fresh for 1 minute, so page/tab switches read from memory.
-// refetchOnWindowFocus: false stops refetching when you return to the browser tab.
+// Single shared client. Imported by main.jsx (provider) and axios.js
+// (cache invalidation after writes). It imports nothing from the app, so
+// there is no circular import with axios.js.
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60_000,
-      refetchOnWindowFocus: false,
+      staleTime: 30_000,          // lists (boards) don't refetch on every mount
       retry: 1,
+      refetchOnWindowFocus: false,
     },
   },
 });

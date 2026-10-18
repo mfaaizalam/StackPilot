@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import api from "../api/axios.js";
 import DiagramsPanel from "../components/DiagramsPanel.jsx";
 import CostPanel from "../components/CostPanel.jsx";
+import ComingSoon from "../components/ComingSoon.jsx";
 
 /* ───────────────────────── helpers ───────────────────────── */
 const errText = (e, fallback = "Something went wrong. Please try again.") => {
@@ -260,36 +261,6 @@ function RequirementsTab({ req, onSave, saving }) {
   );
 }
 
-function TraceabilityTab({ req }) {
-  const ucs = req.use_cases;
-  return (
-    <div className="print:hidden">
-      <p className="text-sm text-neutral-500 mb-4">Every requirement should be covered by at least one use case. Red rows are gaps.</p>
-      <div className="overflow-x-auto bg-white border border-neutral-200 rounded-xl">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="bg-neutral-50 border-b border-neutral-200">
-              <th className="text-left px-3 py-2 font-semibold text-neutral-700">Requirement</th>
-              {ucs.map((u) => <th key={u.id} title={u.name} className="px-3 py-2 font-semibold text-neutral-700 whitespace-nowrap">{u.id}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {req.functional_requirements.map((f) => {
-              const covered = ucs.some((u) => u.fr_ids.includes(f.id));
-              return (
-                <tr key={f.id} className={`border-b border-neutral-100 ${covered ? "" : "bg-red-50"}`}>
-                  <td className="px-3 py-2 text-neutral-700"><span className="font-mono font-semibold mr-2">{f.id}</span>{f.title}</td>
-                  {ucs.map((u) => <td key={u.id} className="px-3 py-2 text-center">{u.fr_ids.includes(f.id) ? <span className="text-emerald-600 font-bold">●</span> : ""}</td>)}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 function QualityTab({ issues }) {
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
@@ -380,6 +351,8 @@ function BoardDialog({ state, busy, onClose, onChoose, onOpenBoard }) {
 }
 
 /* ───────────────────────── page ───────────────────────── */
+// Diagrams and Costing also exist as standalone pages (DiagramsPage / CostingPage).
+// The tabs here show the same panels for whichever SRS version is selected.
 export default function SrsStudio() {
   const { boardId } = useParams();
   const navigate = useNavigate();
@@ -558,15 +531,16 @@ export default function SrsStudio() {
 
   const newGeneration = () => { setDescription(doc?.description || description); setQuestions([]); setError(""); setStep("describe"); };
 
-  const TABS = [["srs", "SRS document"], ["req", "Requirements"], ["trace", "Traceability"], ["quality", "Quality checks"], ["diagrams", "Diagrams"], ["cost", "Cost"]];
+  const TABS = [["srs", "SRS document"], ["req", "Requirements"], ["quality", "Quality checks"], ["diagrams", "Diagrams"], ["cost", "Cost"], ["analysis", "Analysis"]];
   const issueCount = doc?.issues?.length || 0;
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="border-b border-neutral-200 bg-white sticky top-0 z-10 print:hidden">
-        <div className="max-w-5xl mx-auto px-6 min-h-16 py-2 flex flex-wrap gap-2 items-center justify-between">
+      {/* Page toolbar (global nav lives in the sidebar) */}
+      <div className="border-b border-neutral-200 bg-white sticky top-0 z-10 print:hidden">
+        <div className="max-w-5xl mx-auto px-6 min-h-14 py-2 flex flex-wrap gap-2 items-center justify-between">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(`/boards/${boardId}`)} className="text-sm text-neutral-500 hover:text-neutral-900 transition">← Back to board</button>
+            <h1 className="text-sm font-semibold text-neutral-900">SRS</h1>
             <div className="flex gap-1">
               <button onClick={() => loadDemo("hospital")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-300 hover:bg-neutral-100">Hospital demo</button>
               <button onClick={() => loadDemo("ecommerce")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg border border-neutral-300 hover:bg-neutral-100">Store demo</button>
@@ -592,7 +566,7 @@ export default function SrsStudio() {
             </div>
           )}
         </div>
-      </header>
+      </div>
 
       <main className="max-w-5xl mx-auto px-6 py-10">
         {step === "loading" && <div className="h-40 bg-white border border-neutral-200 rounded-2xl animate-pulse" />}
@@ -657,7 +631,6 @@ export default function SrsStudio() {
               </article>
             )}
             {tab === "req" && <RequirementsTab req={doc.requirements} onSave={saveEdits} saving={saving} />}
-            {tab === "trace" && <TraceabilityTab req={doc.requirements} />}
             {tab === "quality" && <QualityTab issues={doc.issues || []} />}
             {/* Mounted on first open, then kept mounted (hidden) so a running diagram job
                 keeps polling and neither panel refetches when you switch tabs. */}
@@ -671,12 +644,18 @@ export default function SrsStudio() {
                 <CostPanel key={doc.id} boardId={boardId} srsId={doc.id} version={doc.version} />
               </div>
             )}
+            {tab === "analysis" && (
+              <ComingSoon
+                title="Analysis"
+                description="Gap analysis, risk analysis and improvement suggestions for this SRS will appear here."
+              />
+            )}
           </>
         )}
       </main>
 
       <BoardDialog state={boardDialog} busy={boardBusy} onClose={() => setBoardDialog(null)}
-        onChoose={buildBoard} onOpenBoard={() => navigate(`/boards/${boardId}`)} />
+        onChoose={buildBoard} onOpenBoard={() => navigate(`/boards/${boardId}/kanban`)} />
 
       {toast && <div className="fixed bottom-5 right-5 z-50 bg-white border border-neutral-200 text-sm font-medium text-neutral-900 px-4 py-2.5 rounded-lg shadow-lg print:hidden">{toast}</div>}
     </div>
