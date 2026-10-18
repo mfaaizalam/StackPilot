@@ -57,3 +57,46 @@
 
   --gradient-card: linear-gradient(145deg, #353943 0%, #252a2e 100%);
 }
+
+/* Print always uses a light page, whatever the screen theme is */
+@media print {
+  :root,
+  [data-theme='dark'] {
+    color-scheme: light;
+    --canvas: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f5f5f5;
+    --line: #e5e5e5;
+    --ink: #171717;
+    --ink-muted: #737373;
+  }
+}
+
+/* Expose the variables as Tailwind classes (bg-canvas, text-ink, ...) */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-overlay: var(--overlay);
+  --font-sans: var(--font-body);
+  --radius-card: var(--card-radius);
+}
+
+/* Gradient cards: add class="card-gradient" instead of bg-surface */
+@utility card-gradient {
+  background-image: var(--gradient-card);
+}
