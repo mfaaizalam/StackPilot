@@ -1,8 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { useDashboardSummary } from "../api/queries.js";
 
-function IconBoards() {
+function IconProjects() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
       <rect x="2" y="2" width="7" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -39,7 +38,6 @@ function IconArrow() {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
   // One cached query replaces the old useState/useEffect + 3 calls on every visit.
@@ -48,67 +46,31 @@ export default function Dashboard() {
   const stats = isError
     ? { boards: "—", columns: "—", tasks: "—" }
     : { boards: data?.boards, columns: data?.columns, tasks: data?.tasks };
-  const recentBoards = data?.recent ?? [];
+  const recentProjects = data?.recent ?? [];
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    queryClient.clear(); // don't leak cached data to the next user on this browser
-    navigate("/login");
-  };
-
+  // NOTE: `key` values match the API response fields, so they stay as-is.
   const STAT_CARDS = [
-    { label: "Boards", key: "boards",  icon: <IconBoards />,  route: "/boards" },
-    { label: "Columns", key: "columns", icon: <IconColumns />, route: null },
-    { label: "Tasks",   key: "tasks",   icon: <IconTasks />,   route: null },
+    { label: "Projects", key: "boards",  icon: <IconProjects />, route: "/boards" },
+    { label: "Columns",  key: "columns", icon: <IconColumns />,  route: null },
+    { label: "Tasks",    key: "tasks",   icon: <IconTasks />,    route: null },
   ];
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      {/* Header */}
+      {/* Top bar */}
       <header className="border-b border-line bg-surface sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 font-semibold tracking-tight">
-              <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">S</div>
-              StackPilot
-            </div>
-            <nav className="hidden sm:flex items-center gap-1">
-              <button className="text-sm px-3 py-1.5 rounded-md bg-surface-2 text-ink font-medium">Home</button>
-              <button onClick={() => navigate("/boards")} className="text-sm px-3 py-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition">Boards</button>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm">
-              {user?.name?.charAt(0) || "U"}
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium leading-none">{user?.name || "User"}</p>
-              <p className="text-xs text-ink-muted mt-0.5">{user?.email || ""}</p>
-            </div>
-            <button onClick={logout} className="text-sm px-3.5 py-2 rounded-lg border border-line hover:bg-surface-2 transition">
-              Sign out
-            </button>
-          </div>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+          <h1 className="text-lg font-semibold tracking-tight">Manage Projects</h1>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-10">
         {/* Greeting */}
-        <div className="flex items-start justify-between flex-wrap gap-4 mb-10">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">
-              Welcome back{user?.name ? `, ${user.name}` : ""} 👋
-            </h1>
-            <p className="mt-1 text-sm text-ink-muted">Here's what's happening across your workspace.</p>
-          </div>
-          <button
-            onClick={() => navigate("/boards")}
-            className="flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
-          >
-            Go to Boards <IconArrow />
-          </button>
+        <div className="mb-10">
+          <h2 className="text-2xl font-semibold tracking-tight text-ink">
+            Welcome back{user?.name ? `, ${user.name}` : ""} 👋
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted">Here's what's happening across your workspace.</p>
         </div>
 
         {/* Stat cards */}
@@ -132,10 +94,10 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Recent boards */}
+        {/* Recent projects */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-ink">Recent boards</h2>
+            <h2 className="text-sm font-semibold text-ink">Recent projects</h2>
             <button onClick={() => navigate("/boards")} className="text-xs text-ink-muted hover:text-ink underline underline-offset-2 transition flex items-center gap-1">
               View all <IconArrow />
             </button>
@@ -147,27 +109,27 @@ export default function Dashboard() {
             </div>
           )}
 
-          {!loading && recentBoards.length === 0 && (
+          {!loading && recentProjects.length === 0 && (
             <div className="py-12 text-center border border-dashed border-line rounded-card">
-              <p className="text-sm text-ink-muted">No boards yet.</p>
-              <button onClick={() => navigate("/boards")} className="mt-3 text-sm text-ink font-medium underline underline-offset-2">Create your first board</button>
+              <p className="text-sm text-ink-muted">No projects yet.</p>
+              <button onClick={() => navigate("/boards")} className="mt-3 text-sm text-ink font-medium underline underline-offset-2">Create your first project</button>
             </div>
           )}
 
-          {!loading && recentBoards.length > 0 && (
+          {!loading && recentProjects.length > 0 && (
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {recentBoards.map((b) => {
-                const initials = b.name.split(" ").slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("");
+              {recentProjects.map((p) => {
+                const initials = p.name.split(" ").slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("");
                 return (
                   <div
-                    key={b.id}
-                    onClick={() => navigate(`/boards/${b.id}`)}
+                    key={p.id}
+                    onClick={() => navigate(`/boards/${p.id}`)}
                     className="bg-surface border border-line rounded-card p-4 hover:border-ink-muted/40 hover:shadow-sm transition cursor-pointer flex flex-col gap-3"
                   >
-                    <div className="w-8 h-8 rounded-md bg-brand text-brand-fg flex items-center justify-center text-xs font-semibold">{initials || "B"}</div>
+                    <div className="w-8 h-8 rounded-md bg-brand text-brand-fg flex items-center justify-center text-xs font-semibold">{initials || "P"}</div>
                     <div>
-                      <p className="text-sm font-medium text-ink truncate">{b.name}</p>
-                      {b.description && <p className="text-xs text-ink-muted mt-0.5 truncate">{b.description}</p>}
+                      <p className="text-sm font-medium text-ink truncate">{p.name}</p>
+                      {p.description && <p className="text-xs text-ink-muted mt-0.5 truncate">{p.description}</p>}
                     </div>
                   </div>
                 );

@@ -1,24 +1,52 @@
-/* 1. THE ONLY PLACE YOU EDIT COLORS. Dark is the default. */
+/* Light is the default */
 :root {
-  color-scheme: dark; /* native selects, scrollbars, date pickers go dark too */
+  color-scheme: light;
 
-  /* Surfaces */
-  --canvas: #1d1e24;       /* page background */
-  --surface: #252b2f;      /* cards, modals, sidebar panels */
-  --surface-2: #2c3138;    /* inner cards, pills, hover fills (derived) */
-  --line: #353943;         /* borders, dividers */
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f5f5f5;
+  --line: #e5e5e5;
 
-  /* Text */
-  --ink: #f4f6f8;          /* headings, main text */
-  --ink-muted: #bcc1c8;    /* secondary text (ice blue) */
+  --ink: #171717;
+  --ink-muted: #737373;
 
-  /* Brand: the light pill in the screenshot */
+  --brand: #171717;
+  --brand-hover: #262626;
+  --brand-fg: #ffffff;
+  --brand-soft: #f0f0f0;
+
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --info: #0284c7;
+
+  --overlay: #000000;
+  --gradient-card: linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%);
+
+  --card-radius: 1rem;
+  --font-body: Arial, Helvetica, sans-serif;
+}
+
+/* Optional dark theme: <html data-theme="dark"> */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --canvas: #1d1e24;
+  --surface: #252b2f;
+  --surface-2: #2c3138;
+  --line: #353943;
+
+  --ink: #f4f6f8;
+  --ink-muted: #bcc1c8;
+
   --brand: #bcc1c8;
   --brand-hover: #d3d7dc;
-  --brand-fg: #1d1e24;     /* dark text on the light brand fill */
+  --brand-fg: #1d1e24;
   --brand-soft: #353943;
 
-  /* Status (tuned for dark backgrounds) */
   --success: #4ade80;
   --success-soft: #17301f;
   --warning: #fbbf24;
@@ -27,77 +55,5 @@
   --danger-soft: #3d2022;
   --info: #38bdf8;
 
-  /* Modal and drawer backdrops (always black, never theme-inverted) */
-  --overlay: #000000;
-
-  /* Card gradient (use with the `card-gradient` class) */
   --gradient-card: linear-gradient(145deg, #353943 0%, #252a2e 100%);
-
-  /* Shape and type */
-  --card-radius: 1rem;
-  --font-body: Arial, Helvetica, sans-serif;
-}
-
-/* Optional light theme: <html data-theme="light"> */
-[data-theme='light'] {
-  color-scheme: light;
-  --canvas: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f5f5f5;
-  --line: #e5e5e5;
-  --ink: #171717;
-  --ink-muted: #737373;
-  --brand: #171717;
-  --brand-hover: #262626;
-  --brand-fg: #ffffff;
-  --brand-soft: #f0f0f0;
-  --success: #16a34a;
-  --success-soft: #dcfce7;
-  --warning: #d97706;
-  --warning-soft: #fef3c7;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --info: #0284c7;
-  --gradient-card: linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%);
-}
-
-/* Print always uses a light page, whatever the screen theme is */
-@media print {
-  :root {
-    --canvas: #ffffff;
-    --surface: #ffffff;
-    --surface-2: #f5f5f5;
-    --line: #e5e5e5;
-    --ink: #171717;
-    --ink-muted: #737373;
-  }
-}
-
-/* 2. EXPOSE THEM AS TAILWIND CLASSES (bg-canvas, text-ink, ...) */
-@theme inline {
-  --color-canvas: var(--canvas);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-line: var(--line);
-  --color-ink: var(--ink);
-  --color-ink-muted: var(--ink-muted);
-  --color-brand: var(--brand);
-  --color-brand-hover: var(--brand-hover);
-  --color-brand-fg: var(--brand-fg);
-  --color-brand-soft: var(--brand-soft);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-info: var(--info);
-  --color-overlay: var(--overlay);
-  --font-sans: var(--font-body);
-  --radius-card: var(--card-radius);
-}
-
-/* 3. GRADIENT CARDS: add class="card-gradient" instead of bg-surface */
-@utility card-gradient {
-  background-image: var(--gradient-card);
 }

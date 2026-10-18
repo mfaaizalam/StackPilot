@@ -28,16 +28,6 @@ function IconTrash() {
     </svg>
   );
 }
-function IconBoard() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="7" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      <rect x="11" y="2" width="7" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      <rect x="11" y="10" width="7" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-      <rect x="2" y="14" width="7" height="4" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-    </svg>
-  );
-}
 function IconEmpty() {
   return (
     <svg className="text-line" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,9 +39,9 @@ function IconEmpty() {
   );
 }
 
-// ── Board card ──────────────────────────────────────────────────────────────
-function BoardCard({ board, onEdit, onDelete, onClick }) {
-  const initials = board.name
+// ── Project card ────────────────────────────────────────────────────────────
+function ProjectCard({ project, onEdit, onDelete, onClick }) {
+  const initials = project.name
     .split(" ")
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() || "")
@@ -60,7 +50,7 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
   return (
     <div
       className="group relative bg-surface border border-line rounded-card p-5 hover:border-ink-muted/40 hover:shadow-sm transition cursor-pointer flex flex-col gap-3"
-      onClick={() => onClick(board)}
+      onClick={() => onClick(project)}
     >
       {/* Action buttons */}
       <div
@@ -68,16 +58,16 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
         onClick={(e) => e.stopPropagation()}
       >
         <button
-          onClick={() => onEdit(board)}
+          onClick={() => onEdit(project)}
           className="w-7 h-7 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-ink hover:bg-surface-2 transition"
-          title="Edit board"
+          title="Edit project"
         >
           <IconEdit />
         </button>
         <button
-          onClick={() => onDelete(board)}
+          onClick={() => onDelete(project)}
           className="w-7 h-7 flex items-center justify-center rounded-md text-ink-muted/70 hover:text-danger hover:bg-danger-soft transition"
-          title="Delete board"
+          title="Delete project"
         >
           <IconTrash />
         </button>
@@ -85,17 +75,17 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
 
       {/* Avatar */}
       <div className="w-10 h-10 rounded-lg bg-brand text-brand-fg flex items-center justify-center text-sm font-semibold tracking-tight shrink-0">
-        {initials || "B"}
+        {initials || "P"}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-ink truncate pr-10">
-          {board.name}
+          {project.name}
         </p>
-        {board.description ? (
+        {project.description ? (
           <p className="mt-1 text-xs text-ink-muted line-clamp-2 leading-relaxed">
-            {board.description}
+            {project.description}
           </p>
         ) : (
           <p className="mt-1 text-xs text-ink-muted/70 italic">No description</p>
@@ -105,27 +95,26 @@ function BoardCard({ board, onEdit, onDelete, onClick }) {
   );
 }
 
-// ── Main Boards page ────────────────────────────────────────────────────────
+// ── Main Projects page ──────────────────────────────────────────────────────
 export default function Boards() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // Cached list: switching Home <-> Boards no longer refetches within the cache window.
+  // Cached list: switching pages no longer refetches within the cache window.
   const {
-    data: boards = [],
+    data: projects = [],
     isLoading: loading,
     error,
-    refetch: fetchBoards,
+    refetch: fetchProjects,
   } = useBoards();
 
   const fetchError = error
-    ? error?.response?.data?.detail || "Failed to load boards. Is the backend running?"
+    ? error?.response?.data?.detail || "Failed to load projects. Is the backend running?"
     : "";
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingBoard, setEditingBoard] = useState(null); // null = create, object = edit
+  const [editingProject, setEditingProject] = useState(null); // null = create, object = edit
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -135,8 +124,6 @@ export default function Boards() {
   const [toast, setToast] = useState(null);
 
   // ── Cache helpers ─────────────────────────────────────────────────────────
-  // Update the cached list immediately and mark the dashboard counts stale
-  // so Home shows correct numbers next time it opens.
   const syncAfterChange = (updater) => {
     queryClient.setQueryData(KEYS.boards, updater);
     queryClient.invalidateQueries({ queryKey: KEYS.dashboardSummary });
@@ -148,17 +135,17 @@ export default function Boards() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // ── CRUD handlers ─────────────────────────────────────────────────────────
+  // ── CRUD handlers (API paths unchanged) ───────────────────────────────────
   const handleCreate = async (form) => {
     const { data } = await api.post("/boards/", form);
     syncAfterChange((prev = []) => [data, ...prev]);
-    showToast("Board created.");
+    showToast("Project created.");
   };
 
   const handleEdit = async (form) => {
-    const { data } = await api.put(`/boards/${editingBoard.id}`, form);
-    syncAfterChange((prev = []) => prev.map((b) => (b.id === data.id ? data : b)));
-    showToast("Board updated.");
+    const { data } = await api.put(`/boards/${editingProject.id}`, form);
+    syncAfterChange((prev = []) => prev.map((p) => (p.id === data.id ? data : p)));
+    showToast("Project updated.");
   };
 
   const handleDelete = async () => {
@@ -166,8 +153,8 @@ export default function Boards() {
     setDeleteLoading(true);
     try {
       await api.delete(`/boards/${deleteTarget.id}`);
-      syncAfterChange((prev = []) => prev.filter((b) => b.id !== deleteTarget.id));
-      showToast("Board deleted.");
+      syncAfterChange((prev = []) => prev.filter((p) => p.id !== deleteTarget.id));
+      showToast("Project deleted.");
       setDeleteTarget(null);
     } catch (err) {
       showToast(err?.response?.data?.detail || "Delete failed.", "error");
@@ -176,112 +163,35 @@ export default function Boards() {
     }
   };
 
-  // ── Open board → navigate to board detail ────────────────────────────────
-  const handleOpenBoard = (board) => {
-    navigate(`/boards/${board.id}`);
+  // ── Open project → navigate to detail ────────────────────────────────────
+  const handleOpenProject = (project) => {
+    navigate(`/boards/${project.id}`);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    queryClient.clear(); // don't leak cached data to the next user on this browser
-    navigate("/login");
-  };
+  const openCreate = () => { setEditingProject(null); setModalOpen(true); };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-canvas text-ink">
       {/* ── Header ── */}
       <header className="border-b border-line bg-surface sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 font-semibold tracking-tight">
-            <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">
-              S
-            </div>
-            StackPilot
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Desktop Navigation */}
-            <nav className="hidden sm:flex items-center gap-1">
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="text-sm px-3 py-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition"
-              >
-                Home
-              </button>
-
-              <button className="text-sm px-3 py-1.5 rounded-md bg-surface-2 text-ink font-medium">
-                Boards
-              </button>
-            </nav>
-
-            {/* Mobile Home Button */}
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="sm:hidden flex items-center gap-1 text-sm px-2 py-1.5 rounded-md text-ink-muted hover:text-ink hover:bg-surface-2 transition"
-            >
-              <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-                <path
-                  d="M10 12L6 8l4-4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Home
-            </button>
-
-            {/* User */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm">
-                {user?.name?.charAt(0) || "U"}
-              </div>
-
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium leading-none">
-                  {user?.name || "User"}
-                </p>
-                <p className="text-xs text-ink-muted mt-0.5">
-                  {user?.email || ""}
-                </p>
-              </div>
-            </div>
-
-            {/* Sign out */}
-            <button
-              onClick={logout}
-              className="text-sm px-2.5 sm:px-3.5 py-2 rounded-lg border border-line hover:bg-surface-2 transition"
-            >
-              Sign out
-            </button>
-          </div>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center">
+          <span className="text-lg font-semibold tracking-tight">Manage Projects</span>
         </div>
       </header>
 
       {/* ── Main ── */}
       <main className="max-w-6xl mx-auto px-6 py-10">
         {/* Page heading */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-ink">
-              Boards
-            </h1>
-            <p className="mt-1 text-sm text-ink-muted">
-              {boards.length > 0
-                ? `${boards.length} board${boards.length === 1 ? "" : "s"}`
-                : "Manage your project boards"}
-            </p>
-          </div>
-
-          <button
-            onClick={() => { setEditingBoard(null); setModalOpen(true); }}
-            className="flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
-          >
-            <IconPlus />
-            New board
-          </button>
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            Projects
+          </h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            {projects.length > 0
+              ? `${projects.length} project${projects.length === 1 ? "" : "s"}`
+              : "Manage your projects"}
+          </p>
         </div>
 
         {/* ── Loading ── */}
@@ -301,7 +211,7 @@ export default function Boards() {
             </p>
             <div className="mt-4">
               <button
-                onClick={() => fetchBoards()}
+                onClick={() => fetchProjects()}
                 className="text-sm text-ink-muted hover:text-ink underline underline-offset-2"
               >
                 Try again
@@ -311,43 +221,43 @@ export default function Boards() {
         )}
 
         {/* ── Empty state ── */}
-        {!loading && !fetchError && boards.length === 0 && (
+        {!loading && !fetchError && projects.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <IconEmpty />
-            <p className="mt-5 text-base font-medium text-ink">No boards yet</p>
+            <p className="mt-5 text-base font-medium text-ink">No projects yet</p>
             <p className="mt-1.5 text-sm text-ink-muted max-w-xs">
-              Create your first board to start organising columns and tasks.
+              Create your first project to start organising columns and tasks.
             </p>
             <button
-              onClick={() => { setEditingBoard(null); setModalOpen(true); }}
+              onClick={openCreate}
               className="mt-6 flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
             >
               <IconPlus />
-              Create a board
+              Create a project
             </button>
           </div>
         )}
 
-        {/* ── Board grid ── */}
-        {!loading && !fetchError && boards.length > 0 && (
+        {/* ── Project grid ── */}
+        {!loading && !fetchError && projects.length > 0 && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {boards.map((board) => (
-              <BoardCard
-                key={board.id}
-                board={board}
-                onEdit={(b) => { setEditingBoard(b); setModalOpen(true); }}
-                onDelete={(b) => setDeleteTarget(b)}
-                onClick={handleOpenBoard}
+            {projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onEdit={(p) => { setEditingProject(p); setModalOpen(true); }}
+                onDelete={(p) => setDeleteTarget(p)}
+                onClick={handleOpenProject}
               />
             ))}
 
-            {/* "Add board" card */}
+            {/* "Add project" card */}
             <button
-              onClick={() => { setEditingBoard(null); setModalOpen(true); }}
+              onClick={openCreate}
               className="h-full min-h-[9rem] flex flex-col items-center justify-center gap-2 border border-dashed border-ink-muted/40 rounded-card text-ink-muted/70 hover:border-ink-muted/60 hover:text-ink-muted hover:bg-surface transition"
             >
               <IconPlus />
-              <span className="text-sm font-medium">New board</span>
+              <span className="text-sm font-medium">New project</span>
             </button>
           </div>
         )}
@@ -357,8 +267,8 @@ export default function Boards() {
       <BoardModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        onSubmit={editingBoard ? handleEdit : handleCreate}
-        initial={editingBoard}
+        onSubmit={editingProject ? handleEdit : handleCreate}
+        initial={editingProject}
       />
 
       <ConfirmDialog
@@ -367,7 +277,7 @@ export default function Boards() {
         onConfirm={handleDelete}
         loading={deleteLoading}
         title={`Delete "${deleteTarget?.name}"?`}
-        message="This will permanently delete the board. This action cannot be undone."
+        message="This will permanently delete the project. This action cannot be undone."
       />
 
       {/* ── Toast ── */}
