@@ -32,6 +32,7 @@ app = FastAPI(
 _origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://stackpilot-production-5297.up.railway.app",
 ] + [o.strip().rstrip("/") for o in settings.FRONTEND_ORIGINS.split(",") if o.strip()]
 
 app.add_middleware(
