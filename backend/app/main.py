@@ -32,12 +32,13 @@ app = FastAPI(
 _origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "https://stackpilot-production-5297.up.railway.app",
+    "https://stackpilot-go.vercel.app",
 ] + [o.strip().rstrip("/") for o in settings.FRONTEND_ORIGINS.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
+    allow_origin_regex=r"https://stackpilot-go.*\.vercel\.app",  # optional: Vercel preview URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
