@@ -16,7 +16,8 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str
     ALGORITHM: str
-
+    OTP_ENABLED: bool = True
+    DEMO_OTP: str = "123456"
     QDRANT_URL: str
     QDRANT_API_KEY: str
 
