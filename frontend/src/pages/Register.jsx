@@ -15,6 +15,7 @@ export default function Register() {
     otp: "",
   });
   const [otpSent, setOtpSent] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,16 +30,23 @@ export default function Register() {
     if (!form.email) return setError("Enter your email first to receive an OTP.");
     setSendingOtp(true);
     try {
-      await api.post("/auth/send-otp", { email: form.email });
+      const { data } = await api.post("/auth/send-otp", { email: form.email });
       setOtpSent(true);
-      setInfo("OTP sent. Check your inbox.");
-    } 
-    catch (err) { console.log("===== OTP ERROR ====="); 
-      console.log("Error:", err); console.log("Message:", err.message); 
-      console.log("Status:", err.response?.status); console.log("Response data:", err.response?.data); 
-      console.log("Response headers:", err.response?.headers); console.log("Request:", err.request); 
-      setError( err?.response?.data?.message || err?.response?.data?.detail || `OTP request failed. Status: ${err?.response?.status || "No response"}` ); }
-    finally {
+      if (data?.demo_mode) {
+        setDemoMode(true);
+        setForm((f) => ({ ...f, otp: "123456" })); // prefill for the demo
+        setInfo("Demo mode: no email is sent. Code 123456 is filled in for you.");
+      } else {
+        setDemoMode(false);
+        setInfo("OTP sent. Check your inbox.");
+      }
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          err?.response?.data?.detail ||
+          `OTP request failed. Status: ${err?.response?.status || "No response"}`
+      );
+    } finally {
       setSendingOtp(false);
     }
   };
@@ -153,6 +161,11 @@ export default function Register() {
             placeholder="6-digit code"
             className="w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-sm tracking-widest placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition"
           />
+          {demoMode && (
+            <p className="mt-1.5 text-xs text-amber-700">
+              Demo mode is on. Use code <strong>123456</strong>.
+            </p>
+          )}
         </div>
 
         {error && (

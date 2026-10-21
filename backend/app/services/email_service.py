@@ -37,11 +37,10 @@ def _send_via_brevo(receiver: str, subject: str, text: str) -> None:
 
 
 def send_email(receiver: str, otp: str):
-    _send_via_brevo(
-        receiver,
-        "StackPilot Verification",
-        f"Your OTP is {otp}",
-    )
+    try:
+        _send_via_brevo(receiver, "StackPilot Verification", f"Your OTP is {otp}")
+    except Exception:
+        logger.exception("OTP email failed")
 
 
 def frontend_base_url() -> str:

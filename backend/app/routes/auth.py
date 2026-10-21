@@ -1,8 +1,8 @@
 import random
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,BackgroundTasks
 from sqlalchemy.orm import Session
-
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import (
     hash_password,
@@ -59,28 +59,31 @@ def get_current_user(
 @router.post("/send-otp")
 def send_otp(
     data: SendOTPRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
+    print("OTP_ENABLED =", settings.OTP_ENABLED, flush=True)
+    if settings.OTP_ENABLED:
+        otp = str(random.randint(100000, 999999))
+    else:
+        otp = settings.DEMO_OTP   # fixed code for the demo
 
-    otp = str(random.randint(100000, 999999))
-
+    # Always save the OTP so /register can verify it
     otp_record = OTP(
         email=data.email,
         otp=otp
     )
-
     db.add(otp_record)
     db.commit()
 
-    send_email(
-        data.email,
-        otp
-    )
+    # Only send a real email when OTP is enabled (in the background, so the response is fast)
+    if settings.OTP_ENABLED:
+        background_tasks.add_task(send_email, data.email, otp)
 
     return {
-        "message": "OTP sent successfully"
+        "message": "OTP sent successfully",
+        "demo_mode": not settings.OTP_ENABLED,
     }
-
 
 @router.post("/register")
 def register(
@@ -104,30 +107,39 @@ def register(
             detail="Email already registered"
         )
 
-    otp_record = db.query(OTP).filter(
-        OTP.email == data.email,
-        OTP.otp == data.otp,
-        OTP.is_used == False
-    ).first()
+    otp_record = None   # <-- this line must exist
 
-    if not otp_record:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid OTP"
-        )
+    if settings.OTP_ENABLED:
+        otp_record = db.query(OTP).filter(
+            OTP.email == data.email,
+            OTP.otp == data.otp,
+            OTP.is_used == False
+        ).first()
+
+        if not otp_record:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid OTP"
+            )
+    else:
+        # Demo mode: accept only the fixed demo code
+        if str(data.otp).strip() != settings.DEMO_OTP:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid OTP"
+            )
 
     user = User(
         name=data.name,
         email=data.email,
-        password_hash=hash_password(
-            data.password
-        ),
+        password_hash=hash_password(data.password),
         is_verified=True
     )
 
     db.add(user)
 
-    otp_record.is_used = True
+    if otp_record:
+        otp_record.is_used = True
 
     db.commit()
 
