@@ -24,6 +24,8 @@ from app.routes.demo import router as demo_router
 from app.core.migrate import ensure_task_columns
 from app.routes.members import router as members_router
 from app.models import rbac  # noqa: F401
+from app.models import gantt as _gantt_models  # noqa: F401  (Issue #9 tables, must load before create_all)
+from app.routes.gantt import router as gantt_router
 import logging
 app = FastAPI(
     title="AI Project Management API",
@@ -84,6 +86,9 @@ app.include_router(cost_router)
 app.include_router(demo_router)
 
 app.include_router(sdd_router)
+
+# Issue #9: Gantt chart, time allocation, cost and finance tracking
+app.include_router(gantt_router)
 
 @app.exception_handler(Exception)
 async def safe_unexpected_error(request: Request, exc: Exception):

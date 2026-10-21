@@ -46,6 +46,13 @@ function IconCosting() {
     </svg>
   );
 }
+function IconGantt() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <path d="M3 5h7M6 10h8M9 15h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
 function IconSdd() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -85,6 +92,7 @@ const SECTIONS = [
   { to: "diagrams", label: "Diagrams", icon: <IconDiagrams /> },
   { to: "sdd", label: "Design Document", icon: <IconSdd /> },
   { to: "costing", label: "Deployment Document", icon: <IconCosting /> },
+  { to: "timeline", label: "Timeline & Finance", icon: <IconGantt /> },
   { to: "settings", label: "Settings", icon: <IconSettings /> },
 ];
 const SECTION_KEYS = SECTIONS.map((s) => s.to);

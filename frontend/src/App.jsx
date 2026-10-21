@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound.jsx";
 import AppLayout from "./components/AppLayout.jsx";
 import { useBoards } from "./api/queries.js";
 import SddPage from "./pages/SddPage.jsx";
+import GanttPage from "./pages/GanttPage.jsx";
 
 function PrivateLayout() {
   const token = localStorage.getItem("token");
@@ -80,6 +81,7 @@ export default function App() {
         <Route path="/boards/:boardId/sdd" element={<SddPage />} />
         <Route path="/boards/:boardId/diagrams" element={<DiagramsPage />} />
         <Route path="/boards/:boardId/costing" element={<CostingPage />} />
+        <Route path="/boards/:boardId/timeline" element={<GanttPage />} />
 
         <Route
           path="/boards/:boardId/kanban"
