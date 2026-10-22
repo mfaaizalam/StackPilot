@@ -157,14 +157,14 @@ def days_for_points(points: int | None) -> int:
 
 
 # ---------------------------------------------------------------- finance
-def finance_summary(base_budget, increments, activities) -> dict:
+def finance_summary(base_budget, increments, activities, extra_estimated=0, extra_actual=0) -> dict:
     inc = sorted(increments, key=lambda i: (i.effective_date, i.id))
     total = lambda s: sum((dec(i.amount) for i in inc if i.status == s), D(0))
     base = dec(base_budget)
     planned, approved, disbursed = total("planned"), total("approved"), total("disbursed")
     committed, available, forecast = base + approved + disbursed, base + disbursed, base + approved + disbursed + planned
-    est_total = sum((dec(a.estimated_cost) for a in activities), D(0))
-    act_total = sum((dec(a.actual_cost) for a in activities), D(0))
+    est_total = sum((dec(a.estimated_cost) for a in activities), D(0)) + dec(extra_estimated)
+    act_total = sum((dec(a.actual_cost) for a in activities), D(0)) + dec(extra_actual)
 
     timeline, run_all, run_committed = [], base, base
     for i in inc:

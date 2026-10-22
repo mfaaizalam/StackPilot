@@ -27,5 +27,9 @@ export function useGanttActions(boardId) {
     addIncrement: mut((body) => api.post(`${b}/finance-increments`, body).then((r) => r.data)),
     updateIncrement: mut(({ id, patch }) => api.patch(`${b}/finance-increments/${id}`, patch).then((r) => r.data)),
     deleteIncrement: mut((id) => api.delete(`${b}/finance-increments/${id}`)),
+    // Issue #7: expense lines for the Costing tab (same cached payload as the timeline)
+    addExpense: mut((body) => api.post(`${b}/expenses`, body).then((r) => r.data)),
+    updateExpense: mut(({ id, patch }) => api.patch(`${b}/expenses/${id}`, patch).then((r) => r.data)),
+    deleteExpense: mut((id) => api.delete(`${b}/expenses/${id}`)),
   };
 }

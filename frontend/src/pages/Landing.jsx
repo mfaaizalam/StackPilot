@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
@@ -5,11 +6,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import useReveal from "../hooks/useReveal.js";
 
 /* =========================================================
-   SHARED HELPERS
+   ORIGINAL GALAXY — PRESERVED
 ========================================================= */
 
-// Mouse position (-1..1), written by a window listener because the
-// canvas has pointer-events: none and R3F's own pointer would stay at 0.
 const input = { x: 0, y: 0 };
 
 const isMobile = () =>
@@ -19,12 +18,8 @@ const prefersReduced = () =>
   typeof window !== "undefined" &&
   !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-// Soft bell-curve random in [-1, 1]
-const gauss = () => (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
-
-/* =========================================================
-   GALAXY DATA (built once, rendered entirely on the GPU)
-========================================================= */
+const gauss = () =>
+  (Math.random() + Math.random() + Math.random() - 1.5) / 1.5;
 
 function buildGalaxy(count) {
   const ARMS = 4;
@@ -37,7 +32,6 @@ function buildGalaxy(count) {
     let x, y, z;
 
     if (roll < 0.16) {
-      // dense central bulge
       const r = Math.pow(Math.random(), 1.8) * 2.4;
       const th = Math.random() * Math.PI * 2;
       const ph = Math.acos(2 * Math.random() - 1);
@@ -45,7 +39,6 @@ function buildGalaxy(count) {
       y = r * Math.sin(ph) * Math.sin(th);
       z = r * Math.cos(ph) * 0.55;
     } else if (roll < 0.9) {
-      // spiral arms
       const r = 0.8 + Math.pow(Math.random(), 0.8) * R;
       const arm = Math.floor(Math.random() * ARMS);
       const a = arm * ((Math.PI * 2) / ARMS) + r * 0.62;
@@ -54,7 +47,6 @@ function buildGalaxy(count) {
       y = Math.sin(a) * r + gauss() * spread;
       z = gauss() * (0.04 + 0.5 * Math.exp(-r * 0.35));
     } else {
-      // loose halo / field stars
       const r = Math.pow(Math.random(), 0.6) * R * 1.25;
       const th = Math.random() * Math.PI * 2;
       x = Math.cos(th) * r;
@@ -65,10 +57,9 @@ function buildGalaxy(count) {
     pos[i * 3] = x;
     pos[i * 3 + 1] = y;
     pos[i * 3 + 2] = z;
-
-    rnd[i * 3] = Math.random(); // size
-    rnd[i * 3 + 1] = Math.random(); // twinkle phase
-    rnd[i * 3 + 2] = Math.random(); // brightness
+    rnd[i * 3] = Math.random();
+    rnd[i * 3 + 1] = Math.random();
+    rnd[i * 3 + 2] = Math.random();
   }
 
   return { pos, rnd };
@@ -91,12 +82,6 @@ function buildShell(count) {
   return { pos, seed };
 }
 
-/* =========================================================
-   SHADERS
-========================================================= */
-
-// Full-screen nebula: domain-warped dust, tilted galactic band,
-// bright core, dust lane. Shape follows the star disc's tilt.
 const NEBULA_VERT = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -107,7 +92,6 @@ const NEBULA_VERT = /* glsl */ `
 
 const NEBULA_FRAG = /* glsl */ `
   precision highp float;
-
   varying vec2 vUv;
   uniform float uTime;
   uniform float uScroll;
@@ -151,27 +135,24 @@ const NEBULA_FRAG = /* glsl */ `
     p += uMouse * 0.03;
     p /= uZoom;
 
-    // tilt: rotate then squash to match the 3D disc
     float c = cos(uRot);
     float s = sin(uRot);
     vec2 q = mat2(c, -s, s, c) * p;
     q.y *= uSquash;
     float r = length(q);
 
-    // domain-warped dust clouds
     vec2 w = vec2(
       fbm(p * 2.0 + uTime * 0.010),
       fbm(p * 2.0 + vec2(5.2, 1.3) - uTime * 0.012)
     );
     float cloud = fbm(p * 2.6 + w * 1.6 + uTime * 0.006);
-    float fine  = fbm(p * 8.0 + w * 2.0 - uTime * 0.010);
+    float fine = fbm(p * 8.0 + w * 2.0 - uTime * 0.010);
 
-    float band     = exp(-r * 1.6);
-    float halo     = exp(-length(p) * 1.1);
-    float core     = exp(-r * 7.0);
+    float band = exp(-r * 1.6);
+    float halo = exp(-length(p) * 1.1);
+    float core = exp(-r * 7.0);
     float coreWide = exp(-r * 2.6);
 
-    // dark dust lane running through the disc
     float lane = smoothstep(
       0.0, 0.22,
       abs(q.y - 0.03 * sin(q.x * 5.0) + (cloud - 0.5) * 0.1)
@@ -191,16 +172,12 @@ const NEBULA_FRAG = /* glsl */ `
     float vig = 1.0 - smoothstep(0.35, 1.0, length(uv - 0.5) * 1.25);
     col *= 0.35 + 0.65 * vig;
     col *= uIntensity;
-
-    // dither to kill banding in the dark gradients
     col += (hash(gl_FragCoord.xy) - 0.5) / 200.0;
 
     gl_FragColor = vec4(max(col, 0.0), 1.0);
   }
 `;
 
-// Main galaxy: every star twinkles, bulge spins faster than the rim,
-// size and brightness vary per star, additive blending for glow.
 const GALAXY_VERT = /* glsl */ `
   uniform float uTime;
   uniform float uPixel;
@@ -213,8 +190,6 @@ const GALAXY_VERT = /* glsl */ `
     vec3 p = position;
     float r = length(p.xy);
     float ang = atan(p.y, p.x);
-
-    // rigid spin + extra spin near the core
     ang += uTime * (0.03 + 0.02 * exp(-r * 0.6));
     p.xy = vec2(cos(ang), sin(ang)) * r;
     p.z += sin(uTime * 0.3 + aRand.y * 6.2831) * 0.03;
@@ -224,10 +199,9 @@ const GALAXY_VERT = /* glsl */ `
 
     float tw = 0.65 + 0.35 * sin(uTime * (0.8 + aRand.x * 2.0) + aRand.y * 6.2831);
     float core = exp(-r * 0.45);
-
     float size = 0.8 + 3.2 * pow(aRand.x, 3.0);
-    gl_PointSize = clamp(size * (1.0 + core * 0.8) * uPixel * (9.0 / -mv.z), 1.0, 14.0 * uPixel);
 
+    gl_PointSize = clamp(size * (1.0 + core * 0.8) * uPixel * (9.0 / -mv.z), 1.0, 14.0 * uPixel);
     vAlpha = tw * (0.35 + 0.65 * aRand.z) * (0.5 + core * 1.1) * uIntensity;
     vTint = aRand.z;
   }
@@ -247,7 +221,6 @@ const GALAXY_FRAG = /* glsl */ `
   }
 `;
 
-// Distant background stars
 const SHELL_VERT = /* glsl */ `
   uniform float uTime;
   uniform float uPixel;
@@ -266,7 +239,6 @@ const SHELL_VERT = /* glsl */ `
 const SHELL_FRAG = /* glsl */ `
   precision highp float;
   varying float vA;
-
   void main() {
     float d = length(gl_PointCoord - 0.5);
     float a = smoothstep(0.5, 0.0, d);
@@ -288,21 +260,16 @@ const METEOR_FRAG = /* glsl */ `
   uniform float uOpacity;
 
   void main() {
-    float along  = pow(vUv.x, 3.0);
+    float along = pow(vUv.x, 3.0);
     float across = 1.0 - smoothstep(0.0, 0.5, abs(vUv.y - 0.5));
-    float head   = smoothstep(0.93, 1.0, vUv.x) * 1.5;
+    float head = smoothstep(0.93, 1.0, vUv.x) * 1.5;
     float a = (along + head) * across * uOpacity;
     gl_FragColor = vec4(vec3(1.0), a);
   }
 `;
 
-/* =========================================================
-   SHOOTING STARS
-========================================================= */
-
 function Meteor() {
   const mesh = useRef();
-
   const uniforms = useMemo(() => ({ uOpacity: { value: 0 } }), []);
 
   const s = useMemo(() => {
@@ -365,23 +332,16 @@ function Meteor() {
   );
 }
 
-/* =========================================================
-   GALAXY SCENE
-========================================================= */
-
 function GalaxyScene() {
   const gl = useThree((state) => state.gl);
-
   const group = useRef();
   const shell = useRef();
   const smooth = useRef({ s: 0, x: 0, y: 0 });
 
   const reduce = useMemo(() => prefersReduced(), []);
   const mobile = useMemo(() => isMobile(), []);
-
   const galaxy = useMemo(() => buildGalaxy(mobile ? 22000 : 60000), [mobile]);
   const stars = useMemo(() => buildShell(mobile ? 1200 : 2800), [mobile]);
-
   const pixel = Math.min(gl.getPixelRatio(), 1.75);
 
   const galaxyUniforms = useMemo(
@@ -418,8 +378,6 @@ function GalaxyScene() {
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
     const t = reduce ? 30 : state.clock.elapsedTime;
-
-    // scroll progress across the whole page (0..1)
     const max = Math.max(
       1,
       document.documentElement.scrollHeight - window.innerHeight
@@ -433,14 +391,12 @@ function GalaxyScene() {
 
     const intro = 1 - Math.exp(-t * 0.9);
     const intensity = (0.25 + 0.75 * intro) * (1 - sm.s * 0.4);
-
-    // camera: parallax with mouse, dolly in on scroll, fly-in on load
     const camZ = 9.5 - sm.s * 3.0 + (1 - intro) * 8;
     const cam = state.camera;
+
     cam.position.set(sm.x * 0.9, sm.y * 0.5 + sm.s * 1.0, camZ);
     cam.lookAt(0, 0, 0);
 
-    // disc tilts toward face-on as you scroll
     const rx = -1.15 + sm.s * 0.55 + sm.y * 0.06;
     const rz = 0.42 - sm.s * 0.25;
 
@@ -471,7 +427,6 @@ function GalaxyScene() {
     <>
       <color attach="background" args={["#020204"]} />
 
-      {/* Full-screen nebula */}
       <mesh frustumCulled={false} renderOrder={-10}>
         <planeGeometry args={[2, 2]} />
         <shaderMaterial
@@ -483,7 +438,6 @@ function GalaxyScene() {
         />
       </mesh>
 
-      {/* Distant stars */}
       <points ref={shell} frustumCulled={false}>
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[stars.pos, 3]} />
@@ -499,7 +453,6 @@ function GalaxyScene() {
         />
       </points>
 
-      {/* The galaxy itself */}
       <group ref={group}>
         <points frustumCulled={false}>
           <bufferGeometry>
@@ -534,6 +487,7 @@ function GalaxyBackground() {
       input.x = (e.clientX / window.innerWidth) * 2 - 1;
       input.y = -((e.clientY / window.innerHeight) * 2 - 1);
     };
+
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMove);
   }, []);
@@ -542,7 +496,7 @@ function GalaxyBackground() {
     <>
       <style>{`
         html { scroll-behavior: smooth; }
-        section[id] { scroll-margin-top: 4rem; }
+        section[id] { scroll-margin-top: 5rem; }
 
         .stackpilot-galaxy {
           position: fixed;
@@ -574,12 +528,12 @@ function GalaxyBackground() {
 
         @keyframes fade-in-up {
           from { opacity: 0; transform: translateY(22px); }
-          to   { opacity: 1; transform: translateY(0); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes marquee-scroll {
           from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
+          to { transform: translateX(-50%); }
         }
 
         .marquee-track { animation: marquee-scroll 32s linear infinite; }
@@ -594,10 +548,11 @@ function GalaxyBackground() {
             background-color 300ms ease,
             border-color 300ms ease;
         }
+
         .reveal.is-visible { opacity: 1; transform: translateY(0); }
 
-        /* cursor-following highlight on feature cards */
         .sp-spot { position: relative; overflow: hidden; }
+
         .sp-spot::before {
           content: "";
           position: absolute;
@@ -611,13 +566,28 @@ function GalaxyBackground() {
             transparent 60%
           );
         }
+
         .sp-spot:hover::before { opacity: 1; }
         .sp-spot > * { position: relative; }
+
+        .sp-outline {
+          border: 1px solid rgba(255,255,255,.13);
+          background: rgba(255,255,255,.035);
+          backdrop-filter: blur(12px);
+          transition: border-color 250ms ease, background 250ms ease, transform 250ms ease;
+        }
+
+        .sp-outline:hover {
+          border-color: rgba(255,255,255,.3);
+          background: rgba(255,255,255,.065);
+          transform: translateY(-3px);
+        }
 
         @media (prefers-reduced-motion: reduce) {
           html { scroll-behavior: auto; }
           .marquee-track { animation: none; }
           .reveal { opacity: 1; transform: none; transition: none; }
+          .sp-outline { transition: none; }
         }
       `}</style>
 
@@ -639,7 +609,7 @@ function GalaxyBackground() {
 }
 
 /* =========================================================
-   LOGO AND NAVIGATION
+   ORIGINAL LOGO AND NAVIGATION
 ========================================================= */
 
 function Logo() {
@@ -677,22 +647,17 @@ function NavBar() {
     >
       <div
         className={
-          "max-w-6xl mx-auto px-6 sm:px-8 flex items-center justify-between transition-all duration-300 " +
+          "max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between transition-all duration-300 " +
           (scrolled ? "h-16" : "h-20")
         }
       >
         <Logo />
 
         <nav className="hidden md:flex items-center gap-8 text-sm text-neutral-300">
-          <a href="#features" className="hover:text-white transition">
-            Product
-          </a>
-          <a href="#how-it-works" className="hover:text-white transition">
-            How it works
-          </a>
-          <a href="#faq" className="hover:text-white transition">
-            FAQ
-          </a>
+          <a href="#features" className="hover:text-white transition">Product</a>
+          <a href="#how-it-works" className="hover:text-white transition">Workflow</a>
+          <a href="#demo" className="hover:text-white transition">Demo</a>
+          <a href="#faq" className="hover:text-white transition">FAQ</a>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -702,12 +667,11 @@ function NavBar() {
           >
             Sign in
           </Link>
-
           <Link
             to="/register"
-            className="text-sm font-medium bg-white text-neutral-950 rounded-lg px-4 py-2 hover:bg-neutral-200 transition"
+            className="text-sm font-medium bg-white text-neutral-950 rounded-full px-5 py-2.5 hover:bg-neutral-200 transition"
           >
-            Get started
+            Get started <span aria-hidden="true">↗</span>
           </Link>
         </div>
       </div>
@@ -716,132 +680,168 @@ function NavBar() {
 }
 
 /* =========================================================
-   HERO
+   REUSABLE SECTION HEADING
 ========================================================= */
 
-function StackVisual() {
-  return (
-    <div className="relative w-full max-w-md mx-auto lg:mx-0">
-      <div className="absolute -bottom-24 -right-16 w-80 h-80 rounded-full bg-white/[0.04] blur-3xl" />
-      <div className="absolute -top-16 -left-10 w-64 h-64 rounded-full bg-neutral-400/[0.05] blur-3xl" />
+function SectionHeading({ eyebrow, title, description, center = false }) {
+  const ref = useReveal();
 
-      <div className="relative rounded-2xl border border-white/10 bg-black/60 backdrop-blur-xl p-2 shadow-2xl shadow-black/40">
-        <video
-          className="w-full h-auto rounded-xl"
-          src="/StackPilot_video.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          controls
-        >
-          Your browser does not support the video tag.
-        </video>
-      </div>
+  return (
+    <div ref={ref} className={`reveal ${center ? "mx-auto text-center" : ""} max-w-3xl`}>
+      <p className="mb-5 text-[10px] font-medium uppercase tracking-[0.24em] text-white/50">
+        {eyebrow}
+      </p>
+      <h2 className="text-3xl sm:text-5xl lg:text-6xl font-medium tracking-[-0.055em] leading-[1.08] text-white">
+        {title}
+      </h2>
+      {description && (
+        <p className={`mt-5 max-w-2xl text-sm sm:text-base leading-7 text-neutral-300 ${center ? "mx-auto" : ""}`}>
+          {description}
+        </p>
+      )}
     </div>
   );
 }
 
+/* =========================================================
+   HERO
+========================================================= */
+
 function Hero() {
+  const ref = useReveal();
+
   return (
-    <section className="relative bg-transparent text-white overflow-hidden pt-40 pb-28 px-6 sm:px-8">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        <div style={{ animation: "fade-in-up 0.8s ease both" }}>
-          <span className="inline-flex items-center gap-2 text-xs font-medium tracking-wide text-neutral-300 border border-white/15 bg-white/5 rounded-full px-3 py-1 mb-6 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-            AI-assisted project management
-          </span>
+    <section className="relative overflow-hidden px-6 sm:px-8 pt-36 sm:pt-44 pb-20 sm:pb-28">
+      <div className="max-w-7xl mx-auto">
+        <div ref={ref} className="reveal grid lg:grid-cols-[1.12fr_.88fr] gap-12 lg:gap-16 items-center">
+          <div>
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/30 px-4 py-2 backdrop-blur-md">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="text-[10px] sm:text-xs uppercase tracking-[0.16em] text-white/75">
+                AI-assisted software planning
+              </span>
+            </div>
 
-          <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.08] text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-400"
-            style={{ textShadow: "0 0 60px rgba(255,255,255,0.12)" }}
-          >
-            Plan the stack.
-            <br />
-            Ship the product.
-          </h1>
+            <h1 className="mt-8 text-5xl sm:text-6xl lg:text-[76px] xl:text-[88px] font-medium tracking-[-0.065em] leading-[.99] text-white">
+              From idea
+              <br />
+              <span className="text-white/45">to architecture.</span>
+              <br />
+              To execution.
+            </h1>
 
-          <p className="mt-5 text-neutral-300 text-lg leading-relaxed max-w-lg">
-            Boards, tasks, and an AI that actually reads your project — so you
-            spend less time reorganizing tickets and more time building.
-          </p>
+            <p className="mt-7 max-w-xl text-base sm:text-lg leading-8 text-neutral-300">
+              Turn your project idea into structured requirements, UML diagrams,
+              organized tasks and a clearer delivery plan — all in one connected
+              software planning workspace.
+            </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-4">
-            <Link
-              to="/register"
-              className="bg-white text-neutral-950 rounded-lg px-5 py-3 text-sm font-medium hover:bg-neutral-200 transition shadow-[0_0_40px_rgba(255,255,255,0.18)]"
-            >
-              Get started free
-            </Link>
+            <div className="mt-9 flex flex-wrap items-center gap-4">
+              <Link
+                to="/register"
+                className="group inline-flex items-center gap-3 rounded-full bg-white px-6 py-3.5 text-sm font-medium text-black transition hover:-translate-y-0.5 hover:bg-neutral-200"
+              >
+                Start planning
+                <span className="transition-transform group-hover:translate-x-1">↗</span>
+              </Link>
 
-            <a
-              href="#how-it-works"
-              className="text-sm font-medium text-neutral-300 hover:text-white transition"
-            >
-              See how it works →
-            </a>
+              <a
+                href="#features"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/20 px-6 py-3.5 text-sm text-white/80 backdrop-blur-md transition hover:border-white/45 hover:text-white"
+              >
+                Explore the workspace <span>↓</span>
+              </a>
+            </div>
+
+            <div className="mt-10 flex flex-wrap gap-x-5 gap-y-3 text-[10px] uppercase tracking-[.16em] text-white/45">
+              <span>Requirements</span>
+              <span>UML diagrams</span>
+              <span>Kanban</span>
+              <span>Project planning</span>
+            </div>
+          </div>
+
+          <div className="relative mx-auto w-full max-w-[440px] lg:ml-auto">
+            <div className="absolute -inset-8 rounded-full bg-white/[0.035] blur-3xl" />
+            <div className="relative rounded-2xl border border-white/15 bg-black/45 p-2.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
+              <video
+                className="block aspect-video w-full rounded-xl object-contain bg-black"
+                src="/StackPilot_video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                controls={false}
+                disablePictureInPicture
+                preload="auto"
+                aria-label="StackPilot product walkthrough"
+              />
+              <div className="flex items-center justify-between gap-4 px-3 py-3">
+                <div>
+                  <p className="text-xs font-medium text-white">StackPilot walkthrough</p>
+                  <p className="mt-1 text-[10px] text-white/45">A closer look at the workspace</p>
+                </div>
+                <span className="rounded-full border border-white/15 px-3 py-1 text-[10px] text-white/65">
+                  Product demo
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-
-        <StackVisual />
       </div>
     </section>
   );
 }
 
 /* =========================================================
-   TECHNOLOGY MARQUEE
+   CAPABILITY MARQUEE
 ========================================================= */
 
 function Marquee() {
-  const stack = ["React", "FastAPI", "PostgreSQL", "Gemini AI", "Qdrant", "Vite"];
-  const items = [...stack, ...stack];
-
-  const maskStyle = {
-    WebkitMaskImage:
-      "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
-    maskImage:
-      "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
-  };
+  const items = [
+    "SRS documentation",
+    "Use case diagrams",
+    "Class diagrams",
+    "Sequence diagrams",
+    "Activity diagrams",
+    "Kanban boards",
+    "Cost estimates",
+    "Gantt timelines",
+  ];
 
   return (
-    <section className="relative bg-black/45 backdrop-blur-md border-y border-white/10 py-8 overflow-hidden">
-      <p className="text-center text-xs uppercase tracking-wide text-neutral-400 mb-5">
-        Built on a stack teams already trust
-      </p>
-
-      <div className="flex overflow-hidden" style={maskStyle}>
-        <div className="marquee-track flex gap-10 pr-10 shrink-0">
-          {items.map((name, i) => (
-            <span
-              key={`${name}-${i}`}
-              className="text-neutral-300 font-medium text-sm whitespace-nowrap"
-            >
-              {name}
-            </span>
-          ))}
-        </div>
-
-        <div className="marquee-track flex gap-10 pr-10 shrink-0" aria-hidden="true">
-          {items.map((name, i) => (
-            <span
-              key={`dup-${name}-${i}`}
-              className="text-neutral-300 font-medium text-sm whitespace-nowrap"
-            >
-              {name}
-            </span>
-          ))}
-        </div>
+    <section className="relative overflow-hidden py-7">
+      <div
+        className="flex overflow-hidden"
+        style={{
+          WebkitMaskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+          maskImage: "linear-gradient(to right, transparent, black 12%, black 88%, transparent)",
+        }}
+      >
+        {[0, 1].map((group) => (
+          <div
+            key={group}
+            className="marquee-track flex shrink-0 items-center gap-8 pr-8"
+            aria-hidden={group === 1 ? "true" : undefined}
+          >
+            {items.map((item, i) => (
+              <span key={`${group}-${item}`} className="flex items-center gap-8 whitespace-nowrap">
+                <span className="text-xs sm:text-sm text-white/55">{item}</span>
+                <span className="text-white/30" aria-hidden="true">✳</span>
+              </span>
+            ))}
+          </div>
+        ))}
       </div>
     </section>
   );
 }
 
 /* =========================================================
-   FEATURES
+   FEATURE CARDS
 ========================================================= */
 
-function FeatureCard({ icon, title, desc }) {
+function FeatureCard({ number, title, desc, tags }) {
   const ref = useReveal();
 
   const onMove = (e) => {
@@ -851,75 +851,87 @@ function FeatureCard({ icon, title, desc }) {
   };
 
   return (
-    <div
+    <article
       ref={ref}
       onMouseMove={onMove}
-      className="reveal sp-spot rounded-2xl border border-white/10 bg-white/[0.045] backdrop-blur-md p-7 hover:bg-white/[0.07] hover:border-white/25"
+      className="reveal sp-spot sp-outline rounded-2xl p-6 sm:p-7"
     >
-      <div className="w-10 h-10 rounded-lg bg-white text-neutral-950 flex items-center justify-center mb-5">
-        {icon}
+      <div className="flex items-start justify-between gap-4">
+        <span className="font-mono text-xs tracking-wider text-white/40">{number}</span>
+        <span className="text-xl text-white/35" aria-hidden="true">↗</span>
       </div>
 
-      <h3 className="font-semibold text-white mb-2">{title}</h3>
+      <h3 className="mt-8 text-xl font-medium tracking-tight text-white">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-neutral-300">{desc}</p>
 
-      <p className="text-sm text-neutral-300 leading-relaxed">{desc}</p>
-    </div>
+      <div className="mt-6 flex flex-wrap gap-2">
+        {tags.map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full border border-white/10 bg-black/20 px-3 py-1.5 text-[10px] text-white/60"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </article>
   );
 }
 
 function Features() {
+  const features = [
+    {
+      number: "01",
+      title: "Requirements & SRS",
+      desc: "Move from a plain-language project idea to a more structured requirements document that makes the intended system easier to understand.",
+      tags: ["Functional requirements", "Non-functional requirements", "SRS"],
+    },
+    {
+      number: "02",
+      title: "UML system design",
+      desc: "Visualize the system before implementation. Explore how users, components and system behavior relate to one another.",
+      tags: ["Use case", "Class", "Sequence", "Activity"],
+    },
+    {
+      number: "03",
+      title: "Kanban task management",
+      desc: "Keep work organized in boards and tasks. Make progress, priorities and next steps easier to follow.",
+      tags: ["Boards", "Tasks", "Workflow"],
+    },
+    {
+      number: "04",
+      title: "AI project analysis",
+      desc: "Use AI-assisted analysis to review project context and help identify effort, feasibility considerations and potential risks.",
+      tags: ["Project context", "Effort", "Risk review"],
+    },
+    {
+      number: "05",
+      title: "Cost & timeline planning",
+      desc: "Build planning estimates for task costs and durations, and organize the schedule with a Gantt-style project timeline.",
+      tags: ["PKR estimates", "Task duration", "Gantt"],
+    },
+    {
+      number: "06",
+      title: "Design & deployment docs",
+      desc: "Bring architecture decisions and implementation planning into clearer technical documentation for the development journey.",
+      tags: ["SDD", "Architecture", "Deployment"],
+    },
+  ];
+
   return (
-    <section
-      id="features"
-      className="relative max-w-6xl mx-auto px-6 sm:px-8 py-28"
-    >
-      <div className="max-w-xl mb-14">
-        <h2 className="text-3xl font-semibold tracking-tight text-white">
-          Everything a project needs, nothing it doesn't
-        </h2>
-
-        <p className="mt-3 text-neutral-300 leading-relaxed">
-          One workspace to organize the work, and an AI layer that understands
-          it well enough to help you make decisions.
-        </p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <FeatureCard
-          title="Boards & tasks"
-          desc="Kanban boards, columns, and tasks that stay out of your way — built for how dev teams actually track work."
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="3" y="4" width="6" height="16" rx="1.5" strokeWidth="1.8" />
-              <rect x="9.5" y="4" width="6" height="10" rx="1.5" strokeWidth="1.8" />
-              <rect x="16" y="4" width="5" height="13" rx="1.5" strokeWidth="1.8" />
-            </svg>
-          }
+    <section id="features" className="relative scroll-mt-24 px-6 sm:px-8 py-24 sm:py-32">
+      <div className="max-w-7xl mx-auto">
+        <SectionHeading
+          eyebrow="One connected workspace"
+          title={<>Every stage of software planning.<br /><span className="text-white/40">Connected in one place.</span></>}
+          description="Go beyond a list of tickets. Bring requirements, system design, task organization and delivery planning into one workflow."
         />
 
-        <FeatureCard
-          title="AI project analysis"
-          desc="One click on any board produces a report on feasibility, effort, risk, and where the project stands — not just a task count."
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                d="M4 19V6a1 1 0 0 1 1-1h9l6 6v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1Z"
-                strokeWidth="1.8"
-              />
-              <path d="M8 13h8M8 16.5h5" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          }
-        />
-
-        <FeatureCard
-          title="Ask StackPilot"
-          desc="A chat built into every board, so context about your project is always one question away."
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M4 5h16v11H8l-4 4V5Z" strokeWidth="1.8" strokeLinejoin="round" />
-            </svg>
-          }
-        />
+        <div className="mt-12 sm:mt-16 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          {features.map((feature) => (
+            <FeatureCard key={feature.number} {...feature} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -929,21 +941,21 @@ function Features() {
    HOW IT WORKS
 ========================================================= */
 
-function Step({ n, title, desc }) {
+function Step({ number, title, desc, last = false }) {
   const ref = useReveal();
 
   return (
-    <div ref={ref} className="reveal flex gap-5">
-      <span className="shrink-0 w-9 h-9 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-xs font-semibold text-neutral-300 tabular-nums">
-        {n}
-      </span>
+    <div ref={ref} className="reveal relative flex gap-5">
+      <div className="relative flex flex-col items-center">
+        <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/60 text-xs font-medium text-white">
+          {number}
+        </span>
+        {!last && <span className="mt-2 w-px flex-1 bg-white/15" />}
+      </div>
 
-      <div>
-        <h4 className="font-medium text-white pt-1.5">{title}</h4>
-
-        <p className="mt-1.5 text-sm text-neutral-300 leading-relaxed max-w-sm">
-          {desc}
-        </p>
+      <div className="pb-10">
+        <h3 className="pt-2 text-lg font-medium text-white">{title}</h3>
+        <p className="mt-2 max-w-lg text-sm leading-7 text-neutral-300">{desc}</p>
       </div>
     </div>
   );
@@ -951,38 +963,203 @@ function Step({ n, title, desc }) {
 
 function HowItWorks() {
   return (
-    <section
-      id="how-it-works"
-      className="relative bg-black/35 backdrop-blur-sm border-y border-white/10 py-28"
-    >
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 grid lg:grid-cols-2 gap-16">
+    <section id="how-it-works" className="relative scroll-mt-24 px-6 sm:px-8 py-24 sm:py-32">
+      <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[.9fr_1.1fr] lg:gap-24">
         <div>
-          <h2 className="text-3xl font-semibold tracking-tight text-white">
-            From idea to shipped, in order
-          </h2>
+          <SectionHeading
+            eyebrow="The workflow"
+            title={<>From the first idea to a <span className="text-white/40">structured plan.</span></>}
+            description="StackPilot helps you organize the important decisions before and during development."
+          />
 
-          <p className="mt-3 text-neutral-300 leading-relaxed max-w-md">
-            StackPilot follows the actual life of a project — set it up, break
-            it down, then check in on it.
-          </p>
+          <Link
+            to="/register"
+            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-5 py-3 text-sm text-white/85 transition hover:border-white/45 hover:bg-white/[0.05]"
+          >
+            Start a project <span>↗</span>
+          </Link>
         </div>
 
-        <div className="space-y-10">
+        <div className="pt-1">
           <Step
-            n="1"
-            title="Create a board"
-            desc="Spin up a board for your project and lay out the columns that match how your team works."
+            number="01"
+            title="Describe your project"
+            desc="Start with the problem you want to solve, the people who will use the system and the outcome you want to achieve."
           />
           <Step
-            n="2"
-            title="Break it into tasks"
-            desc="Add tasks under each column, assign them, and track them as work moves forward."
+            number="02"
+            title="Clarify requirements"
+            desc="Organize the project's requirements into a more understandable specification and define what the system needs to do."
           />
           <Step
-            n="3"
-            title="Ask StackPilot to analyze it"
-            desc="Get a report on where the project stands — feasibility, effort, and what to fix next."
+            number="03"
+            title="Visualize the system"
+            desc="Use relevant UML diagrams to make system structure, interactions and workflows easier to communicate."
           />
+          <Step
+            number="04"
+            title="Break work into tasks"
+            desc="Organize implementation work into a Kanban workflow and keep task priorities and progress visible."
+          />
+          <Step
+            number="05"
+            title="Plan cost and delivery"
+            desc="Estimate effort, task costs and durations, then use the plan to help organize the project schedule."
+          />
+          <Step
+            number="06"
+            title="Prepare for implementation"
+            desc="Bring the technical design and deployment documentation together to support the next stage of development."
+            last
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =========================================================
+   INTERACTIVE WORKFLOW PREVIEW
+========================================================= */
+
+function WorkflowPreview() {
+  const [active, setActive] = useState(0);
+
+  const tabs = [
+    {
+      name: "Requirements",
+      title: "Start with clarity.",
+      description: "Capture what the system needs to do before work is split into tasks.",
+      lines: [
+        ["FR-01", "User authentication"],
+        ["FR-02", "Project workspace"],
+        ["FR-03", "Task management"],
+      ],
+    },
+    {
+      name: "UML design",
+      title: "Make structure visible.",
+      description: "Use diagrams to communicate the system's components and interactions.",
+      lines: [
+        ["UML-01", "Use case diagram"],
+        ["UML-02", "Class diagram"],
+        ["UML-03", "Sequence diagram"],
+      ],
+    },
+    {
+      name: "Kanban",
+      title: "Turn plans into work.",
+      description: "Organize the work into manageable tasks and track each task's progress.",
+      lines: [
+        ["TASK-01", "Design database"],
+        ["TASK-02", "Build API endpoints"],
+        ["TASK-03", "Connect frontend"],
+      ],
+    },
+  ];
+
+  const current = tabs[active];
+
+  return (
+    <section className="relative px-6 sm:px-8 py-20 sm:py-28">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-20">
+        <div>
+          <SectionHeading
+            eyebrow="See the workflow"
+            title={<>Ideas become <span className="text-white/40">actionable work.</span></>}
+            description="Switch between stages to explore how project information can be organized from requirements through implementation."
+          />
+
+          <div className="mt-8 flex flex-wrap gap-2">
+            {tabs.map((tab, i) => (
+              <button
+                key={tab.name}
+                type="button"
+                onClick={() => setActive(i)}
+                aria-pressed={active === i}
+                className={`rounded-full px-4 py-2.5 text-xs transition ${
+                  active === i
+                    ? "bg-white text-black"
+                    : "border border-white/15 bg-black/20 text-white/65 hover:border-white/35 hover:text-white"
+                }`}
+              >
+                {tab.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="sp-outline relative overflow-hidden rounded-2xl p-5 sm:p-8">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-white/25" />
+              <span className="h-2 w-2 rounded-full bg-white/25" />
+              <span className="h-2 w-2 rounded-full bg-white/25" />
+            </div>
+            <span className="text-[10px] uppercase tracking-[.18em] text-white/40">
+              Illustrative preview
+            </span>
+          </div>
+
+          <div className="mt-9">
+            <p className="text-[10px] uppercase tracking-[.18em] text-white/45">
+              {current.name}
+            </p>
+            <h3 className="mt-3 text-2xl sm:text-3xl font-medium tracking-tight text-white">
+              {current.title}
+            </h3>
+            <p className="mt-3 max-w-md text-sm leading-7 text-neutral-300">
+              {current.description}
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-3">
+            {current.lines.map(([id, label], index) => (
+              <div
+                key={id}
+                className="flex items-center gap-4 rounded-xl border border-white/10 bg-black/25 px-4 py-4 transition"
+                style={{ animation: `fade-in-up 350ms ease both`, animationDelay: `${index * 70}ms` }}
+              >
+                <span className="font-mono text-[10px] text-white/40">{id}</span>
+                <span className="flex-1 text-sm text-white/85">{label}</span>
+                <span className="text-xs text-white/40">↗</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-5 text-[10px] leading-5 text-white/35">
+            Example content for demonstrating the workflow; this preview is not connected to your saved project data.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* =========================================================
+   TECHNOLOGY
+========================================================= */
+
+function Technology() {
+  const tech = ["React", "Vite", "FastAPI", "Python", "PostgreSQL", "Gemini AI", "Qdrant"];
+
+  return (
+    <section className="relative px-6 sm:px-8 py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="text-center">
+          <p className="text-[10px] uppercase tracking-[.22em] text-white/45">
+            The technology behind the workspace
+          </p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            {tech.map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/15 bg-black/20 px-4 py-2.5 text-xs text-white/70 transition hover:border-white/35 hover:text-white"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -996,66 +1173,98 @@ function HowItWorks() {
 function Faq() {
   const faqs = [
     {
-      q: "Is StackPilot free to use?",
-      a: "You can create an account and start using boards and tasks at no cost while StackPilot is in early access.",
+      q: "What is StackPilot?",
+      a: "StackPilot is an AI-assisted software planning workspace designed to bring project requirements, diagrams, task organization and delivery planning into a more connected workflow.",
     },
     {
-      q: "What does the AI project analysis look at?",
-      a: "It reads your board's tasks and progress to produce a report on feasibility, effort, and suggestions — not just a status count.",
+      q: "Can it help with software requirements and UML?",
+      a: "StackPilot is designed around structured requirements and software design workflows, including SRS documentation and UML diagram planning.",
     },
     {
-      q: "Is the chat assistant available yet?",
-      a: "It's visible in every board and being actively built. You'll see a note if you try a feature that isn't live yet.",
+      q: "Can I manage development tasks?",
+      a: "Yes. StackPilot includes a board-and-task workflow intended to help organize work and track project progress.",
+    },
+    {
+      q: "Are project costs guaranteed?",
+      a: "No. Cost figures are estimates based on assumptions and the rates used. They should be reviewed and adjusted for the actual project, team and market.",
+    },
+    {
+      q: "Does the landing page preview connect to my project?",
+      a: "The interactive preview on this page is illustrative. Your actual saved boards, tasks and project data remain in the application workspace.",
     },
   ];
 
   return (
-    <section id="faq" className="relative max-w-3xl mx-auto px-6 sm:px-8 py-28">
-      <h2 className="text-3xl font-semibold tracking-tight text-white mb-10">
-        Questions, answered
-      </h2>
+    <section id="faq" className="relative scroll-mt-24 px-6 sm:px-8 py-24 sm:py-28">
+      <div className="mx-auto max-w-3xl">
+        <SectionHeading
+          eyebrow="Frequently asked questions"
+          title={<>A few things worth <span className="text-white/40">knowing.</span></>}
+          description="Understand what StackPilot is built to help with before you get started."
+        />
 
-      <div className="divide-y divide-white/10 border-t border-b border-white/10">
-        {faqs.map((f) => (
-          <details key={f.q} className="group py-5">
-            <summary className="flex items-center justify-between cursor-pointer list-none text-white font-medium">
-              {f.q}
-              <span className="text-neutral-400 group-open:rotate-45 transition-transform text-xl leading-none">
-                +
-              </span>
-            </summary>
-
-            <p className="mt-3 text-sm text-neutral-300 leading-relaxed">{f.a}</p>
-          </details>
-        ))}
+        <div className="mt-10">
+          {faqs.map((faq) => (
+            <details
+              key={faq.q}
+              className="group border-b border-white/10 py-5 first:border-t"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-5 text-sm sm:text-base font-medium text-white">
+                {faq.q}
+                <span className="shrink-0 text-xl font-light text-white/45 transition-transform duration-300 group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="max-w-2xl pt-4 pr-8 text-sm leading-7 text-neutral-300">
+                {faq.a}
+              </p>
+            </details>
+          ))}
+        </div>
       </div>
     </section>
   );
 }
 
 /* =========================================================
-   CALL TO ACTION
+   FINAL CTA
 ========================================================= */
 
 function CtaBanner() {
+  const ref = useReveal();
+
   return (
-    <section className="relative bg-black/55 backdrop-blur-md border-y border-white/10 text-white py-24 px-6 sm:px-8 text-center overflow-hidden">
-      <div className="absolute -bottom-32 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-white/[0.05] blur-3xl" />
-
-      <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight relative z-10">
-        Ready to plan smarter?
-      </h2>
-
-      <p className="mt-3 text-neutral-300 relative z-10">
-        Set up your first board in under two minutes.
-      </p>
-
-      <Link
-        to="/register"
-        className="mt-8 inline-block bg-white text-neutral-950 rounded-lg px-6 py-3 text-sm font-medium hover:bg-neutral-200 transition relative z-10 shadow-[0_0_40px_rgba(255,255,255,0.18)]"
+    <section className="relative px-6 sm:px-8 py-24 sm:py-32">
+      <div
+        ref={ref}
+        className="reveal relative mx-auto max-w-7xl overflow-hidden rounded-3xl border border-white/15 bg-black/45 px-6 py-16 text-center backdrop-blur-xl sm:px-12 sm:py-24"
       >
-        Get started free
-      </Link>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,255,0.10),transparent_60%)]" />
+
+        <div className="relative z-10 mx-auto max-w-3xl">
+          <p className="text-[10px] uppercase tracking-[.24em] text-white/50">
+            Your next project starts here
+          </p>
+
+          <h2 className="mt-6 text-4xl sm:text-5xl lg:text-7xl font-medium leading-[1.04] tracking-[-.06em] text-white">
+            Plan with purpose.
+            <br />
+            <span className="text-white/40">Build with confidence.</span>
+          </h2>
+
+          <p className="mx-auto mt-6 max-w-xl text-sm sm:text-base leading-7 text-neutral-300">
+            Give your project a clearer structure — from the first requirements
+            to tasks, design decisions and delivery planning.
+          </p>
+
+          <Link
+            to="/register"
+            className="mt-9 inline-flex items-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-medium text-black transition hover:-translate-y-0.5 hover:bg-neutral-200"
+          >
+            Get started with StackPilot <span>↗</span>
+          </Link>
+        </div>
+      </div>
     </section>
   );
 }
@@ -1066,12 +1275,19 @@ function CtaBanner() {
 
 function Footer() {
   return (
-    <footer className="relative px-6 sm:px-8 py-10 border-t border-white/10 bg-black/65 backdrop-blur-md">
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer className="relative bg-black/45 px-6 sm:px-8 py-9 backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row">
         <Logo />
 
-        <p className="text-xs text-neutral-400">
-          © {new Date().getFullYear()} StackPilot. All rights reserved.
+        <nav className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs text-white/50">
+          <a href="#features" className="transition hover:text-white">Product</a>
+          <a href="#how-it-works" className="transition hover:text-white">Workflow</a>
+          <a href="#demo" className="transition hover:text-white">Demo</a>
+          <a href="#faq" className="transition hover:text-white">FAQ</a>
+        </nav>
+
+        <p className="text-center text-[10px] text-white/40">
+          © {new Date().getFullYear()} StackPilot
         </p>
       </div>
     </footer>
@@ -1083,18 +1299,46 @@ function Footer() {
 ========================================================= */
 
 export default function Landing() {
+  useEffect(() => {
+    const nodes = document.querySelectorAll(".reveal:not(.is-visible)");
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 }
+    );
+
+    nodes.forEach((node) => observer.observe(node));
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="relative min-h-screen bg-[#020204] text-white">
+    <div className="relative min-h-screen overflow-clip bg-[#020204] text-white selection:bg-white selection:text-black">
       <GalaxyBackground />
 
       <div className="relative z-10">
         <NavBar />
-        <Hero />
-        <Marquee />
-        <Features />
-        <HowItWorks />
-        <Faq />
-        <CtaBanner />
+        <main>
+          <Hero />
+          <Marquee />
+          <Features />
+          <HowItWorks />
+          <WorkflowPreview />
+
+          <div id="demo" className="scroll-mt-24">
+            <Technology />
+          </div>
+
+          <Faq />
+          <CtaBanner />
+        </main>
         <Footer />
       </div>
     </div>

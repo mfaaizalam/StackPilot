@@ -20,7 +20,14 @@ MAX_UC_RELATIONS = 6
 MAX_DEPLOY_NODES = 8
 MAX_DEPLOY_ARTIFACTS = 4
 MAX_DEPLOY_LINKS = 12
-DIAGRAM_TYPES = ["usecase", "class", "sequence", "activity", "state", "deployment"]
+MAX_ER_ENTITIES = 14
+MAX_ER_ATTRS = 10
+MAX_ER_RELATIONS = 22
+MAX_DFD_EXTERNALS = 6
+MAX_DFD_PROCESSES = 8
+MAX_DFD_STORES = 6
+MAX_DFD_FLOWS = 26
+DIAGRAM_TYPES = ["usecase", "class", "er", "dfd", "sequence", "activity", "state", "deployment"]
 
 
 # ---- class ----------------------------------------------------------------
@@ -149,7 +156,73 @@ class UseCaseModel(BaseModel):
     extends: list[Rel] = []
 
 
+# ---- entity-relationship --------------------------------------------------
+class ErAttribute(BaseModel):
+    name: str = Field(description="snake_case column name, e.g. 'member_id'")
+    type: str = Field(description='Short data type, e.g. "INT", "VARCHAR(100)", "DATE"')
+    key: Literal["PK", "FK", "UK", ""] = Field(description="PK primary key, FK foreign key, UK unique, or empty")
+
+
+class ErEntity(BaseModel):
+    name: str = Field(description="PascalCase singular noun, no spaces")
+    attributes: list[ErAttribute]
+
+
+class ErRelation(BaseModel):
+    source: str = Field(description="Entity name")
+    target: str = Field(description="Entity name")
+    cardinality_source: Literal["one", "zero_or_one", "many", "one_or_many"] = Field(
+        description="How many SOURCE rows take part in one relationship")
+    cardinality_target: Literal["one", "zero_or_one", "many", "one_or_many"] = Field(
+        description="How many TARGET rows take part in one relationship")
+    label: str = Field(description="Short verb phrase, max 20 characters, e.g. 'places'")
+
+
+class ErModel(BaseModel):
+    entities: list[ErEntity]
+    relations: list[ErRelation]
+
+
+# ---- data flow (DFD, Yourdon / DeMarco notation) ---------------------------
+class DfdExternal(BaseModel):
+    id: str = Field(description="e1, e2, ...")
+    name: str = Field(description="Max 28 characters, e.g. 'Customer'")
+
+
+class DfdProcess(BaseModel):
+    id: str = Field(description="Level 0: '0'. Level 1: '1', '2', ... Level 2: '1.1', '1.2', ...")
+    name: str = Field(description="Verb + noun, max 28 characters, e.g. 'Process Order'")
+
+
+class DfdStore(BaseModel):
+    id: str = Field(description="D1, D2, ...")
+    name: str = Field(description="Max 28 characters, e.g. 'Orders'")
+
+
+class DfdFlow(BaseModel):
+    source: str = Field(description="Id of an external, process or store")
+    target: str = Field(description="Id of an external, process or store")
+    label: str = Field(description="The data that moves, a noun phrase, max 28 characters")
+
+
+class DfdModel(BaseModel):
+    level: Literal[0, 1, 2]
+    title: str = Field(description="e.g. 'Level 1 DFD: Order System'")
+    parent: str = Field(description="Level 2 only: id of the Level 1 process being exploded, else empty")
+    externals: list[DfdExternal]
+    processes: list[DfdProcess]
+    stores: list[DfdStore]
+    flows: list[DfdFlow]
+
+
+class DfdSet(BaseModel):
+    """Level 1 and the Level 2 explosions, generated in one call so ids stay consistent."""
+    level1: DfdModel
+    level2: list[DfdModel]
+
+
 # ---- API ------------------------------------------------------------------
 class DiagramGenerateRequest(BaseModel):
     srs_id: int | None = None
-    types: list[Literal["usecase", "class", "sequence", "activity", "state", "deployment"]] | None = None
+    types: list[Literal["usecase", "class", "er", "dfd", "sequence", "activity", "state", "deployment"]] | None = None
+

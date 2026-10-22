@@ -1,0 +1,1049 @@
+{
+ "version": "2026.1",
+ "currency": {
+  "usd_to_pkr": 280,
+  "verified": false,
+  "source": "Placeholder exchange rate, update before quoting",
+  "last_updated": "unverified"
+ },
+ "pricing_status": {
+  "verified": false,
+  "source": "Approximate vendor list prices entered manually (monthly, USD). Check the vendor page before quoting.",
+  "last_updated": "unverified"
+ },
+ "scales": {
+  "small": "Small (up to a few hundred users)",
+  "medium": "Medium (thousands of users)",
+  "large": "Large (tens of thousands of users or more)"
+ },
+ "categories": {
+  "frontend_hosting": "Frontend hosting",
+  "backend_hosting": "Backend hosting",
+  "database_hosting": "Database",
+  "cache": "Cache (Redis)",
+  "load_balancer": "Load balancer",
+  "api_gateway": "API gateway",
+  "blockchain": "Blockchain node provider",
+  "object_storage": "File / object storage",
+  "cdn": "CDN",
+  "vector_db": "Vector database",
+  "monitoring": "Monitoring",
+  "ci_cd": "CI/CD",
+  "email": "Transactional email"
+ },
+ "services": [
+  {
+   "id": "vercel",
+   "name": "Vercel",
+   "category": "frontend_hosting",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Hobby (non-commercial)",
+     0
+    ],
+    "medium": [
+     "Pro",
+     20
+    ],
+    "large": [
+     "Pro (higher usage)",
+     60
+    ]
+   },
+   "why": "Best developer experience for React, Next.js and Vue; preview deployments on every push.",
+   "hint": "Import the Git repo, set the build command and environment variables, then assign your domain.",
+   "url": "https://vercel.com/pricing",
+   "fits": {
+    "frontend": [
+     "react",
+     "nextjs",
+     "vue",
+     "angular",
+     "svelte",
+     "static"
+    ]
+   }
+  },
+  {
+   "id": "netlify",
+   "name": "Netlify",
+   "category": "frontend_hosting",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Pro",
+     19
+    ],
+    "large": [
+     "Pro (higher usage)",
+     60
+    ]
+   },
+   "why": "Simple static and SPA hosting with forms, redirects and deploy previews.",
+   "hint": "Connect the repo, set the publish directory and add a redirect rule for single-page routing.",
+   "url": "https://www.netlify.com/pricing/",
+   "fits": {
+    "frontend": [
+     "react",
+     "nextjs",
+     "vue",
+     "angular",
+     "svelte",
+     "flutter_web",
+     "static"
+    ]
+   }
+  },
+  {
+   "id": "cloudflare_pages",
+   "name": "Cloudflare Pages",
+   "category": "frontend_hosting",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Free",
+     0
+    ],
+    "large": [
+     "Workers Paid",
+     5
+    ]
+   },
+   "why": "Free, fast global network with generous limits; good value for static front ends.",
+   "hint": "Connect the repo in the Cloudflare dashboard and set the build output directory.",
+   "url": "https://pages.cloudflare.com/",
+   "fits": {
+    "frontend": [
+     "react",
+     "nextjs",
+     "vue",
+     "angular",
+     "svelte",
+     "flutter_web",
+     "static"
+    ]
+   }
+  },
+  {
+   "id": "aws_amplify",
+   "name": "AWS Amplify Hosting",
+   "category": "frontend_hosting",
+   "rank": 4,
+   "plans": {
+    "small": [
+     "Pay as you go",
+     5
+    ],
+    "medium": [
+     "Pay as you go",
+     15
+    ],
+    "large": [
+     "Pay as you go",
+     40
+    ]
+   },
+   "why": "Stays inside AWS if the rest of the system already runs there.",
+   "hint": "Connect the repo in the Amplify console and configure build settings and environment variables.",
+   "url": "https://aws.amazon.com/amplify/pricing/",
+   "fits": {
+    "frontend": [
+     "react",
+     "nextjs",
+     "vue",
+     "angular",
+     "svelte",
+     "flutter_web",
+     "static"
+    ]
+   }
+  },
+  {
+   "id": "railway",
+   "name": "Railway",
+   "category": "backend_hosting",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Hobby",
+     5
+    ],
+    "medium": [
+     "Pro",
+     20
+    ],
+    "large": [
+     "Pro (larger services)",
+     60
+    ]
+   },
+   "why": "Quick Git-based deploys with a Procfile, built-in variables and private networking.",
+   "hint": "Create a service from the repo, add environment variables and set the start command (for example the Procfile).",
+   "url": "https://railway.com/pricing"
+  },
+  {
+   "id": "render",
+   "name": "Render",
+   "category": "backend_hosting",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Starter web service",
+     7
+    ],
+    "medium": [
+     "Standard web service",
+     25
+    ],
+    "large": [
+     "Pro web service",
+     85
+    ]
+   },
+   "why": "Predictable fixed prices, managed TLS and background workers.",
+   "hint": "Create a Web Service from the repo, set build and start commands, and add environment variables.",
+   "url": "https://render.com/pricing"
+  },
+  {
+   "id": "flyio",
+   "name": "Fly.io",
+   "category": "backend_hosting",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Small machine",
+     5
+    ],
+    "medium": [
+     "Performance machine",
+     30
+    ],
+    "large": [
+     "Multiple machines",
+     90
+    ]
+   },
+   "why": "Runs containers close to users in several regions.",
+   "hint": "Write a Dockerfile, run the Fly launch command and set secrets with the Fly CLI.",
+   "url": "https://fly.io/docs/about/pricing/"
+  },
+  {
+   "id": "digitalocean_app",
+   "name": "DigitalOcean App Platform",
+   "category": "backend_hosting",
+   "rank": 4,
+   "plans": {
+    "small": [
+     "Basic",
+     5
+    ],
+    "medium": [
+     "Professional",
+     25
+    ],
+    "large": [
+     "Professional (scaled)",
+     75
+    ]
+   },
+   "why": "Managed platform with straightforward pricing and a managed database option.",
+   "hint": "Create an App from the repo, choose the component size and add environment variables.",
+   "url": "https://www.digitalocean.com/pricing/app-platform"
+  },
+  {
+   "id": "aws_ec2",
+   "name": "AWS EC2 (self-managed)",
+   "category": "backend_hosting",
+   "rank": 5,
+   "plans": {
+    "small": [
+     "t3.small",
+     15
+    ],
+    "medium": [
+     "t3.medium",
+     30
+    ],
+    "large": [
+     "2 x t3.large",
+     120
+    ]
+   },
+   "why": "Full control and the most flexibility, but you manage the server, updates and security.",
+   "hint": "Launch an instance, install the runtime, run the app behind a process manager and a reverse proxy.",
+   "url": "https://aws.amazon.com/ec2/pricing/on-demand/"
+  },
+  {
+   "id": "neon",
+   "name": "Neon (PostgreSQL)",
+   "category": "database_hosting",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Launch",
+     19
+    ],
+    "large": [
+     "Scale",
+     69
+    ]
+   },
+   "why": "Serverless PostgreSQL with branching; ideal while traffic is small or spiky.",
+   "hint": "Create a project, copy the pooled connection string into DATABASE_URL and run your migrations.",
+   "url": "https://neon.com/pricing",
+   "fits": {
+    "database": [
+     "postgresql"
+    ]
+   }
+  },
+  {
+   "id": "supabase",
+   "name": "Supabase (PostgreSQL)",
+   "category": "database_hosting",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Pro",
+     25
+    ],
+    "large": [
+     "Pro + larger compute",
+     110
+    ]
+   },
+   "why": "PostgreSQL plus auth, storage and realtime in one platform.",
+   "hint": "Create a project, copy the connection string into DATABASE_URL and run your migrations.",
+   "url": "https://supabase.com/pricing",
+   "fits": {
+    "database": [
+     "postgresql"
+    ]
+   }
+  },
+  {
+   "id": "digitalocean_db",
+   "name": "DigitalOcean Managed Database",
+   "category": "database_hosting",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Basic node",
+     15
+    ],
+    "medium": [
+     "2 vCPU node",
+     60
+    ],
+    "large": [
+     "4 vCPU, standby node",
+     120
+    ]
+   },
+   "why": "Managed backups and failover with simple pricing.",
+   "hint": "Create a managed cluster, restrict trusted sources and put the connection string in DATABASE_URL.",
+   "url": "https://www.digitalocean.com/pricing/managed-databases",
+   "fits": {
+    "database": [
+     "postgresql",
+     "mysql"
+    ]
+   }
+  },
+  {
+   "id": "aws_rds",
+   "name": "AWS RDS",
+   "category": "database_hosting",
+   "rank": 4,
+   "plans": {
+    "small": [
+     "db.t4g.micro",
+     15
+    ],
+    "medium": [
+     "db.t4g.medium",
+     60
+    ],
+    "large": [
+     "db.m6g.large (Multi-AZ)",
+     280
+    ]
+   },
+   "why": "Mature managed database with automated backups and Multi-AZ failover.",
+   "hint": "Create the instance in a private subnet, open the port only to the backend security group.",
+   "url": "https://aws.amazon.com/rds/pricing/",
+   "fits": {
+    "database": [
+     "postgresql",
+     "mysql"
+    ]
+   }
+  },
+  {
+   "id": "mongodb_atlas",
+   "name": "MongoDB Atlas",
+   "category": "database_hosting",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free (M0)",
+     0
+    ],
+    "medium": [
+     "M10",
+     57
+    ],
+    "large": [
+     "M30",
+     390
+    ]
+   },
+   "why": "The standard managed MongoDB service with backups and monitoring.",
+   "hint": "Create a cluster, add the backend IP to the access list and put the URI in the environment.",
+   "url": "https://www.mongodb.com/pricing",
+   "fits": {
+    "database": [
+     "mongodb"
+    ]
+   }
+  },
+  {
+   "id": "upstash_redis",
+   "name": "Upstash Redis",
+   "category": "cache",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Pay as you go",
+     10
+    ],
+    "large": [
+     "Pay as you go (high volume)",
+     40
+    ]
+   },
+   "why": "Serverless Redis that bills by usage.",
+   "hint": "Create a database and put its URL and token in the backend environment.",
+   "url": "https://upstash.com/pricing/redis"
+  },
+  {
+   "id": "redis_cloud",
+   "name": "Redis Cloud",
+   "category": "cache",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Essentials",
+     7
+    ],
+    "large": [
+     "Pro",
+     50
+    ]
+   },
+   "why": "Managed Redis from Redis itself.",
+   "hint": "Create a subscription and database, then set REDIS_URL.",
+   "url": "https://redis.io/pricing/"
+  },
+  {
+   "id": "aws_elasticache",
+   "name": "AWS ElastiCache",
+   "category": "cache",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "cache.t4g.micro",
+     13
+    ],
+    "medium": [
+     "cache.t4g.small",
+     50
+    ],
+    "large": [
+     "cache.m6g.large",
+     150
+    ]
+   },
+   "why": "Fits AWS-only architectures that need low latency inside a VPC.",
+   "hint": "Create the cluster in a private subnet and allow only the backend security group.",
+   "url": "https://aws.amazon.com/elasticache/pricing/"
+  },
+  {
+   "id": "aws_alb",
+   "name": "AWS Application Load Balancer",
+   "category": "load_balancer",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "ALB (low traffic)",
+     18
+    ],
+    "medium": [
+     "ALB",
+     25
+    ],
+    "large": [
+     "ALB (high traffic)",
+     50
+    ]
+   },
+   "why": "Layer-7 routing and health checks for several backend instances.",
+   "hint": "Create the load balancer, a target group and health-check path, then add TLS from ACM.",
+   "url": "https://aws.amazon.com/elasticloadbalancing/pricing/"
+  },
+  {
+   "id": "cloudflare_lb",
+   "name": "Cloudflare Load Balancing",
+   "category": "load_balancer",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Load Balancing",
+     5
+    ],
+    "medium": [
+     "Load Balancing",
+     5
+    ],
+    "large": [
+     "Load Balancing (more origins)",
+     15
+    ]
+   },
+   "why": "DNS-level load balancing with failover across origins.",
+   "hint": "Add your origins and a health monitor in the Cloudflare dashboard.",
+   "url": "https://www.cloudflare.com/application-services/products/load-balancing/"
+  },
+  {
+   "id": "do_lb",
+   "name": "DigitalOcean Load Balancer",
+   "category": "load_balancer",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "1 node",
+     12
+    ],
+    "medium": [
+     "1 node",
+     12
+    ],
+    "large": [
+     "2 nodes",
+     24
+    ]
+   },
+   "why": "Simple managed load balancer if you already use DigitalOcean.",
+   "hint": "Create the load balancer and attach your droplets or app.",
+   "url": "https://www.digitalocean.com/pricing/load-balancers"
+  },
+  {
+   "id": "aws_api_gateway",
+   "name": "AWS API Gateway",
+   "category": "api_gateway",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "HTTP API",
+     1
+    ],
+    "medium": [
+     "HTTP API",
+     5
+    ],
+    "large": [
+     "HTTP API (high volume)",
+     35
+    ]
+   },
+   "why": "Managed gateway with throttling, authorizers and usage plans, billed per request.",
+   "hint": "Create an HTTP API with an integration to the backend and enable throttling.",
+   "url": "https://aws.amazon.com/api-gateway/pricing/"
+  },
+  {
+   "id": "kong_oss",
+   "name": "Kong Gateway (self-hosted)",
+   "category": "api_gateway",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Self-hosted on a small server",
+     5
+    ],
+    "medium": [
+     "Self-hosted on a medium server",
+     20
+    ],
+    "large": [
+     "Clustered, self-hosted",
+     60
+    ]
+   },
+   "why": "Open-source gateway with plugins for rate limiting and auth; you run it yourself.",
+   "hint": "Run Kong in a container next to the backend and define services and routes.",
+   "url": "https://konghq.com/pricing"
+  },
+  {
+   "id": "alchemy",
+   "name": "Alchemy",
+   "category": "blockchain",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Growth (pay as you go)",
+     49
+    ],
+    "large": [
+     "Scale",
+     199
+    ]
+   },
+   "why": "Reliable node access and APIs for EVM chains.",
+   "hint": "Create an app for the target network and store the RPC URL and key as secrets.",
+   "url": "https://www.alchemy.com/pricing"
+  },
+  {
+   "id": "infura",
+   "name": "Infura",
+   "category": "blockchain",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Developer",
+     50
+    ],
+    "large": [
+     "Team",
+     225
+    ]
+   },
+   "why": "Long-standing Ethereum node provider.",
+   "hint": "Create a project, choose networks and store the endpoint and key as secrets.",
+   "url": "https://www.infura.io/pricing"
+  },
+  {
+   "id": "quicknode",
+   "name": "QuickNode",
+   "category": "blockchain",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Starter",
+     10
+    ],
+    "medium": [
+     "Build",
+     49
+    ],
+    "large": [
+     "Scale",
+     299
+    ]
+   },
+   "why": "Many supported chains and add-ons.",
+   "hint": "Create an endpoint for the target chain and store the URL as a secret.",
+   "url": "https://www.quicknode.com/pricing"
+  },
+  {
+   "id": "cloudflare_r2",
+   "name": "Cloudflare R2",
+   "category": "object_storage",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Pay as you go",
+     1
+    ],
+    "medium": [
+     "Pay as you go",
+     3
+    ],
+    "large": [
+     "Pay as you go",
+     15
+    ]
+   },
+   "why": "S3-compatible storage with no egress fees.",
+   "hint": "Create a bucket and an API token, then use the S3-compatible endpoint.",
+   "url": "https://developers.cloudflare.com/r2/pricing/"
+  },
+  {
+   "id": "aws_s3",
+   "name": "AWS S3",
+   "category": "object_storage",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Standard",
+     1
+    ],
+    "medium": [
+     "Standard",
+     5
+    ],
+    "large": [
+     "Standard",
+     25
+    ]
+   },
+   "why": "The default choice for object storage on AWS.",
+   "hint": "Create a private bucket, block public access and use an IAM role for the backend.",
+   "url": "https://aws.amazon.com/s3/pricing/"
+  },
+  {
+   "id": "backblaze_b2",
+   "name": "Backblaze B2",
+   "category": "object_storage",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Pay as you go",
+     1
+    ],
+    "medium": [
+     "Pay as you go",
+     3
+    ],
+    "large": [
+     "Pay as you go",
+     12
+    ]
+   },
+   "why": "Low storage cost with an S3-compatible API.",
+   "hint": "Create a bucket and an application key for the backend.",
+   "url": "https://www.backblaze.com/cloud-storage/pricing"
+  },
+  {
+   "id": "cloudflare_cdn",
+   "name": "Cloudflare CDN",
+   "category": "cdn",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Pro",
+     20
+    ],
+    "large": [
+     "Business",
+     200
+    ]
+   },
+   "why": "CDN, DNS, TLS and basic DDoS protection in one place.",
+   "hint": "Point your nameservers to Cloudflare and enable proxying for the site.",
+   "url": "https://www.cloudflare.com/plans/"
+  },
+  {
+   "id": "aws_cloudfront",
+   "name": "AWS CloudFront",
+   "category": "cdn",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Pay as you go",
+     1
+    ],
+    "medium": [
+     "Pay as you go",
+     10
+    ],
+    "large": [
+     "Pay as you go",
+     50
+    ]
+   },
+   "why": "CDN that integrates with S3 and the rest of AWS.",
+   "hint": "Create a distribution with your origin and attach a TLS certificate.",
+   "url": "https://aws.amazon.com/cloudfront/pricing/"
+  },
+  {
+   "id": "bunny",
+   "name": "Bunny CDN",
+   "category": "cdn",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Pay as you go",
+     1
+    ],
+    "medium": [
+     "Pay as you go",
+     5
+    ],
+    "large": [
+     "Pay as you go",
+     20
+    ]
+   },
+   "why": "Low-cost CDN with simple pricing.",
+   "hint": "Create a pull zone pointing at your origin.",
+   "url": "https://bunny.net/pricing/"
+  },
+  {
+   "id": "qdrant_cloud",
+   "name": "Qdrant Cloud",
+   "category": "vector_db",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free cluster",
+     0
+    ],
+    "medium": [
+     "Standard cluster",
+     25
+    ],
+    "large": [
+     "Larger cluster",
+     100
+    ]
+   },
+   "why": "Managed Qdrant, the vector database you already use for RAG.",
+   "hint": "Create a cluster and put its URL and API key in QDRANT_URL and QDRANT_API_KEY.",
+   "url": "https://qdrant.tech/pricing/"
+  },
+  {
+   "id": "pinecone",
+   "name": "Pinecone",
+   "category": "vector_db",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Starter",
+     0
+    ],
+    "medium": [
+     "Standard",
+     50
+    ],
+    "large": [
+     "Standard (large index)",
+     150
+    ]
+   },
+   "why": "Fully managed vector database.",
+   "hint": "Create an index with the right dimension and store the API key.",
+   "url": "https://www.pinecone.io/pricing/"
+  },
+  {
+   "id": "sentry",
+   "name": "Sentry",
+   "category": "monitoring",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Developer",
+     0
+    ],
+    "medium": [
+     "Team",
+     26
+    ],
+    "large": [
+     "Business",
+     80
+    ]
+   },
+   "why": "Error tracking and performance monitoring for both front end and back end.",
+   "hint": "Add the SDK to the app and set the DSN as an environment variable.",
+   "url": "https://sentry.io/pricing/"
+  },
+  {
+   "id": "grafana_cloud",
+   "name": "Grafana Cloud",
+   "category": "monitoring",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Pro",
+     19
+    ],
+    "large": [
+     "Pro (more usage)",
+     60
+    ]
+   },
+   "why": "Metrics, logs and dashboards in one hosted stack.",
+   "hint": "Install the agent and send metrics and logs to your stack.",
+   "url": "https://grafana.com/pricing/"
+  },
+  {
+   "id": "uptimerobot",
+   "name": "UptimeRobot",
+   "category": "monitoring",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Solo",
+     7
+    ],
+    "large": [
+     "Team",
+     29
+    ]
+   },
+   "why": "Simple uptime checks and alerts.",
+   "hint": "Add an HTTP check for the health endpoint and set alert contacts.",
+   "url": "https://uptimerobot.com/pricing/"
+  },
+  {
+   "id": "github_actions",
+   "name": "GitHub Actions",
+   "category": "ci_cd",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Team",
+     4
+    ],
+    "large": [
+     "Team (more minutes)",
+     21
+    ]
+   },
+   "why": "Built in to GitHub; easy pipelines for tests and deploys.",
+   "hint": "Add a workflow that runs tests and deploys on merge to the main branch.",
+   "url": "https://github.com/features/actions"
+  },
+  {
+   "id": "gitlab_ci",
+   "name": "GitLab CI/CD",
+   "category": "ci_cd",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Premium",
+     29
+    ],
+    "large": [
+     "Premium",
+     29
+    ]
+   },
+   "why": "Pipelines inside GitLab with good environment tracking.",
+   "hint": "Add a pipeline file that runs tests and deploys from the main branch.",
+   "url": "https://about.gitlab.com/pricing/"
+  },
+  {
+   "id": "resend",
+   "name": "Resend",
+   "category": "email",
+   "rank": 1,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Pro",
+     20
+    ],
+    "large": [
+     "Scale",
+     90
+    ]
+   },
+   "why": "Developer-friendly transactional email API.",
+   "hint": "Verify your sending domain and store the API key as a secret.",
+   "url": "https://resend.com/pricing"
+  },
+  {
+   "id": "aws_ses",
+   "name": "Amazon SES",
+   "category": "email",
+   "rank": 2,
+   "plans": {
+    "small": [
+     "Pay as you go",
+     1
+    ],
+    "medium": [
+     "Pay as you go",
+     5
+    ],
+    "large": [
+     "Pay as you go",
+     30
+    ]
+   },
+   "why": "Very low cost per email; needs more set-up.",
+   "hint": "Verify the domain, request production access and use SMTP or the API.",
+   "url": "https://aws.amazon.com/ses/pricing/"
+  },
+  {
+   "id": "brevo",
+   "name": "Brevo",
+   "category": "email",
+   "rank": 3,
+   "plans": {
+    "small": [
+     "Free",
+     0
+    ],
+    "medium": [
+     "Starter",
+     9
+    ],
+    "large": [
+     "Business",
+     25
+    ]
+   },
+   "why": "Transactional and marketing email with a free tier.",
+   "hint": "Verify the sender domain and store the SMTP or API key as a secret.",
+   "url": "https://www.brevo.com/pricing/"
+  }
+ ]
+}

@@ -14,6 +14,9 @@ from app.schemas.diagrams import (
     MAX_UC_RELATIONS, ActEdge, ActivityModel, ActNode, ClassModel, ClassNode,
     ClassRelation, DeploymentModel, DeployLink, DeployNode, Fragment, Message, Rel, SequenceModel,
     StateModel, Transition, UseCaseModel,
+    MAX_DFD_EXTERNALS, MAX_DFD_FLOWS, MAX_DFD_PROCESSES, MAX_DFD_STORES, MAX_ER_ATTRS, MAX_ER_ENTITIES,
+    MAX_ER_RELATIONS, DfdExternal, DfdFlow, DfdModel, DfdProcess, DfdStore, ErAttribute, ErEntity, ErModel,
+    ErRelation,
 )
 from app.schemas.srs import Issue
 
@@ -378,3 +381,138 @@ def sanitize_uc_relations(includes: list[Rel], extends: list[Rel], model: UseCas
     inc = clean(includes)
     ext = clean(extends)
     return inc, ext
+
+
+
+# ======================================================== entity-relationship
+def validate_er(m: ErModel) -> list[Issue]:
+    out: list[Issue] = []
+    names = [_key(e.name) for e in m.entities]
+    if len(names) < 2:
+        out.append(_err("ER_TOO_SMALL", "Need at least 2 entities."))
+    if len(m.entities) > MAX_ER_ENTITIES:
+        out.append(_err("TOO_MANY_ENTITIES", f"Use at most {MAX_ER_ENTITIES} entities."))
+    if len(set(names)) != len(names):
+        out.append(_err("DUP_ENTITY", "Entity names must be unique."))
+    known = set(names)
+    for r in m.relations:
+        for end in (r.source, r.target):
+            if _key(end) not in known:
+                out.append(_err("UNKNOWN_ENTITY", f"Relation refers to entity '{end}' which is not defined."))
+    for e in m.entities:
+        if not any(a.key == "PK" for a in e.attributes):
+            out.append(_err("NO_PK", f"Entity '{e.name}' has no primary key."))
+    return out
+
+
+def sanitize_er(m: ErModel) -> tuple[ErModel | None, list[str]]:
+    warns: list[str] = []
+    ents: dict[str, ErEntity] = {}
+    for e in m.entities:
+        k = _key(e.name)
+        if not k or k in ents:
+            continue
+        attrs, seen = [], set()
+        for a in e.attributes:
+            n = _key(a.name).replace(" ", "_")
+            if not n or n in seen:
+                continue
+            seen.add(n)
+            attrs.append(ErAttribute(name=clip(n, 30), type=clip(a.type, 16).upper(), key=a.key))
+        if not any(a.key == "PK" for a in attrs):
+            attrs.insert(0, ErAttribute(name="id", type="INT", key="PK"))
+        if len(attrs) > MAX_ER_ATTRS:
+            attrs = attrs[:MAX_ER_ATTRS]
+            warns.append(f"'{e.name}' shows its first {MAX_ER_ATTRS} attributes only.")
+        ents[k] = ErEntity(name=clip(e.name.replace(" ", ""), 28), attributes=attrs)
+    if len(ents) > MAX_ER_ENTITIES:
+        ents = dict(list(ents.items())[:MAX_ER_ENTITIES])
+        warns.append(f"Showing the first {MAX_ER_ENTITIES} entities only.")
+    rels, seen_pairs = [], set()
+    for r in m.relations:
+        s_, t_ = _key(r.source), _key(r.target)
+        if s_ in ents and t_ in ents and s_ != t_ and (s_, t_, _key(r.label)) not in seen_pairs:
+            seen_pairs.add((s_, t_, _key(r.label)))
+            rels.append(ErRelation(source=ents[s_].name, target=ents[t_].name, cardinality_source=r.cardinality_source,
+                                   cardinality_target=r.cardinality_target, label=clip(r.label, 20)))
+    rels = rels[:MAX_ER_RELATIONS]
+    linked = {r.source for r in rels} | {r.target for r in rels}
+    if len(ents) < 2:
+        return None, warns
+    if rels and len(linked) < len(ents):
+        gone = [n for n in (e.name for e in ents.values()) if n not in linked]
+        if gone and len(gone) < len(ents):
+            warns.append(f"Entities with no relationship are shown on their own: {', '.join(gone)}.")
+    return ErModel(entities=list(ents.values()), relations=rels), warns
+
+
+# ================================================================== data flow
+def _dfd_kind(m: DfdModel) -> dict[str, str]:
+    kinds = {x.id: "external" for x in m.externals}
+    kinds.update({p.id: "process" for p in m.processes})
+    kinds.update({s.id: "store" for s in m.stores})
+    return kinds
+
+
+def validate_dfd(m: DfdModel) -> list[Issue]:
+    out: list[Issue] = []
+    kinds = _dfd_kind(m)
+    ids = [x.id for x in m.externals] + [p.id for p in m.processes] + [s.id for s in m.stores]
+    if len(set(ids)) != len(ids):
+        out.append(_err("DUP_DFD_ID", "Every external, process and store needs a unique id."))
+    if not m.processes:
+        out.append(_err("DFD_NO_PROCESS", "A data flow diagram needs at least one process."))
+    if len(m.processes) > MAX_DFD_PROCESSES:
+        out.append(_err("TOO_MANY_PROCESSES", f"Use at most {MAX_DFD_PROCESSES} processes."))
+    if len(m.flows) > MAX_DFD_FLOWS:
+        out.append(_err("TOO_MANY_FLOWS", f"Use at most {MAX_DFD_FLOWS} data flows."))
+    for f in m.flows:
+        a, b = kinds.get(f.source), kinds.get(f.target)
+        if not a or not b:
+            out.append(_err("UNKNOWN_DFD_ID", f"Flow '{f.label}' refers to an id that does not exist."))
+        elif a != "process" and b != "process":
+            out.append(_err("FLOW_NEEDS_PROCESS", f"Flow '{f.label}' joins two non-process items: every data flow must start or end at a process."))
+    ins = {f.target for f in m.flows}
+    outs = {f.source for f in m.flows}
+    for p in m.processes:
+        if p.id not in ins:
+            out.append(_err("PROCESS_NO_INPUT", f"Process '{p.name}' has no incoming data flow (a 'miracle')."))
+        if p.id not in outs:
+            out.append(_err("PROCESS_NO_OUTPUT", f"Process '{p.name}' has no outgoing data flow (a 'black hole')."))
+    return out
+
+
+def sanitize_dfd(m: DfdModel) -> tuple[DfdModel | None, list[str]]:
+    warns: list[str] = []
+    ext = [DfdExternal(id=x.id, name=clip(x.name)) for x in m.externals if x.id and str(x.name).strip()][:MAX_DFD_EXTERNALS]
+    pro = [DfdProcess(id=p.id, name=clip(p.name)) for p in m.processes if p.id and str(p.name).strip()][:MAX_DFD_PROCESSES]
+    sto = [DfdStore(id=s.id, name=clip(s.name)) for s in m.stores if s.id and str(s.name).strip()][:MAX_DFD_STORES]
+    seen_ids: set[str] = set()
+    for lst in (ext, pro, sto):
+        for item in list(lst):
+            if item.id in seen_ids:
+                lst.remove(item)
+            seen_ids.add(item.id)
+    kinds = {**{x.id: "external" for x in ext}, **{p.id: "process" for p in pro}, **{s.id: "store" for s in sto}}
+    flows, seen, dropped = [], set(), 0
+    for f in m.flows:
+        a, b = kinds.get(f.source), kinds.get(f.target)
+        key = (f.source, f.target, _key(f.label))
+        if not a or not b or (a != "process" and b != "process") or f.source == f.target or key in seen:
+            dropped += 1
+            continue
+        seen.add(key)
+        flows.append(DfdFlow(source=f.source, target=f.target, label=clip(f.label or "data")))
+    if dropped:
+        warns.append(f"Removed {dropped} invalid or duplicate data flow(s).")
+    flows = flows[:MAX_DFD_FLOWS]
+    used = {f.source for f in flows} | {f.target for f in flows}
+    if len(used) < len(kinds):
+        warns.append(f"Removed {len(kinds) - len(used)} item(s) that had no data flow.")
+    ext = [x for x in ext if x.id in used]
+    pro = [p for p in pro if p.id in used]
+    sto = [s for s in sto if s.id in used]
+    if not pro or not flows:
+        return None, warns
+    return DfdModel(level=m.level, title=clip(m.title, 60), parent=m.parent, externals=ext, processes=pro,
+                    stores=sto, flows=flows), warns

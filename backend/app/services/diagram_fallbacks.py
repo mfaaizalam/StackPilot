@@ -5,7 +5,8 @@ import re
 
 from app.schemas.diagrams import (
     MAX_CLASSES, ActEdge, ActivityModel, ActNode, ClassModel, ClassNode, ClassRelation,
-    DeploymentModel, DeployLink, DeployNode, Message, SequenceModel, UCActor, UCNode, UseCaseModel,
+    DeploymentModel, DeployLink, DeployNode, DfdExternal, DfdFlow, DfdModel, DfdProcess, DfdStore, ErAttribute,
+    ErEntity, ErModel, ErRelation, Message, SequenceModel, UCActor, UCNode, UseCaseModel,
 )
 from app.schemas.srs import Entity, Requirements, UseCase
 from app.services.diagram_validator import clip
@@ -189,3 +190,145 @@ def activity_from_usecase(uc: UseCase) -> ActivityModel:
     nodes.append(ActNode(id="n_end", kind="end", label=""))
     edges.append(ActEdge(source=prev, target="n_end", label=prev_label))
     return ActivityModel(nodes=nodes, edges=edges)
+
+
+
+# ====================================================== entity-relationship
+_COL_STOP = re.compile(r"\s+(NOT\s+NULL|NULL|UNIQUE|PRIMARY|REFERENCES|DEFAULT|CHECK)\b", re.I)
+_TYPE_ALIAS = {"SERIAL": "INT", "INTEGER": "INT", "BIGSERIAL": "BIGINT", "NUMERIC": "DECIMAL", "TIMESTAMP": "TIMESTAMP"}
+
+
+def er_from_tables(tables) -> ErModel:
+    """ER model from the SDD table designs (TableDesign list): the picture always matches the data dictionary."""
+    from app.services.sdd_fallbacks import pascal, singular
+
+    by_table = {t.table.lower(): pascal(t.entity) for t in tables}
+    by_single = {singular(t.table).lower(): pascal(t.entity) for t in tables}
+    ents, rels, seen = [], [], set()
+    for t in tables:
+        me = pascal(t.entity)
+        attrs = []
+        for raw in t.columns:
+            name, _, spec = raw.partition(":")
+            name, spec = name.strip(), spec.strip()
+            if not name:
+                continue
+            m = _COL_STOP.search(spec)
+            typ = (spec[: m.start()] if m else spec).strip().upper() or "VARCHAR(255)"
+            typ = _TYPE_ALIAS.get(typ, typ)
+            up = spec.upper()
+            ref = re.search(r"REFERENCES\s+(\w+)", spec, re.I)
+            parent = by_table.get(ref.group(1).lower()) if ref else None
+            if not parent and name.lower().endswith("_id") and name.lower() != "id":
+                parent = by_single.get(name[:-3].lower())
+            key = "PK" if "PRIMARY KEY" in up else "FK" if (ref or parent) else "UK" if "UNIQUE" in up else ""
+            attrs.append(ErAttribute(name=name, type=typ, key=key))
+            if parent and parent != me and (parent, me) not in seen:
+                seen.add((parent, me))
+                one_to_one = "UNIQUE" in up
+                rels.append(ErRelation(source=parent, target=me, cardinality_source="one" if "NOT NULL" in up else "zero_or_one",
+                                       cardinality_target="zero_or_one" if one_to_one else "many", label="has"))
+        ents.append(ErEntity(name=me, attributes=attrs))
+    return ErModel(entities=ents, relations=rels)
+
+
+def er_from_requirements(req: Requirements) -> ErModel:
+    from app.services.sdd_fallbacks import table_from_entity
+    return er_from_tables([table_from_entity(e, req.entities) for e in req.entities])
+
+
+# ================================================================= data flow
+_READ_VERBS = {"view", "search", "list", "browse", "track", "read", "check", "display", "show", "see", "find", "export", "download", "report"}
+
+
+def _noun(name: str) -> str:
+    words = re.findall(r"[A-Za-z]+", name)
+    return words[-1].capitalize() if words else "Data"
+
+
+def _process_name(uc_name: str) -> str:
+    return clip(" ".join(w if i else w.capitalize() for i, w in enumerate(uc_name.split())), 28)
+
+
+def dfd_level1_from_requirements(req: Requirements) -> tuple[DfdModel, dict[str, UseCase]]:
+    """Deterministic Level 1: one process per important use case, one store per entity."""
+    ucs = rank_use_cases(req)[:6]
+    used = {u.actor for u in ucs}
+    ext = [DfdExternal(id=f"e{i}", name=clip(a.name)) for i, a in enumerate([a for a in req.actors if a.name in used], start=1)]
+    by_actor = {x.name: x.id for x in ext}
+    k = len(ext)
+    for text in req.external_interfaces[:3]:
+        if len(ext) >= 6:
+            break
+        k += 1
+        ext.append(DfdExternal(id=f"e{k}", name=clip(re.split(r"\s[-–—:(]|[:(]", str(text), maxsplit=1)[0].strip() or str(text))))
+    ents = req.entities[:5]
+    sto = [DfdStore(id=f"D{i}", name=clip(e.name)) for i, e in enumerate(ents, start=1)]
+    procs, flows, mapping = [], [], {}
+    fr_text = {f.id: f"{f.title} {f.statement}" for f in req.functional_requirements}
+    for i, u in enumerate(ucs, start=1):
+        pid = str(i)
+        procs.append(DfdProcess(id=pid, name=_process_name(u.name)))
+        mapping[pid] = u
+        noun = _noun(u.name)
+        actor_id = by_actor.get(u.actor)
+        if actor_id:
+            flows.append(DfdFlow(source=actor_id, target=pid, label=clip(f"{noun} request")))
+            flows.append(DfdFlow(source=pid, target=actor_id, label=clip(f"{noun} result")))
+        blob = " ".join([u.name, u.description, *u.main_flow, *(fr_text.get(f, "") for f in u.fr_ids)]).lower()
+        hits = [(j, e) for j, e in enumerate(ents, start=1) if re.search(rf"\b{re.escape(e.name.lower())}s?\b", blob)]
+        if not hits and sto:
+            hits = [(((i - 1) % len(ents)) + 1, ents[(i - 1) % len(ents)])]
+        read_only = u.name.lower().split()[0] in _READ_VERBS if u.name.split() else False
+        for n, (j, e) in enumerate(hits[:1]):
+            flows.append(DfdFlow(source=f"D{j}", target=pid, label=clip(f"{e.name} data")))
+            if not read_only:
+                flows.append(DfdFlow(source=pid, target=f"D{j}", label=clip(f"{e.name} record")))
+    for x in ext[len(by_actor):]:  # external systems: attach to the process whose text mentions them, else the first
+        key = x.name.lower().split()[0]
+        pid = next((p for p, u in mapping.items() if key in (u.name + " " + u.description + " ".join(u.main_flow)).lower()), "1")
+        flows.append(DfdFlow(source=pid, target=x.id, label="Service request"))
+        flows.append(DfdFlow(source=x.id, target=pid, label="Service response"))
+    return DfdModel(level=1, title=clip(f"Level 1 DFD: {req.title}", 60), parent="", externals=ext,
+                    processes=procs, stores=sto, flows=flows), mapping
+
+
+def dfd_context_from_level1(l1: DfdModel, req: Requirements) -> DfdModel:
+    """Level 0 is the Level 1 diagram folded into one process, so the two always balance."""
+    flows = []
+    ids = {p.id for p in l1.processes}
+    for x in l1.externals:
+        ins = list(dict.fromkeys(f.label for f in l1.flows if f.source == x.id and f.target in ids))
+        outs = list(dict.fromkeys(f.label for f in l1.flows if f.target == x.id and f.source in ids))
+        if ins:
+            flows.append(DfdFlow(source=x.id, target="0", label=clip(" / ".join(ins[:2]), 40)))
+        if outs:
+            flows.append(DfdFlow(source="0", target=x.id, label=clip(" / ".join(outs[:2]), 40)))
+    return DfdModel(level=0, title=clip(f"Level 0 DFD: {req.title}", 60), parent="", externals=list(l1.externals),
+                    processes=[DfdProcess(id="0", name=clip(req.title))], stores=[], flows=flows)
+
+
+def dfd_level2_from_level1(l1: DfdModel, mapping: dict[str, UseCase], max_diagrams: int = 3) -> list[DfdModel]:
+    out: list[DfdModel] = []
+    pool = sorted((p for p in l1.processes if mapping.get(p.id) and len(mapping[p.id].main_flow) >= 3),
+                  key=lambda p: -len(mapping[p.id].main_flow))[:max_diagrams]
+    for p in sorted(pool, key=lambda p: int(p.id)):
+        uc = mapping[p.id]
+        steps = [_short(s, uc.actor) for s in uc.main_flow[:5]][:4]
+        subs = [DfdProcess(id=f"{p.id}.{i}", name=st) for i, st in enumerate(steps, start=1)]
+        mid = ["Validated input", "Processed data", "Result data"]
+        flows = [DfdFlow(source=subs[i].id, target=subs[i + 1].id, label=mid[min(i, 2)]) for i in range(len(subs) - 1)]
+        ext_ids, sto_ids = set(), set()
+        for f in l1.flows:
+            if f.target == p.id and f.source.startswith("e"):
+                flows.append(DfdFlow(source=f.source, target=subs[0].id, label=f.label)); ext_ids.add(f.source)
+            elif f.source == p.id and f.target.startswith("e"):
+                flows.append(DfdFlow(source=subs[-1].id, target=f.target, label=f.label)); ext_ids.add(f.target)
+            elif f.target == p.id and f.source.startswith("D"):
+                flows.append(DfdFlow(source=f.source, target=subs[min(1, len(subs) - 1)].id, label=f.label)); sto_ids.add(f.source)
+            elif f.source == p.id and f.target.startswith("D"):
+                flows.append(DfdFlow(source=subs[-1].id, target=f.target, label=f.label)); sto_ids.add(f.target)
+        out.append(DfdModel(level=2, title=clip(f"Level 2 DFD: {p.id} {p.name}", 60), parent=p.id,
+                            externals=[x for x in l1.externals if x.id in ext_ids], processes=subs,
+                            stores=[s for s in l1.stores if s.id in sto_ids], flows=flows))
+    return out

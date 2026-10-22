@@ -27,10 +27,13 @@ function ActivityForm({ initial, others, onSave, onCancel, busy, error }) {
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const toggleDep = (id) => setF((p) => ({ ...p, depends_on: p.depends_on.includes(id) ? p.depends_on.filter((d) => d !== id) : [...p.depends_on, id] }));
   const badDates = f.end_date < f.start_date;
+  const fromExpenses = initial?.cost_source === "expenses";
 
   const submit = (e) => {
     e.preventDefault();
-    onSave({ ...f, name: f.name.trim(), phase: f.phase.trim() || null, progress_pct: Number(f.progress_pct) });
+    const body = { ...f, name: f.name.trim(), phase: f.phase.trim() || null, progress_pct: Number(f.progress_pct) };
+    if (fromExpenses) { delete body.estimated_cost; delete body.actual_cost; }   // the expense lines own these
+    onSave(body);
   };
 
   return (
@@ -43,8 +46,8 @@ function ActivityForm({ initial, others, onSave, onCancel, busy, error }) {
         <Field label="End date"><input required type="date" min={f.start_date} className={inputCls} value={f.end_date} onChange={set("end_date")} /></Field>
         <Field label="Planned hours"><input type="number" min="0" step="0.5" className={inputCls} value={f.planned_hours} onChange={set("planned_hours")} /></Field>
         <Field label="Actual hours"><input type="number" min="0" step="0.5" className={inputCls} value={f.actual_hours} onChange={set("actual_hours")} /></Field>
-        <Field label="Estimated cost (PKR)"><input type="number" min="0" step="0.01" className={inputCls} value={f.estimated_cost} onChange={set("estimated_cost")} /></Field>
-        <Field label="Actual cost (PKR)"><input type="number" min="0" step="0.01" className={inputCls} value={f.actual_cost} onChange={set("actual_cost")} /></Field>
+        <Field label="Estimated cost (PKR)" hint={fromExpenses ? "From expense lines (edit them on the Costing tab)" : undefined}><input type="number" min="0" step="0.01" disabled={fromExpenses} className={`${inputCls} disabled:opacity-60`} value={f.estimated_cost} onChange={set("estimated_cost")} /></Field>
+        <Field label="Actual cost (PKR)" hint={fromExpenses ? "From expense lines" : undefined}><input type="number" min="0" step="0.01" disabled={fromExpenses} className={`${inputCls} disabled:opacity-60`} value={f.actual_cost} onChange={set("actual_cost")} /></Field>
       </div>
       {others.length > 0 && (
         <fieldset>

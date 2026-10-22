@@ -46,6 +46,14 @@ function IconCosting() {
     </svg>
   );
 }
+function IconDeploy() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <path d="M5 2.5h7l3.5 3.5v11a1 1 0 0 1-1 1h-9.5a1 1 0 0 1-1-1v-13.5a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M7.5 11h5M7.5 14h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
 function IconGantt() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -91,8 +99,9 @@ const SECTIONS = [
   { to: "srs", label: "SRS Document", icon: <IconSrs /> },
   { to: "diagrams", label: "Diagrams", icon: <IconDiagrams /> },
   { to: "sdd", label: "Design Document", icon: <IconSdd /> },
-  { to: "costing", label: "Deployment Document", icon: <IconCosting /> },
+  { to: "costing", label: "Costing", icon: <IconCosting /> },
   { to: "timeline", label: "Timeline & Finance", icon: <IconGantt /> },
+  { to: "document", label: "Document", icon: <IconDeploy /> },
   { to: "settings", label: "Settings", icon: <IconSettings /> },
 ];
 const SECTION_KEYS = SECTIONS.map((s) => s.to);

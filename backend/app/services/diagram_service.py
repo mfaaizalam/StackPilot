@@ -15,14 +15,16 @@ from app.core.llm import LLMError, llm_json
 from app.models.srs import Diagram, DiagramJob, SRSDocument
 from app.prompts import diagram_prompt as P
 from app.schemas.diagrams import (
-        DIAGRAM_TYPES, ActivityModel, ClassModel, DeploymentModel, SequenceModel, StateModelSet,
-    UseCaseRelations,
+        DIAGRAM_TYPES, ActivityModel, ClassModel, DeploymentModel, DfdModel, DfdSet, ErModel, SequenceModel,
+        StateModelSet, UseCaseRelations,
 )
 import logging
 from app.schemas.srs import Requirements
 from app.services import diagram_fallbacks as F
 from app.services import diagram_validator as V
 from app.services.diagram_mermaid import to_mermaid
+from app.services.diagram_render import to_svg
+from app.services.diagram_scene import Scene, scene_for
 from app.services.diagram_usecase_svg import render_usecase_svg
 from app.schemas.diagrams import UseCaseModel
 
@@ -120,6 +122,70 @@ def make_deployment(req: Requirements) -> Result:
     spec, warns = V.sanitize_deployment(F.deployment_from_requirements(req))
     return (spec.model_dump() if spec else None), [reason] + warns, "fallback"
 
+def make_er(req: Requirements) -> Result:
+    """Entity-relationship diagram: AI normalises cardinalities and junction tables, rules are the safety net."""
+    try:
+        spec, warns = _ai_model(P.er_prompt(req), ErModel, P.ER_SYSTEM, V.validate_er, V.sanitize_er)
+        if spec:
+            return spec.model_dump(), warns, "ai"
+    except LLMError:
+        pass
+    spec, warns = V.sanitize_er(F.er_from_requirements(req))
+    return (spec.model_dump() if spec else None), [AI_DOWN] + warns, "fallback"
+
+
+def _dfd_set_from_ai(req: Requirements) -> tuple[list[DfdModel], list[list[str]]]:
+    """Level 1 + Level 2 from one AI call (ids stay consistent); each model validated, repaired once, sanitized."""
+    raw = llm_json(P.dfd_prompt(req), DfdSet, system=P.DFD_SYSTEM, temperature=0.2)
+    models: list[DfdModel] = []
+    warns: list[list[str]] = []
+    for m in [raw.level1.model_copy(update={"level": 1})] + [x.model_copy(update={"level": 2}) for x in raw.level2[:3]]:
+        errors = [i.message for i in V.validate_dfd(m) if i.level == "error"]
+        if errors:
+            try:
+                m = llm_json(P.repair_prompt(m.model_dump_json(), errors), DfdModel, system=P.REPAIR_SYSTEM, temperature=0.1)
+            except LLMError:
+                pass
+        clean, w = V.sanitize_dfd(m)
+        if clean:
+            models.append(clean)
+            warns.append(w)
+    return models, warns
+
+
+def make_dfd_set(req: Requirements) -> list[tuple[str, Result]]:
+    """Level 0, Level 1 and up to three Level 2 diagrams, in that order."""
+    l1 = None
+    l2: list[DfdModel] = []
+    w1: list[str] = []
+    source = "ai"
+    try:
+        models, warns = _dfd_set_from_ai(req)
+        if models and models[0].level == 1:
+            l1, w1, l2 = models[0], warns[0], models[1:]
+    except LLMError:
+        pass
+    if l1 is None:
+        source = "fallback"
+        draft, mapping = F.dfd_level1_from_requirements(req)
+        l1, w1 = V.sanitize_dfd(draft)
+        if l1 is None:
+            return []
+        w1 = [AI_DOWN] + w1
+        l2 = [m for m in (V.sanitize_dfd(d)[0] for d in F.dfd_level2_from_level1(l1, mapping)) if m]
+    elif not l2:
+        draft, mapping = F.dfd_level1_from_requirements(req)
+        l2 = [m for m in (V.sanitize_dfd(d)[0] for d in F.dfd_level2_from_level1(l1, mapping)) if m]
+    l0, _ = V.sanitize_dfd(F.dfd_context_from_level1(l1, req))
+    out: list[tuple[str, Result]] = []
+    if l0:
+        out.append(("Level 0 DFD: Context diagram", (l0.model_dump(), [], source)))
+    out.append((f"Level 1 DFD: {req.title}"[:80], (l1.model_dump(), w1, source)))
+    for m in l2:
+        out.append((m.title, (m.model_dump(), [] if source == "ai" else [AI_DOWN], source)))
+    return out
+
+
 def make_state_set(req: Requirements) -> list[tuple[str, Result]]:
     """May yield 0..3 diagrams (only entities with a lifecycle). Returns [(title, result)]."""
     try:
@@ -146,6 +212,8 @@ def plan_tasks(req: Requirements, types: list[str]) -> list[Task]:
         for i, ents in enumerate(parts, start=1):
             title = "Class diagram" if len(parts) == 1 else f"Class diagram (part {i} of {len(parts)})"
             tasks.append(Task("class", title, lambda e=ents, i=i, n=len(parts): make_class(req, e, i, n)))
+    if "er" in types and len(req.entities) >= 2:
+        tasks.append(Task("er", "Entity-relationship diagram", lambda: make_er(req)))
     if "sequence" in types:
         for uc in ranked[:N_SEQUENCE]:
             tasks.append(Task("sequence", f"Sequence: {uc.name}", lambda uc=uc: make_sequence(req, uc)))
@@ -162,13 +230,57 @@ def diagram_out(d: Diagram, req_actors: set[str] | None = None) -> dict:
     m = d.model or {}
     out = {"id": d.id, "type": d.type, "title": d.title, "stale": bool(d.stale),
            "warnings": m.get("warnings", []), "source": m.get("source", "ai")}
+    ed = m.get("edited")
+    out["edited"] = bool(ed)
+    if ed and ed.get("png"):  # the person changed this diagram in the editor: show their version
+        out["edited_png"] = "data:image/png;base64," + ed["png"]
     try:
         if d.type == "usecase":
             out["svg"] = render_usecase_svg(UseCaseModel.model_validate(m["spec"]))
+        elif d.type in ("er", "dfd"):
+            out["svg"] = to_svg(scene_for(d.type, m["spec"], d.title or d.type))
+            if d.type == "dfd":
+                out["level"] = m["spec"].get("level")
         else:
             out["mermaid"] = to_mermaid(d.type, m["spec"], set(m.get("actors", [])))
     except Exception:  # a corrupt row must never break the whole list
         out["error"] = "This diagram could not be rendered."
+    return out
+
+
+def diagram_rows(db: Session, srs_id: int) -> list[Diagram]:
+    rows = db.query(Diagram).filter(Diagram.srs_id == srs_id).all()
+    rows.sort(key=lambda d: (TYPE_ORDER.get(d.type, 99), (d.model or {}).get("order", 0), d.id))
+    return rows
+
+
+def row_scene(d: Diagram) -> Scene | None:
+    """The editable scene of one stored diagram (None if the row is corrupt)."""
+    m = d.model or {}
+    try:
+        return scene_for(d.type, m["spec"], d.title or d.type, set(m.get("actors", [])))
+    except Exception:
+        log.warning("Diagram %s could not be turned into a scene", d.id, exc_info=True)
+        return None
+
+
+def figures(db: Session, srs_id: int) -> list[dict]:
+    """Every diagram of an SRS version as {type, title, stale, scene}: input for the Word documents and draw.io files."""
+    out = []
+    for d in diagram_rows(db, srs_id):
+        sc = row_scene(d)
+        if sc:
+            ed = (d.model or {}).get("edited") or {}
+            png = None
+            if ed.get("png"):
+                import base64
+                try:
+                    png = base64.b64decode(ed["png"])
+                except Exception:
+                    png = None
+            out.append({"type": d.type, "title": d.title or d.type, "stale": bool(d.stale), "scene": sc, "id": d.id,
+                        "png": png, "xml": ed.get("xml"),
+                        "level": (d.model or {}).get("spec", {}).get("level")})
     return out
 
 
@@ -202,7 +314,8 @@ def run_diagram_job(job_id: str) -> None:
             actors = [a.name for a in req.actors]
             tasks = plan_tasks(req, types)
             want_state = "state" in types
-            total = len(tasks) + (1 if want_state else 0)
+            want_dfd = "dfd" in types
+            total = len(tasks) + (1 if want_state else 0) + (1 if want_dfd else 0)
 
             job.status, job.stage = "running", f"0/{total}"
             db.commit()
@@ -228,6 +341,8 @@ def run_diagram_job(job_id: str) -> None:
                 futures = {pool.submit(t.run): (t, i) for _, i, t in jobs}
                 if want_state:
                     futures[pool.submit(make_state_set, req)] = (None, 0)
+                if want_dfd:
+                    futures[pool.submit(make_dfd_set, req)] = ("dfd", 0)
                 for fut in as_completed(futures):
                     task, order = futures[fut]
                     try:
@@ -237,6 +352,9 @@ def run_diagram_job(job_id: str) -> None:
                     if task is None:  # state machines: a list of (title, result)
                         for k, (title, r) in enumerate(res or []):
                             store("state", title, k, r)
+                    elif task == "dfd":  # data flow diagrams: Level 0, 1, 2 in order
+                        for k, (title, r) in enumerate(res or []):
+                            store("dfd", title, k, r)
                     elif res:
                         store(task.type, task.title, order, res)
                     done += 1

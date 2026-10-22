@@ -5,6 +5,8 @@ import DiagramCard from "./DiagramCard.jsx";
 const TYPES = [
   ["usecase", "Use case"],
   ["class", "Class"],
+  ["er", "ER diagram"],
+  ["dfd", "Data flow (DFD 0/1/2)"],
   ["sequence", "Sequence"],
   ["activity", "Activity"],
   ["state", "State"],
@@ -71,6 +73,16 @@ export default function DiagramsPanel({ boardId, srsId, version }) {
     } catch (e) { setProgress(null); setError(errText(e)); }
   };
 
+  const downloadAll = async () => {
+    try {
+      const { data } = await api.get(`/boards/${boardId}/srs/diagrams/export.drawio`, { params: { srs_id: srsId }, responseType: "blob" });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url; a.download = `diagrams_v${version}.drawio`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) { setError(errText(e)); }
+  };
+
   const counts = Object.fromEntries(TYPES.map(([k]) => [k, diagrams.filter((d) => d.type === k).length]));
   const shown = diagrams.filter((d) => d.type === active);
   const stale = diagrams.some((d) => d.stale);
@@ -96,7 +108,7 @@ export default function DiagramsPanel({ boardId, srsId, version }) {
         <div className="bg-surface border border-line rounded-card px-8 py-14 text-center">
           <h2 className="text-lg font-semibold text-ink">Turn this SRS into UML diagrams</h2>
           <p className="text-sm text-ink-muted mt-2 max-w-md mx-auto">
-            We draw a use case diagram, a class diagram, sequence and activity diagrams for your most important use cases, and state diagrams for anything with a lifecycle, and a deployment diagram of the system. Version {version}.
+            We draw a use case diagram, a class diagram, an entity-relationship (ER) diagram, data flow diagrams at Level 0, 1 and 2, sequence and activity diagrams for your most important use cases, state diagrams for anything with a lifecycle, and a deployment diagram. Every diagram can be edited right here with the full draw.io editor. Version {version}.
           </p>
           <button onClick={generate} className="mt-6 text-sm font-medium px-5 py-2.5 rounded-lg bg-brand text-brand-fg hover:bg-brand-hover transition">Generate diagrams</button>
         </div>
@@ -118,13 +130,16 @@ export default function DiagramsPanel({ boardId, srsId, version }) {
                 </button>
               ))}
             </div>
-            {!running && !stale && (
-              <button onClick={generate} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-line hover:bg-surface-2 transition">Regenerate all</button>
-            )}
+            <div className="flex items-center gap-2">
+              <button onClick={downloadAll} title="All diagrams in one editable draw.io file (one page per diagram)" className="text-xs font-medium px-3 py-1.5 rounded-lg border border-line hover:bg-surface-2 transition">Download all (.drawio)</button>
+              {!running && !stale && (
+                <button onClick={generate} className="text-xs font-medium px-3 py-1.5 rounded-lg border border-line hover:bg-surface-2 transition">Regenerate all</button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-5">
-            {shown.map((d) => <DiagramCard key={d.id} d={d} />)}
+            {shown.map((d) => <DiagramCard key={d.id} d={d} boardId={boardId} onChanged={load} />)}
           </div>
         </>
       )}

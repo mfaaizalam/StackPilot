@@ -9,11 +9,13 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.column import BoardColumn
+from app.models.expense import Expense
 from app.models.gantt import Activity, BoardBudget, FinanceIncrement
 from app.models.srs import CostEstimate
 from app.models.task import Task
 from app.schemas.gantt import (ActivityCreate, ActivityUpdate, BudgetUpdate, IncrementCreate,
                                IncrementUpdate)
+from app.services import costing_calculator as K
 from app.services import gantt_calculator as C
 
 D = Decimal
@@ -35,6 +37,7 @@ def activity_out(a: Activity, metrics: dict, conflicts: list[int]) -> dict:
             "progress_pct": a.progress_pct, "estimated_cost": _s(a.estimated_cost),
             "actual_cost": _s(a.actual_cost), "depends_on": list(a.depends_on or []),
             "position": a.position, "conflicting_dependencies": conflicts,
+            "cost_source": getattr(a, "cost_source", "manual"), "expense_count": getattr(a, "expense_count", 0),
             **m, "flags": flags}
 
 
@@ -80,21 +83,40 @@ def base_budget(db: Session, board_id: int) -> Decimal:
     return C.dec(row.base_budget) if row else D(0)
 
 
+def expense_out(e: Expense) -> dict:
+    return {"id": e.id, "activity_id": e.activity_id, "category": e.category, "description": e.description,
+            "estimated_amount": _s(e.estimated_amount), "actual_amount": _s(e.actual_amount),
+            "variance": _s(C.dec(e.actual_amount) - C.dec(e.estimated_amount)),
+            "incurred_on": e.incurred_on.isoformat() if e.incurred_on else None}
+
+
+def _expenses(db: Session, board_id: int) -> list[Expense]:
+    return db.query(Expense).filter(Expense.board_id == board_id).order_by(Expense.id).all()
+
+
 def payload(db: Session, board_id: int, role: str, today: date | None = None) -> dict:
-    """Everything the Gantt page needs, in one round trip."""
+    """Everything the Timeline and Costing pages need, in one round trip.
+    Activity costs are the EFFECTIVE costs (expense lines when present, else the manual fields),
+    so both pages always show the same totals."""
     today = today or date.today()
-    acts, incs = _activities(db, board_id), _increments(db, board_id)
+    raw, incs, exps = _activities(db, board_id), _increments(db, board_id), _expenses(db, board_id)
+    acts, x_est, x_act, x_count = K.apply_expenses(raw, exps)
     conflicts = C.schedule_conflicts(acts)
-    summary = C.finance_summary(base_budget(db, board_id), incs, acts)
+    summary = C.finance_summary(base_budget(db, board_id), incs, acts, x_est, x_act)
     proj = C.project_summary(acts, today)
     proj_out = {**_money_dict(proj), "start_date": proj["start_date"].isoformat() if proj["start_date"] else None,
                 "end_date": proj["end_date"].isoformat() if proj["end_date"] else None}
     phases = [_money_dict(p) for p in C.phase_summary(incs, acts)]
+    cats = [{**_money_dict(r), "variance_pct": r["variance_pct"], "share_pct": r["share_pct"], "overrun": r["overrun"]}
+            for r in K.category_breakdown(raw, exps)]
     return {"today": today.isoformat(), "role": role, "can_edit": role in ("editor", "project_manager", "admin"),
             "can_manage_finance": role in ("project_manager", "admin"),
             "project": proj_out,
             "activities": [activity_out(a, C.activity_metrics(a, today), conflicts.get(a.id, [])) for a in acts],
             "increments": [increment_out(i) for i in incs],
+            "expenses": [expense_out(e) for e in exps],
+            "categories": cats,
+            "project_level": {"estimated": _s(x_est), "actual": _s(x_act), "count": x_count},
             "summary": summary_out(summary), "phases": phases}
 
 
@@ -161,6 +183,8 @@ def delete_activity(db: Session, board_id: int, activity_id: int) -> None:
     for other in _activities(db, board_id):                 # nobody may keep depending on a deleted row
         if activity_id in (other.depends_on or []):
             other.depends_on = [d for d in other.depends_on if d != activity_id]
+    db.query(Expense).filter(Expense.activity_id == activity_id).update({"activity_id": None})
+    db.query(FinanceIncrement).filter(FinanceIncrement.activity_id == activity_id).update({"activity_id": None})
     db.delete(a)
     db.commit()
 

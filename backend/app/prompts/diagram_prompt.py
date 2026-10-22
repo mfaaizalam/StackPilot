@@ -55,6 +55,32 @@ Return include and extend relations between the given use cases, using their ids
 - Return only relations that are clearly justified, at most 4 of each. Empty lists are fine.
 {_DATA}"""
 
+ER_SYSTEM = f"""You are a database designer drawing an ENTITY-RELATIONSHIP diagram (crow's foot notation) as a small JSON model.
+Rules:
+- entities: use the given SRS entities (PascalCase, singular, no spaces); you MAY add junction entities to resolve many-to-many relationships. At most 14 entities.
+- attributes: at most 8 per entity, snake_case names, short SQL types such as INT, VARCHAR(100), TEXT, DATE, TIMESTAMP, DECIMAL(10,2), BOOLEAN.
+  Every entity has exactly one primary key attribute (key "PK", usually "id" or "<entity>_id"). A foreign key attribute has key "FK" and is named after the parent key. Use "UK" for unique columns such as email.
+- relations: source and target are entity names. cardinality_source/target is how many rows of THAT entity take part per one row of the other:
+  "one" (exactly one), "zero_or_one", "many" (zero or many), "one_or_many". Example: one Customer places many Orders ->
+  source Customer cardinality_source "one", target Order cardinality_target "many", label "places".
+- Every relation must use entity names that exist. No many-to-many relation between two entities: use a junction entity.
+{_DATA}"""
+
+DFD_SYSTEM = f"""You are a systems analyst drawing DATA FLOW DIAGRAMS (Yourdon / DeMarco notation) as small JSON models.
+Produce the Level 1 diagram and the Level 2 explosions of the most important Level 1 processes.
+Rules for Level 1 (field "level1", level = 1):
+- externals: ids e1, e2, ...: the SRS actors and external systems that send data to or receive data from the system. Max 6.
+- processes: ids "1", "2", ... : 4 to 7 major functions, each named verb + noun (max 28 characters), together covering all the functional requirements.
+- stores: ids D1, D2, ...: persistent data (taken from the SRS entities), max 5, named as plural nouns.
+- flows: every flow must start or end at a PROCESS. Never connect an external to an external, an external to a store, or a store to a store.
+  label = the DATA that moves (a noun phrase, max 28 characters), never a verb. Every process has at least one input and one output flow. At most 24 flows.
+Rules for Level 2 (list "level2", level = 2, 2 or 3 entries):
+- Each entry explodes ONE Level 1 process: set parent to its id (for example "2") and number its sub-processes parent.1, parent.2 ... (for example "2.1"), 3 to 5 sub-processes.
+- Keep the same data flows that enter and leave the parent process at Level 1 (balancing): reuse the same externals and stores and the same flow labels.
+- Add flows between the sub-processes for the intermediate data. Stores and externals keep the ids used in Level 1.
+- title: "Level 2 DFD: <parent id> <parent name>".
+{_DATA}"""
+
 REPAIR_SYSTEM = """You are fixing a UML diagram model that failed automatic validation.
 Return the COMPLETE corrected model (not only the changes). Fix every listed problem; keep what was already correct."""
 
@@ -105,6 +131,25 @@ def deployment_prompt(req: Requirements) -> str:
         "external_interfaces": req.external_interfaces,
         "non_functional_requirements": [f"{n.category}: {n.statement}" for n in req.non_functional_requirements],
     })
+
+def er_prompt(req: Requirements) -> str:
+    return _wrap({
+        "system": req.title,
+        "entities": [e.model_dump() for e in req.entities],
+        "functional_requirements": [f"{f.id} {f.title}" for f in req.functional_requirements][:30],
+    })
+
+
+def dfd_prompt(req: Requirements) -> str:
+    return _wrap({
+        "system": req.title,
+        "actors": [{"name": a.name, "description": a.description} for a in req.actors],
+        "external_interfaces": req.external_interfaces,
+        "entities": [e.name for e in req.entities],
+        "functional_requirements": [{"id": f.id, "title": f.title, "actor": f.actor} for f in req.functional_requirements][:40],
+        "use_cases": [{**_uc_brief(u), "main_flow": u.main_flow[:8]} for u in req.use_cases][:12],
+    })
+
 
 def usecase_rel_prompt(req: Requirements) -> str:
     return _wrap({"system": req.title, "use_cases": [_uc_brief(u) for u in req.use_cases]})

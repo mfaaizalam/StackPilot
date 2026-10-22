@@ -109,7 +109,7 @@ def export_docx(board_id: int, version: int | None = None, db: Session = Depends
         raise HTTPException(status_code=404, detail="The SRS this SDD was based on no longer exists.")
     data = build_docx(DesignModel.model_validate(doc.design), Requirements.model_validate(srs.requirements),
                       [Issue.model_validate(i) for i in (doc.issues or [])],
-                      diagram_service.list_diagrams(db, srs.id), doc.version, doc.srs_version or srs.version)
+                      diagram_service.figures(db, srs.id), doc.version, doc.srs_version or srs.version)
     return Response(data, media_type=_DOCX, headers={"Content-Disposition": _filename(board, doc, "docx")})
 
 

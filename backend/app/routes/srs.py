@@ -101,8 +101,10 @@ def export_docx(board_id: int, version: int | None = None, db: Session = Depends
                 current_user=Depends(get_current_user)):
     board = get_owned_board(db, board_id, current_user, "viewer")
     doc = _get_doc(db, board_id, version)
+    from app.services import diagram_service  # local import: keeps module start-up light
     data = build_docx(Requirements.model_validate(doc.requirements),
-                      [Issue.model_validate(i) for i in (doc.issues or [])], doc.version)
+                      [Issue.model_validate(i) for i in (doc.issues or [])], doc.version,
+                      diagram_service.figures(db, doc.id))
     name = "".join(c if c.isalnum() else "_" for c in board.name)[:40] or "srs"
     return Response(data,
                     media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import api from "../api/axios.js";
+import DrawioEditor from "./DrawioEditor.jsx";
 
 /* ───────── mermaid is large: load it only when a diagram is first shown ───────── */
 let mermaidPromise = null;
@@ -64,10 +66,16 @@ function svgToPng(svgText, filename) {
 const safeName = (s) => (s || "diagram").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "").slice(0, 50) || "diagram";
 
 /* ───────── the card ───────── */
-export default function DiagramCard({ d }) {
+export default function DiagramCard({ d, boardId, onChanged }) {
   const [svg, setSvg] = useState(d.svg || "");
   const [failed, setFailed] = useState(!!d.error);
   const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const canEdit = !!(boardId && d.id);
+  const reset = async () => {
+    if (!window.confirm("Discard your changes and go back to the generated diagram?")) return;
+    try { await api.delete(`/boards/${boardId}/srs/diagrams/${d.id}/drawio`); onChanged?.(); } catch { /* keep the card usable */ }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -82,6 +90,13 @@ export default function DiagramCard({ d }) {
   }, [d.id, d.svg, d.mermaid]);
 
   const name = safeName(d.title);
+  // Native draw.io file: every shape (UML, ER, DFD ...) stays editable with the full draw.io shape library
+  const drawio = async () => {
+    try {
+      const { data } = await api.get(`/boards/${boardId}/srs/diagrams/${d.id}/export.drawio`, { responseType: "blob" });
+      download(data, `${name}.drawio`);
+    } catch { /* the toolbar stays usable; the file simply is not downloaded */ }
+  };
   // Diagrams are drawn for a light background (Mermaid "neutral" theme + the
   // code-built use-case SVG), and PNG export is white, so the image always sits on
   // a white "paper" panel regardless of the site theme. bg-white is intentional.
@@ -93,13 +108,17 @@ export default function DiagramCard({ d }) {
       <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 border-b border-line">
         <div className="flex items-center gap-2 min-w-0">
           <h3 className="text-sm font-semibold text-ink truncate">{d.title}</h3>
+          {d.edited && <span className="text-[10px] font-medium bg-surface-2 text-ink-muted rounded-full px-2 py-0.5">Edited by you</span>}
           {d.stale && <span className="text-[10px] font-medium bg-warning-soft text-warning rounded-full px-2 py-0.5">Out of date</span>}
           {d.source === "fallback" && <span className="text-[10px] font-medium bg-surface-2 text-ink-muted rounded-full px-2 py-0.5">Drawn from requirements</span>}
         </div>
         <div className="flex items-center gap-1.5 print:hidden">
-          <button disabled={!svg} onClick={() => setExpanded(true)} className={btn}>Expand</button>
-          <button disabled={!svg} onClick={() => download(new Blob([sizedSvg(svg).text], { type: "image/svg+xml" }), `${name}.svg`)} className={btn}>SVG</button>
-          <button disabled={!svg} onClick={() => svgToPng(svg, `${name}.png`)} className={btn}>PNG</button>
+          {canEdit && <button onClick={() => setEditing(true)} className="text-xs px-2.5 py-1 rounded-lg bg-brand text-brand-fg hover:bg-brand-hover transition">Edit</button>}
+          {d.edited && <button onClick={reset} className={btn}>Reset</button>}
+          <button disabled={!svg && !d.edited_png} onClick={() => setExpanded(true)} className={btn}>Expand</button>
+          <button disabled={!svg || d.edited} onClick={() => download(new Blob([sizedSvg(svg).text], { type: "image/svg+xml" }), `${name}.svg`)} className={btn}>SVG</button>
+          <button disabled={!svg && !d.edited_png} onClick={() => d.edited_png ? fetch(d.edited_png).then((r) => r.blob()).then((b) => download(b, `${name}.png`)) : svgToPng(svg, `${name}.png`)} className={btn}>PNG</button>
+          {boardId && d.id && <button onClick={drawio} title="Download an editable draw.io file" className={btn}>draw.io</button>}
           {d.mermaid && <button onClick={() => download(new Blob([d.mermaid], { type: "text/plain" }), `${name}.mmd`)} className={btn}>Mermaid</button>}
         </div>
       </div>
@@ -110,6 +129,8 @@ export default function DiagramCard({ d }) {
             <p className="mb-2">This diagram could not be drawn in your browser.</p>
             {d.mermaid && <details><summary className="cursor-pointer text-xs text-ink-muted">Show diagram source</summary><pre className="mt-2 text-xs text-ink bg-surface-2 border border-line rounded-lg p-3 overflow-x-auto">{d.mermaid}</pre></details>}
           </div>
+        ) : d.edited_png ? (
+          <div className={canvasCls}><img src={d.edited_png} alt={d.title} /></div>
         ) : svg ? (
           <div className={canvasCls} dangerouslySetInnerHTML={{ __html: svg }} />
         ) : (
@@ -123,6 +144,8 @@ export default function DiagramCard({ d }) {
         </ul>
       )}
 
+      {editing && <DrawioEditor boardId={boardId} diagram={d} onClose={() => setEditing(false)} onSaved={onChanged} />}
+
       {expanded && (
         <div className="fixed inset-0 z-50 bg-canvas text-ink overflow-auto print:hidden" onClick={() => setExpanded(false)}>
           <div className="sticky top-0 flex items-center justify-between bg-surface/95 backdrop-blur border-b border-line px-6 h-14">
@@ -130,7 +153,7 @@ export default function DiagramCard({ d }) {
             <button className="text-sm px-3 py-1.5 rounded-lg border border-line hover:bg-surface-2">Close</button>
           </div>
           <div className="p-6">
-            <div className="bg-white rounded-card p-6 [&_svg]:w-full [&_svg]:h-auto [&_svg]:min-w-[760px] [&_svg]:max-w-none" onClick={(e) => e.stopPropagation()} dangerouslySetInnerHTML={{ __html: svg }} />
+            <div className="bg-white rounded-card p-6 [&_svg]:w-full [&_svg]:h-auto [&_svg]:min-w-[760px] [&_svg]:max-w-none" onClick={(e) => e.stopPropagation()} dangerouslySetInnerHTML={{ __html: d.edited_png ? `<img src="${d.edited_png}" alt="" />` : svg }} />
           </div>
         </div>
       )}
