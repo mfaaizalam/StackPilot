@@ -17,15 +17,13 @@ fastapi==0.136.3
 filelock==3.29.4
 fsspec==2026.6.0
 google-ai-generativelanguage==0.6.15
-google-api-core==2.31.0
+google-api-core[grpc]==2.31.0
 google-api-python-client==2.197.0
 google-auth==2.54.0
 google-auth-httplib2==0.4.0
 google-genai==2.8.0
 googleapis-common-protos==1.75.0
 greenlet==3.5.1
-grpcio==1.81.1
-grpcio-status==1.71.2
 h11==0.16.0
 h2==4.3.0
 hf-xet==1.5.1
@@ -65,6 +63,7 @@ python-docx==1.2.0
 python-dotenv==1.2.2
 python-jose==3.5.0
 python-multipart==0.0.32
+pywin32==312; sys_platform == "win32"
 PyYAML==6.0.3
 qdrant-client==1.18.0
 regex==2026.6.28
