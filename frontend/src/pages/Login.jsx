@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api/axios.js";
 import AuthShell from "../components/AuthShell.jsx";
 import { safeNext, authQuery } from "../utils/safeNext.js";
+import { DEMO_TOKEN } from "../demo/demoMode.js";
+import demoData from "../demo/demoAccount.json";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -29,11 +31,19 @@ export default function Login() {
       setError(
         err?.response?.data?.message ||
           err?.response?.data?.detail ||
-          "Invalid email or password."
+          (err?.response
+            ? "Invalid email or password."
+            : "Cannot reach the server. The backend is currently offline.")
       );
     } finally {
       setLoading(false);
     }
+  };
+
+  const enterDemo = () => {
+    localStorage.setItem("token", DEMO_TOKEN);
+    localStorage.setItem("user", JSON.stringify(demoData.user));
+    navigate("/dashboard", { replace: true });
   };
 
   return (
@@ -73,7 +83,6 @@ export default function Login() {
             <label className="block text-sm font-medium text-neutral-700">
               Password
             </label>
-           
           </div>
           <input
             type="password"
@@ -100,6 +109,20 @@ export default function Login() {
           {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
+
+      <div className="mt-5 pt-5 border-t border-neutral-100">
+        <button
+          type="button"
+          onClick={enterDemo}
+          className="w-full border border-neutral-300 text-neutral-900 rounded-lg py-2.5 text-sm font-medium hover:bg-neutral-50 transition"
+        >
+          View demo account
+        </button>
+        <p className="mt-2 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          The backend is temporarily offline due to a security vulnerability on our
+          hosting provider. Demo mode shows read-only sample data stored in your browser.
+        </p>
+      </div>
     </AuthShell>
   );
 }
