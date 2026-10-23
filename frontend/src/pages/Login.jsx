@@ -119,8 +119,7 @@ export default function Login() {
           View demo account
         </button>
         <p className="mt-2 text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-          The backend is temporarily offline due to a security vulnerability on our
-          hosting provider. Demo mode shows read-only sample data stored in your browser.
+          The backend is temporarily offline due to a security vulnerability on Railway. Demo mode shows read-only sample data stored in your browser.
         </p>
       </div>
     </AuthShell>
