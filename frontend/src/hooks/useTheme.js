@@ -3,6 +3,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const KEY = "theme"; // "system" | "light" | "dark"
 const query = () => window.matchMedia("(prefers-color-scheme: dark)");
 
+// Pages that always stay on the light look, whatever the theme setting is
+const LIGHT_ONLY = new Set(["/", "/login", "/register"]);
+export const isLightOnly = (p = window.location.pathname) =>
+  LIGHT_ONLY.has(p.replace(/\/+$/, "") || "/");
+
 export function getStoredMode() {
   try {
     const v = localStorage.getItem(KEY);
@@ -14,7 +19,9 @@ export function getStoredMode() {
 
 export function applyTheme(mode, animate = false) {
   const root = document.documentElement;
-  const dark = mode === "dark" || (mode === "system" && query().matches);
+  const dark =
+    !isLightOnly() &&
+    (mode === "dark" || (mode === "system" && query().matches));
   const next = dark ? "dark" : "light";
   if (root.getAttribute("data-theme") === next) return;
 

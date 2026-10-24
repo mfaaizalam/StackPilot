@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { useLayoutEffect } from "react";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 
 import Landing from "./pages/Landing.jsx";
 import Login from "./pages/Login.jsx";
@@ -20,6 +21,7 @@ import SddPage from "./pages/SddPage.jsx";
 import GanttPage from "./pages/GanttPage.jsx";
 import DocumentPage from "./pages/DocumentPage.jsx";
 import useDocumentTitle from "./hooks/useDocumentTitle.js";
+import { applyTheme, getStoredMode } from "./hooks/useTheme.js";
 
 function PrivateLayout() {
   const token = localStorage.getItem("token");
@@ -59,6 +61,12 @@ export default function App() {
   // Sets the browser tab title for public pages (landing, login, register, invite, 404).
   // Pages inside AppLayout are handled there, where the project name is available.
   useDocumentTitle(undefined, "public");
+
+  // Landing, login and register always render light; everything else follows the saved theme.
+  const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    applyTheme(getStoredMode());
+  }, [pathname]);
 
   return (
     <Routes>
