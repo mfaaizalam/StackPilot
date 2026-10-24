@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { useBoards } from "../api/queries.js";
-import { queryClient } from "../api/queryClient.js";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function IconOverview() {
@@ -63,14 +62,6 @@ function IconDiagrams() {
     </svg>
   );
 }
-function IconCosting() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-      <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M12.5 7.5c-.4-.8-1.4-1.2-2.5-1.2-1.4 0-2.4.7-2.4 1.8 0 2.4 5 1.1 5 3.6 0 1.1-1.1 1.9-2.6 1.9-1.2 0-2.2-.5-2.6-1.4M10 4.8v1.5M10 13.7v1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-    </svg>
-  );
-}
 function IconDeploy() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -94,23 +85,6 @@ function IconSdd() {
     </svg>
   );
 }
-function IconAnalysis() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-      <path d="M3.5 16.5V10M8 16.5V4.5M12.5 16.5V8M17 16.5V3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IconSettings() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-      <path d="M3 5.5h6M13 5.5h4M3 10h2M9 10h8M3 14.5h9M16 14.5h1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="11" cy="5.5" r="1.7" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="7" cy="10" r="1.7" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="14" cy="14.5" r="1.7" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
 function IconFolder() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
@@ -120,7 +94,7 @@ function IconFolder() {
 }
 
 const OVERVIEW = { to: "overview", label: "Overview", icon: <IconOverview /> };
-const SETTINGS = { to: "settings", label: "Settings", icon: <IconSettings /> };
+const SETTINGS_KEY = "settings"; // route still exists; reached from the topbar menu
 
 const GROUPS = [
   {
@@ -147,14 +121,13 @@ const GROUPS = [
 
 const SECTION_KEYS = [
   OVERVIEW.to,
-  SETTINGS.to,
+  SETTINGS_KEY,
   ...GROUPS.flatMap((g) => g.items.map((i) => i.to)),
 ];
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const user = JSON.parse(localStorage.getItem("user") || "null");
   const { data: boards = [] } = useBoards();
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -202,14 +175,6 @@ export default function Sidebar({ open, onClose }) {
     onClose?.();
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("lastBoardId");
-    queryClient.clear(); // don't leak cached data to the next user on this browser
-    navigate("/login");
-  };
-
   const linkBase =
     "flex items-center gap-2 text-[13px] px-2.5 py-1.5 rounded-md transition";
 
@@ -253,10 +218,10 @@ export default function Sidebar({ open, onClose }) {
 
   return (
     <>
-      {/* Mobile backdrop */}
+      {/* Mobile backdrop: z-[35] sits above the topbar (z-30), below the drawer (z-40) */}
       {open && (
         <div
-          className="fixed inset-0 z-30 bg-overlay/50 md:hidden print:hidden"
+          className="fixed inset-0 z-[35] bg-overlay/50 md:hidden print:hidden"
           onClick={onClose}
         />
       )}
@@ -366,26 +331,6 @@ export default function Sidebar({ open, onClose }) {
               );
             })}
           </nav>
-        </div>
-
-        {/* Settings (pinned) + user + sign out */}
-        <div className="border-t border-line p-3 shrink-0 space-y-2">
-          <nav>{renderItem(SETTINGS)}</nav>
-          <div className="flex items-center gap-2.5 px-1">
-            <div className="w-8 h-8 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm shrink-0">
-              {user?.name?.charAt(0) || "U"}
-            </div>
-            <div className="min-w-0">
-              <p className="text-[13px] font-medium leading-none truncate">{user?.name || "User"}</p>
-              <p className="text-xs text-ink-muted mt-1 truncate">{user?.email || ""}</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="w-full text-[13px] px-3 py-1.5 rounded-md border border-line hover:bg-surface-2 transition"
-          >
-            Sign out
-          </button>
         </div>
       </aside>
     </>

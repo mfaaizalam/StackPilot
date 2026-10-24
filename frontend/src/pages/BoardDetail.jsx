@@ -5,7 +5,6 @@ import api from "../api/axios.js";
 import ColumnModal from "../components/ColumnModal.jsx";
 import TaskModal from "../components/TaskModal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
-import ChatWidget from "../components/ChatWidget.jsx";
 
 import { DragDropProvider, useDraggable, useDroppable } from "@dnd-kit/react";
 import { PointerSensor, PointerActivationConstraints } from "@dnd-kit/dom";
@@ -194,14 +193,15 @@ function TraceSection({ boardId, task }) {
 }
 
 // ── Task Detail slide-over panel ─────────────────────────────────────────────
+// Starts below the universal topbar (top-12) so the account menu stays reachable.
 function TaskDetail({ boardId, task, columns, onClose, onEdit, onDelete }) {
   if (!task) return null;
   const col = columns.find(c => c.id === task.column_id);
   const note = noteFor(task.priority);
   return (
     <>
-      <div className="fixed inset-0 z-30 bg-ink/20 backdrop-blur-[2px]" onClick={onClose} />
-      <div className="fixed right-0 top-0 bottom-0 z-40 w-full max-w-sm bg-surface border-l border-line shadow-2xl flex flex-col">
+      <div className="fixed inset-x-0 top-12 bottom-0 z-30 bg-ink/20 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="fixed right-0 top-12 bottom-0 z-40 w-full max-w-sm bg-surface border-l border-line shadow-2xl flex flex-col">
         {/* Colour strip matches the sticky note */}
         <div className="h-2 shrink-0" style={{ background: note.bg }} />
         <div className="flex items-center justify-between px-5 py-3 border-b border-line">
@@ -257,81 +257,70 @@ function TaskDetail({ boardId, task, columns, onClose, onEdit, onDelete }) {
 // ── Sticky note (draggable task card) ────────────────────────────────────────
 function TaskCard({ task, onView, onEdit, onDelete }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const isDraft = !!task.__draft;
-  const { ref, isDragging } = useDraggable({ id: `task-${task.id}`, disabled: isDraft });
+  const { ref, isDragging } = useDraggable({ id: `task-${task.id}` });
 
   const note = noteFor(task.priority);
   // The tilt lives on an inner wrapper so it never fights dnd-kit's own transform.
-  const noteStyle = isDraft
-    ? { "--rot": "0deg", background: "transparent", border: "2px dashed rgba(128,128,128,.5)", boxShadow: "none" }
-    : { "--rot": `${tiltFor(task.id)}deg`, background: note.bg };
+  const noteStyle = { "--rot": `${tiltFor(task.id)}deg`, background: note.bg };
 
   return (
     <div
       ref={ref}
-      onClick={() => { if (!isDraft && !menuOpen && !isDragging) onView(task); }}
+      onClick={() => { if (!menuOpen && !isDragging) onView(task); }}
       className="relative cursor-pointer select-none pt-2"
-      style={{ touchAction: isDraft ? "auto" : "none" }}
+      style={{ touchAction: "none" }}
     >
       <div
         className={`sp-note group relative rounded-[3px] px-4 pt-5 pb-3 ${isDragging ? "sp-lifted" : ""}`}
-        style={{ ...noteStyle, color: isDraft ? undefined : "#2B2A26" }}
+        style={{ ...noteStyle, color: "#2B2A26" }}
       >
         {/* Pin */}
-        {!isDraft && (
-          <span
-            className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full"
-            style={{ background: `radial-gradient(circle at 35% 30%, #fff8 0 15%, ${note.pin} 40%)`, boxShadow: "0 2px 3px rgba(0,0,0,.35)" }}
-          />
-        )}
+        <span
+          className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full"
+          style={{ background: `radial-gradient(circle at 35% 30%, #fff8 0 15%, ${note.pin} 40%)`, boxShadow: "0 2px 3px rgba(0,0,0,.35)" }}
+        />
 
         {/* Action menu */}
-        {!isDraft && (
-          <div className="absolute top-1.5 right-1.5" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              className="w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-black/10 transition"
-              aria-label="Note actions"
-            >
-              <IconDots />
-            </button>
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-7 z-20 w-32 bg-surface border border-line rounded-lg shadow-lg py-1 text-sm">
-                  <button onClick={() => { setMenuOpen(false); onEdit(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-ink hover:bg-surface-2 transition">
-                    <IconEdit /> Edit
-                  </button>
-                  <button onClick={() => { setMenuOpen(false); onDelete(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-danger hover:bg-danger-soft transition">
-                    <IconTrash /> Delete
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        <div className="absolute top-1.5 right-1.5" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            className="w-6 h-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-black/10 transition"
+            aria-label="Note actions"
+          >
+            <IconDots />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-7 z-20 w-32 bg-surface border border-line rounded-lg shadow-lg py-1 text-sm">
+                <button onClick={() => { setMenuOpen(false); onEdit(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-ink hover:bg-surface-2 transition">
+                  <IconEdit /> Edit
+                </button>
+                <button onClick={() => { setMenuOpen(false); onDelete(task); }} className="w-full flex items-center gap-2 px-3 py-2 text-danger hover:bg-danger-soft transition">
+                  <IconTrash /> Delete
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
-        {task.requirement_id && !isDraft && (
+        {task.requirement_id && (
           <span className="inline-block mb-1 text-[11px] font-medium rounded px-1.5 py-0.5" style={{ background: "rgba(255,255,255,.55)" }}>
             {task.requirement_id}
           </span>
         )}
 
-        <p className={`sp-hand text-[22px] font-semibold leading-[1.1] pr-4 ${isDraft ? "text-ink-muted" : ""}`}>{task.title}</p>
+        <p className="sp-hand text-[22px] font-semibold leading-[1.1] pr-4">{task.title}</p>
 
         {task.description && (
-          <p className={`mt-1.5 text-xs line-clamp-2 leading-relaxed ${isDraft ? "text-ink-muted" : "opacity-75"}`}>{task.description}</p>
+          <p className="mt-1.5 text-xs line-clamp-2 leading-relaxed opacity-75">{task.description}</p>
         )}
 
         <div className="mt-3 flex items-center gap-2">
-          {isDraft ? (
-            <span className="text-[11px] font-medium text-ink-muted">Draft · not saved yet</span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium">
-              <span className="w-2 h-2 rounded-full" style={{ background: note.pin }} />{note.label}
-            </span>
-          )}
-          {!isDraft && task.estimate_points ? (
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium">
+            <span className="w-2 h-2 rounded-full" style={{ background: note.pin }} />{note.label}
+          </span>
+          {task.estimate_points ? (
             <span
               title="Estimated story points (relative size)"
               className="ml-auto w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-semibold"
@@ -343,12 +332,10 @@ function TaskCard({ task, onView, onEdit, onDelete }) {
         </div>
 
         {/* Folded corner */}
-        {!isDraft && (
-          <span
-            className="absolute bottom-0 right-0 w-5 h-5 rounded-tl-[3px]"
-            style={{ background: `linear-gradient(135deg, transparent 50%, ${note.fold} 50%)` }}
-          />
-        )}
+        <span
+          className="absolute bottom-0 right-0 w-5 h-5 rounded-tl-[3px]"
+          style={{ background: `linear-gradient(135deg, transparent 50%, ${note.fold} 50%)` }}
+        />
       </div>
     </div>
   );
@@ -442,8 +429,8 @@ function ColumnPanel({
 }
 
 // ── BoardDetail page ─────────────────────────────────────────────────────────
-// Rendered inside the app layout (sidebar). The global header (logo, nav,
-// user, sign out) lives in the sidebar; this page only has a slim toolbar.
+// Rendered inside the app layout (sidebar + universal topbar). The AI assistant
+// lives in the topbar's "Ask AI" panel; this page only has a slim toolbar.
 export default function BoardDetail() {
   const { boardId } = useParams();
   const queryClient = useQueryClient();
@@ -501,18 +488,18 @@ export default function BoardDetail() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const [savingDrafts, setSavingDrafts] = useState(false);
-
   // ── Fetch ──────────────────────────────────────────────────────────────────
   // Cached for 60 s. Any write request anywhere in the app (see the axios
   // interceptor) marks "board-data" stale, so coming back after creating,
   // moving or generating tasks always refetches. A plain page switch does not.
+  // `silent` refreshes in the background without flashing the loading skeletons
+  // (used when the Ask AI assistant changes the board).
   // NOTE: this still downloads ALL columns/tasks and filters here. A backend
   // endpoint like GET /boards/{id}/full would remove that over-fetching.
-  const fetchAll = useCallback(async (force = false) => {
+  const fetchAll = useCallback(async (force = false, silent = false) => {
     const key = ["board-data", boardId];
     const hasCache = !!queryClient.getQueryData(key);
-    if (!hasCache || force) setLoading(true);
+    if ((!hasCache || force) && !silent) setLoading(true);
     setFetchError("");
     try {
       const result = await queryClient.fetchQuery({
@@ -544,6 +531,14 @@ export default function BoardDetail() {
   }, [boardId, queryClient]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // The Ask AI assistant (topbar) announces when it saves tasks or creates
+  // columns; refresh quietly so they appear without a reload.
+  useEffect(() => {
+    const refresh = () => fetchAll(true, true);
+    window.addEventListener("stackpilot:board-changed", refresh);
+    return () => window.removeEventListener("stackpilot:board-changed", refresh);
+  }, [fetchAll]);
 
   // ── Column CRUD ────────────────────────────────────────────────────────────
   const handleCreateColumn = async (name) => {
@@ -641,76 +636,12 @@ export default function BoardDetail() {
     handleDropTask(taskId, newColumnId);
   };
 
-  // ── AI chat → board bridge ───────────────────────────────────────────────
-  // Every AI response that drafts/edits/clears tasks sends back the
-  // COMPLETE resulting set (never a diff), so we always fully replace
-  // whatever draft cards currently exist with the new set.
-  const handleTasksDrafted = (newColumns = [], newTasks = []) => {
-    setColumns(prev => {
-      const existingIds = new Set(prev.map(c => c.id));
-      const toAdd = newColumns
-        .filter(c => !existingIds.has(c.id))
-        .map(c => ({ id: c.id, name: c.name, board_id: Number(boardId) }));
-      return toAdd.length ? [...prev, ...toAdd] : prev;
-    });
-
-    setTasks(prev => {
-      const withoutOldDrafts = prev.filter(t => !t.__draft);
-      const freshDrafts = newTasks.map((t, i) => ({
-        id: `draft-${Date.now()}-${i}`,
-        __draft: true,
-        title: t.title,
-        description: t.description || "",
-        priority: t.priority || "medium",
-        column_id: t.column_id,
-      }));
-      return [...withoutOldDrafts, ...freshDrafts];
-    });
-  };
-
-  const handleColumnCreated = (col) => {
-    setColumns(prev => (prev.some(c => c.id === col.id) ? prev : [...prev, { id: col.id, name: col.name, board_id: Number(boardId) }]));
-    showToast(`Column "${col.name}" added.`);
-  };
-
-  const handleSaveAllDrafts = async () => {
-    const drafts = tasks.filter(t => t.__draft);
-    if (!drafts.length) return { success: true, savedCount: 0, failedCount: 0 };
-
-    setSavingDrafts(true);
-    let savedCount = 0;
-    let failedCount = 0;
-
-    for (const draft of drafts) {
-      try {
-        const { data } = await api.post("/tasks/", {
-          title: draft.title,
-          description: draft.description,
-          priority: draft.priority,
-          column_id: draft.column_id,
-        });
-        setTasks(prev => prev.map(t => (t.id === draft.id ? data : t)));
-        savedCount += 1;
-      } catch {
-        failedCount += 1;
-      }
-    }
-
-    setSavingDrafts(false);
-    if (failedCount) {
-      showToast(`${failedCount} task(s) failed to save — you can ask the assistant to try again.`, "error");
-    }
-    return { success: failedCount === 0, savedCount, failedCount };
-  };
-
   // ── Derived: progress + filtering ──────────────────────────────────────────
-  const realTasks = tasks.filter(t => !t.__draft);
   const doneIds = new Set(columns.filter(c => isDoneCol(c.name)).map(c => c.id));
-  const doneCount = realTasks.filter(t => doneIds.has(t.column_id)).length;
-  const pct = realTasks.length ? Math.round((doneCount / realTasks.length) * 100) : 0;
+  const doneCount = tasks.filter(t => doneIds.has(t.column_id)).length;
+  const pct = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
 
   const matches = (t) => {
-    if (t.__draft) return true;
     if (prioFilter !== "all" && (t.priority || "low").toLowerCase() !== prioFilter) return false;
     const q = query.trim().toLowerCase();
     if (!q) return true;
@@ -733,12 +664,12 @@ export default function BoardDetail() {
         <div className="px-3 sm:px-6 py-3 flex flex-wrap items-center gap-x-5 gap-y-3">
           <div className="min-w-0">
             <h1 className="text-lg font-semibold tracking-tight text-ink truncate">Kanban Board</h1>
-            {realTasks.length > 0 && (
-              <div className="mt-1 flex items-center gap-2" title={`${doneCount} of ${realTasks.length} tasks done`}>
+            {tasks.length > 0 && (
+              <div className="mt-1 flex items-center gap-2" title={`${doneCount} of ${tasks.length} tasks done`}>
                 <div className="w-32 h-1.5 rounded-full bg-surface-2 overflow-hidden">
                   <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: "#2FB86B" }} />
                 </div>
-                <span className="text-xs text-ink-muted">{doneCount} of {realTasks.length} done</span>
+                <span className="text-xs text-ink-muted">{doneCount} of {tasks.length} done</span>
               </div>
             )}
           </div>
@@ -837,7 +768,7 @@ export default function BoardDetail() {
                   column={col}
                   accent={columnAccent(col.name, idx)}
                   tasks={colTasks.filter(matches)}
-                  totalCount={colTasks.filter(t => !t.__draft).length}
+                  totalCount={colTasks.length}
                   filtering={filtering}
                   onAddTask={(colId) => { setEditingTask(null); setDefaultColId(colId); setTaskModalOpen(true); }}
                   onQuickAdd={handleQuickAdd}
@@ -916,24 +847,6 @@ export default function BoardDetail() {
           {toast.msg}
         </div>
       )}
-
-      {/* RAG-connected chat assistant, scoped to this board. Confirmation
-          for AI-drafted tasks happens inline in the chat panel — no popup. */}
-      <ChatWidget
-        boardId={boardId}
-        pendingTasks={tasks
-          .filter(t => t.__draft)
-          .map(t => ({
-            title: t.title,
-            description: t.description,
-            priority: t.priority,
-            column_id: t.column_id,
-            column_name: columns.find(c => c.id === t.column_id)?.name || "",
-          }))}
-        onTasksDrafted={handleTasksDrafted}
-        onColumnCreated={handleColumnCreated}
-        onSaveAllDrafts={handleSaveAllDrafts}
-      />
     </div>
   );
 }
