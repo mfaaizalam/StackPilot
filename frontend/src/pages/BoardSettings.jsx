@@ -20,20 +20,20 @@ const roleLabel = (role) =>
 
 // Same input / button / pill styles as the Login, Boards and SRS pages.
 const inputClass =
-  "w-full rounded-lg border border-neutral-200 bg-white px-3.5 py-2.5 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition";
+  "w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 text-sm placeholder:text-ink-muted/70 focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition";
 const primaryButton =
-  "inline-flex items-center justify-center bg-neutral-950 text-white text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-40 transition";
+  "inline-flex items-center justify-center bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40 transition";
 const secondaryButton =
-  "inline-flex items-center justify-center border border-neutral-200 bg-white text-neutral-700 text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 transition";
+  "inline-flex items-center justify-center border border-line bg-surface text-ink text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40 transition";
 const dangerGhost =
-  "text-xs font-medium text-red-500 hover:text-red-700 px-2.5 py-1.5 rounded-md hover:bg-red-50 disabled:opacity-40 transition";
+  "text-xs font-medium text-red-500 hover:text-danger px-2.5 py-1.5 rounded-md hover:bg-danger-soft disabled:opacity-40 transition";
 const pillClass =
-  "text-xs font-medium text-neutral-500 bg-neutral-100 border border-neutral-200 rounded-full px-2.5 py-1";
+  "text-xs font-medium text-ink-muted bg-surface-2 border border-line rounded-full px-2.5 py-1";
 
 function ErrorMessage({ children }) {
   if (!children) return null;
   return (
-    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+    <p className="text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-3 py-2">
       {children}
     </p>
   );
@@ -41,11 +41,11 @@ function ErrorMessage({ children }) {
 
 function Section({ title, description, children }) {
   return (
-    <section className="bg-white border border-neutral-200 rounded-2xl p-5 sm:p-6">
+    <section className="bg-surface border border-line rounded-2xl p-5 sm:p-6">
       <div className="mb-4">
-        <h2 className="text-sm font-semibold text-neutral-900">{title}</h2>
+        <h2 className="text-sm font-semibold text-ink">{title}</h2>
         {description && (
-          <p className="mt-1 text-xs leading-relaxed text-neutral-500">{description}</p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">{description}</p>
         )}
       </div>
       {children}
@@ -55,14 +55,14 @@ function Section({ title, description, children }) {
 
 function Avatar({ name }) {
   return (
-    <div className="w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center font-semibold text-sm shrink-0">
+    <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm shrink-0">
       {(name || "?").charAt(0).toUpperCase()}
     </div>
   );
 }
 
 function Skeleton({ className = "h-16" }) {
-  return <div className={`bg-neutral-50 border border-neutral-100 rounded-xl animate-pulse ${className}`} />;
+  return <div className={`bg-surface-2 border border-line rounded-xl animate-pulse ${className}`} />;
 }
 
 export default function BoardSettings() {
@@ -205,8 +205,8 @@ export default function BoardSettings() {
 
   if (boardLoading || roleLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50">
-        <div className="border-b border-neutral-200 bg-white h-14" />
+      <div className="min-h-screen bg-surface-2">
+        <div className="border-b border-line bg-surface h-14" />
         <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
           <Skeleton className="h-40" />
           <Skeleton className="h-56" />
@@ -217,11 +217,11 @@ export default function BoardSettings() {
 
   if (boardError) {
     return (
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen bg-surface-2">
         <div className="max-w-5xl mx-auto px-6 py-8">
-          <div className="bg-white border border-dashed border-neutral-300 rounded-2xl px-6 py-14 text-center">
-            <p className="text-base font-medium text-neutral-900">Could not load this project</p>
-            <p className="mt-1.5 text-sm text-neutral-500">
+          <div className="bg-surface border border-dashed border-line rounded-2xl px-6 py-14 text-center">
+            <p className="text-base font-medium text-ink">Could not load this project</p>
+            <p className="mt-1.5 text-sm text-ink-muted">
               {showError(boardError, "It may have been deleted, or you may no longer have access.")}
             </p>
             <Link to="/boards" className={`${primaryButton} mt-5`}>
@@ -234,13 +234,13 @@ export default function BoardSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-surface-2">
       {/* Page toolbar (same pattern as Diagrams / Costing) */}
-      <div className="border-b border-neutral-200 bg-white sticky top-0 z-10 print:hidden">
+      <div className="border-b border-line bg-surface sticky top-0 z-10 print:hidden">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between gap-3">
-          <h1 className="text-sm font-semibold text-neutral-900 truncate">
+          <h1 className="text-sm font-semibold text-ink truncate">
             Settings
-            {board?.name && <span className="font-normal text-neutral-400"> · {board.name}</span>}
+            {board?.name && <span className="font-normal text-ink-muted/70"> · {board.name}</span>}
           </h1>
           <span className={`${pillClass} shrink-0`}>Your role: {roleLabel(role)}</span>
         </div>
@@ -285,7 +285,7 @@ export default function BoardSettings() {
                 </button>
               </div>
               {lookup && (
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-ink-muted">
                   {lookup.registered
                     ? `Registered account found${lookup.name ? `: ${lookup.name}` : ""}.`
                     : "No account yet. They can still accept the invitation after signing up with this email."}
@@ -307,7 +307,7 @@ export default function BoardSettings() {
           ) : membersError ? (
             <ErrorMessage>{showError(membersError, "Could not load members.")}</ErrorMessage>
           ) : members.length === 0 ? (
-            <p className="text-sm text-neutral-500">No members found.</p>
+            <p className="text-sm text-ink-muted">No members found.</p>
           ) : (
             <div className="divide-y divide-neutral-100">
               {members.map((member) => (
@@ -318,15 +318,15 @@ export default function BoardSettings() {
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar name={member.name || member.email} />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-neutral-900">
+                      <p className="truncate text-sm font-medium text-ink">
                         {member.name || member.email}
                         {member.is_owner && (
-                          <span className="ml-2 text-[11px] font-medium text-neutral-500 bg-neutral-100 border border-neutral-200 rounded-full px-2 py-0.5">
+                          <span className="ml-2 text-[11px] font-medium text-ink-muted bg-surface-2 border border-line rounded-full px-2 py-0.5">
                             Owner
                           </span>
                         )}
                       </p>
-                      <p className="mt-0.5 truncate text-xs text-neutral-500">{member.email}</p>
+                      <p className="mt-0.5 truncate text-xs text-ink-muted">{member.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -336,7 +336,7 @@ export default function BoardSettings() {
                           value={member.role}
                           disabled={busy}
                           onChange={(e) => handleRoleChange(member, e.target.value)}
-                          className="rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-xs text-neutral-700 focus:outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10 transition"
+                          className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-ink focus:outline-none focus:border-brand focus:ring-2 focus:ring-brand/10 transition"
                           aria-label={`Role for ${member.email}`}
                         >
                           {ROLES.map((r) => (
@@ -369,7 +369,7 @@ export default function BoardSettings() {
             ) : invitationsError ? (
               <ErrorMessage>{showError(invitationsError, "Could not load invitations.")}</ErrorMessage>
             ) : invitations.length === 0 ? (
-              <p className="text-sm text-neutral-500">No pending invitations.</p>
+              <p className="text-sm text-ink-muted">No pending invitations.</p>
             ) : (
               <div className="divide-y divide-neutral-100">
                 {invitations.map((inv) => (
@@ -380,8 +380,8 @@ export default function BoardSettings() {
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar name={inv.email} />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-neutral-900">{inv.email}</p>
-                        <p className="mt-0.5 text-xs text-neutral-500">
+                        <p className="truncate text-sm font-medium text-ink">{inv.email}</p>
+                        <p className="mt-0.5 text-xs text-ink-muted">
                           {roleLabel(inv.role)} · Expires {new Date(inv.expires_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -407,15 +407,15 @@ export default function BoardSettings() {
           ) : activityError ? (
             <ErrorMessage>{showError(activityError, "Could not load activity.")}</ErrorMessage>
           ) : activity.length === 0 ? (
-            <p className="text-sm text-neutral-500">No activity recorded yet.</p>
+            <p className="text-sm text-ink-muted">No activity recorded yet.</p>
           ) : (
             <div className="space-y-3">
               {activity.map((item) => (
                 <div key={item.id} className="flex gap-3">
                   <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-neutral-300" />
                   <div className="min-w-0">
-                    <p className="text-sm text-neutral-800">{item.summary}</p>
-                    <p className="mt-0.5 text-xs text-neutral-400">
+                    <p className="text-sm text-ink">{item.summary}</p>
+                    <p className="mt-0.5 text-xs text-ink-muted/70">
                       {item.user_name || "A member"} · {new Date(item.created_at).toLocaleString()}
                     </p>
                   </div>
@@ -442,7 +442,7 @@ export default function BoardSettings() {
       />
 
       {toast && (
-        <div className="fixed bottom-5 right-5 z-50 text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg border bg-white border-neutral-200 text-neutral-900">
+        <div className="fixed bottom-5 right-5 z-50 text-sm font-medium px-4 py-2.5 rounded-lg shadow-lg border bg-surface border-line text-ink">
           {toast}
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { useBoards } from "../api/queries.js";
+import useSidebarCollapsed from "../hooks/useSidebarCollapsed.js";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 function IconOverview() {
@@ -92,6 +93,16 @@ function IconFolder() {
     </svg>
   );
 }
+function IconCollapse({ flipped }) {
+  return (
+    <svg
+      width="16" height="16" viewBox="0 0 20 20" fill="none"
+      style={{ transform: flipped ? "rotate(180deg)" : undefined }}
+    >
+      <path d="M12 5.5L7.5 10l4.5 4.5M16 3.5v13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 const OVERVIEW = { to: "overview", label: "Overview", icon: <IconOverview /> };
 const SETTINGS_KEY = "settings"; // route still exists; reached from the topbar menu
@@ -130,6 +141,11 @@ export default function Sidebar({ open, onClose }) {
   const location = useLocation();
   const { data: boards = [] } = useBoards();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // Icon-only mode (desktop only). The mobile drawer always shows the full menu.
+  const [menuCollapsed, setMenuCollapsed] = useSidebarCollapsed();
+  const c = menuCollapsed;
+  const hideWhenC = c ? "md:hidden" : "";
 
   // Collapsed state per group, remembered across visits.
   const [collapsed, setCollapsed] = useState(() => {
@@ -175,46 +191,62 @@ export default function Sidebar({ open, onClose }) {
     onClose?.();
   };
 
-  const linkBase =
-    "flex items-center gap-2 text-[13px] px-2.5 py-1.5 rounded-md transition";
+  // Icon-only mode has no room for the dropdown: expand first, then open it.
+  const onProjectsClick = () => {
+    if (c && window.matchMedia("(min-width: 768px)").matches) {
+      setMenuCollapsed(false);
+      setSwitcherOpen(true);
+    } else {
+      setSwitcherOpen((v) => !v);
+    }
+  };
 
-  const renderItem = ({ to, label, icon, soon }) =>
-    activeId ? (
+  const linkBase = "flex items-center gap-2 text-[13px] px-2.5 py-1.5 rounded-md transition";
+  const linkC = c ? "md:justify-center md:px-0" : "";
+
+  const renderItem = ({ to, label, icon, soon }) => {
+    const inner = (muted) => (
+      <>
+        <span className="shrink-0">{icon}</span>
+        <span className={`truncate ${hideWhenC}`}>{label}</span>
+        {soon && (
+          <span
+            className={`ml-auto text-[10px] font-medium ${
+              muted ? "text-ink-muted/50" : "text-ink-muted/70"
+            } bg-surface-2 border border-line rounded-full px-1.5 py-0.5 ${hideWhenC}`}
+          >
+            Soon
+          </span>
+        )}
+      </>
+    );
+
+    return activeId ? (
       <NavLink
         key={to}
         to={`/boards/${activeId}/${to}`}
         onClick={onClose}
+        title={c ? label : undefined}
         className={({ isActive }) =>
-          `${linkBase} ${
+          `${linkBase} ${linkC} ${
             isActive
               ? "bg-surface-2 text-ink font-medium"
               : "text-ink-muted hover:text-ink hover:bg-surface-2"
           }`
         }
       >
-        {icon}
-        {label}
-        {soon && (
-          <span className="ml-auto text-[10px] font-medium text-ink-muted/70 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
-            Soon
-          </span>
-        )}
+        {inner(false)}
       </NavLink>
     ) : (
       <span
         key={to}
         title="Select a project first"
-        className={`${linkBase} text-ink-muted/50 cursor-not-allowed`}
+        className={`${linkBase} ${linkC} text-ink-muted/50 cursor-not-allowed`}
       >
-        {icon}
-        {label}
-        {soon && (
-          <span className="ml-auto text-[10px] font-medium text-ink-muted/50 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
-            Soon
-          </span>
-        )}
+        {inner(true)}
       </span>
     );
+  };
 
   return (
     <>
@@ -227,35 +259,42 @@ export default function Sidebar({ open, onClose }) {
       )}
 
       <aside
-        className={`fixed left-0 top-0 bottom-0 z-40 w-60 bg-canvas text-ink border-r border-line flex flex-col transition-transform duration-200 print:hidden ${
+        className={`fixed left-0 top-0 bottom-0 z-40 w-60 md:w-[var(--sidebar-w)] bg-canvas text-ink border-r border-line flex flex-col transition-[transform,width] duration-200 print:hidden ${
           open ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
         {/* Logo */}
-        <div className="h-12 px-4 flex items-center gap-2 font-semibold tracking-tight border-b border-line shrink-0">
-          <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">
+        <div
+          className={`h-12 px-4 flex items-center gap-2 font-semibold tracking-tight border-b border-line shrink-0 ${
+            c ? "md:px-0 md:justify-center" : ""
+          }`}
+        >
+          <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm shrink-0">
             S
           </div>
-          StackPilot
+          <span className={hideWhenC}>StackPilot</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden p-3 space-y-3 ${c ? "md:p-2" : ""}`}>
           {/* Projects row (current project + switcher) */}
           <div className="relative">
-            <p className="px-1 mb-1 text-[10px] text-ink-muted/70 font-medium uppercase tracking-wide">
+            <p className={`px-1 mb-1 text-[10px] text-ink-muted/70 font-medium uppercase tracking-wide ${hideWhenC}`}>
               Projects
             </p>
             <button
-              onClick={() => setSwitcherOpen((v) => !v)}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-line bg-surface hover:bg-surface-2 transition text-left"
+              onClick={onProjectsClick}
+              title={c ? currentBoard?.name || "Select a project" : undefined}
+              className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-line bg-surface hover:bg-surface-2 transition text-left ${
+                c ? "md:justify-center md:px-0" : ""
+              }`}
             >
               <span className="text-ink-muted shrink-0">
                 <IconFolder />
               </span>
-              <span className="flex-1 min-w-0 text-[13px] font-medium text-ink truncate">
+              <span className={`flex-1 min-w-0 text-[13px] font-medium text-ink truncate ${hideWhenC}`}>
                 {currentBoard?.name || "Select a project"}
               </span>
-              <span className="text-ink-muted/70 shrink-0">
+              <span className={`text-ink-muted/70 shrink-0 ${hideWhenC}`}>
                 <IconChevron />
               </span>
             </button>
@@ -306,24 +345,26 @@ export default function Sidebar({ open, onClose }) {
 
             {GROUPS.map((group) => {
               const isCollapsed = !!collapsed[group.key];
+              const showItems = !isCollapsed || c; // icon mode always shows every icon
               return (
                 <div key={group.key} className="pt-2">
+                  {c && <div className="hidden md:block mx-2 mb-1.5 border-t border-line" />}
                   <button
                     onClick={() => toggleGroup(group.key)}
                     aria-expanded={!isCollapsed}
-                    className="w-full flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted/70 hover:text-ink transition"
+                    className={`w-full flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted/70 hover:text-ink transition ${hideWhenC}`}
                   >
                     {group.label}
-                    <span
-                      className={`transition-transform duration-150 ${
-                        isCollapsed ? "-rotate-90" : ""
-                      }`}
-                    >
+                    <span className={`transition-transform duration-150 ${isCollapsed ? "-rotate-90" : ""}`}>
                       <IconChevron />
                     </span>
                   </button>
-                  {!isCollapsed && (
-                    <div className="mt-0.5 ml-3 pl-2 border-l border-line space-y-0.5">
+                  {showItems && (
+                    <div
+                      className={`mt-0.5 ml-3 pl-2 border-l border-line space-y-0.5 ${
+                        c ? "md:ml-0 md:pl-0 md:border-l-0" : ""
+                      } ${isCollapsed && c ? "hidden md:block" : ""}`}
+                    >
                       {group.items.map(renderItem)}
                     </div>
                   )}
@@ -331,6 +372,21 @@ export default function Sidebar({ open, onClose }) {
               );
             })}
           </nav>
+        </div>
+
+        {/* Pinned footer: Collapse Menu */}
+        <div className="hidden md:block shrink-0 border-t border-line p-2">
+          <button
+            onClick={() => setMenuCollapsed((v) => !v)}
+            aria-label={c ? "Expand menu" : "Collapse menu"}
+            title={c ? "Expand menu" : undefined}
+            className={`${linkBase} w-full text-ink-muted hover:text-ink hover:bg-surface-2 ${
+              c ? "justify-center px-0" : ""
+            }`}
+          >
+            <span className="shrink-0"><IconCollapse flipped={c} /></span>
+            {!c && <span>Collapse Menu</span>}
+          </button>
         </div>
       </aside>
     </>

@@ -8,6 +8,7 @@
 ./App.jsx
 ./components
 ./components/AppLayout.jsx
+./components/AssistantPanel.jsx
 ./components/AuthShell.jsx
 ./components/BoardModal.jsx
 ./components/ChatWidget.jsx
@@ -41,11 +42,13 @@
 ./components/Sidebar.jsx
 ./components/SrsGate.jsx
 ./components/TaskModal.jsx
+./components/Topbar.jsx
 ./demo
 ./demo/demoAccount.json
 ./demo/demoAdapter.js
 ./demo/demoMode.js
 ./hooks
+./hooks/useActiveBoardId.js
 ./hooks/useReveal.js
 ./index.css
 ./main.jsx
@@ -64,7 +67,9 @@
 ./pages/Landing.jsx
 ./pages/Login.jsx
 ./pages/NotFound.jsx
+./pages/OverviewPage.jsx
 ./pages/Register.jsx
+./pages/ScopePage.jsx
 ./pages/SddPage.jsx
 ./pages/settings.jsx
 ./pages/SrsStudio.jsx

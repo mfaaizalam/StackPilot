@@ -15,9 +15,9 @@ const roleLabel = (role) =>
   })[role] || role;
 
 const primaryBtn =
-  "w-full bg-neutral-900 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-neutral-800 disabled:opacity-60 disabled:cursor-not-allowed transition text-center";
+  "w-full bg-brand text-brand-fg rounded-lg py-2.5 text-sm font-medium hover:bg-brand-hover disabled:opacity-60 disabled:cursor-not-allowed transition text-center";
 const secondaryBtn =
-  "w-full border border-neutral-200 bg-white text-neutral-700 rounded-lg py-2.5 text-sm font-medium hover:bg-neutral-50 disabled:opacity-60 disabled:cursor-not-allowed transition text-center";
+  "w-full border border-line bg-surface text-ink rounded-lg py-2.5 text-sm font-medium hover:bg-surface-2 disabled:opacity-60 disabled:cursor-not-allowed transition text-center";
 
 export default function AcceptInvite() {
   const { token } = useParams();
@@ -64,7 +64,7 @@ export default function AcceptInvite() {
   if (isLoading) {
     return (
       <AuthShell title="Loading invitation…" subtitle="One moment.">
-        <div className="h-24 bg-white border border-neutral-200 rounded-xl animate-pulse" />
+        <div className="h-24 bg-surface border border-line rounded-xl animate-pulse" />
       </AuthShell>
     );
   }
@@ -105,16 +105,16 @@ export default function AcceptInvite() {
       subtitle={`${inv.invited_by || "A teammate"} invited you as ${roleLabel(inv.role)}.`}
     >
       <div className="space-y-5">
-        <div className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm">
-          <p className="text-[11px] text-neutral-400 font-medium uppercase tracking-wide">
+        <div className="rounded-xl border border-line bg-surface px-4 py-3 text-sm">
+          <p className="text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide">
             Invitation sent to
           </p>
-          <p className="mt-1 font-medium text-neutral-900 break-all">{inv.email}</p>
+          <p className="mt-1 font-medium text-ink break-all">{inv.email}</p>
         </div>
 
         {!loggedIn ? (
           <div className="space-y-3">
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-ink-muted">
               {inv.registered
                 ? "Sign in with this email address to accept the invitation."
                 : "Create a StackPilot account with this email address to accept the invitation."}
@@ -135,12 +135,12 @@ export default function AcceptInvite() {
         ) : (
           <div className="space-y-3">
             {wrongAccount && (
-              <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+              <p className="text-sm text-warning bg-warning-soft border border-warning/30 rounded-lg px-3 py-2">
                 You are signed in as {me.email}, but this invitation is for {inv.email}.
               </p>
             )}
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              <p className="text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-3 py-2">
                 {error}
               </p>
             )}
@@ -160,12 +160,12 @@ export default function AcceptInvite() {
             >
               {busy === "decline" ? "Declining…" : "Decline"}
             </button>
-            <p className="text-center text-xs text-neutral-500">
+            <p className="text-center text-xs text-ink-muted">
               {me?.email ? `Signed in as ${me.email}. ` : ""}
               <button
                 type="button"
                 onClick={switchAccount}
-                className="text-neutral-900 font-medium hover:underline"
+                className="text-ink font-medium hover:underline"
               >
                 Use a different account
               </button>

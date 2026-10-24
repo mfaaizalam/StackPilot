@@ -41,21 +41,21 @@ export default function InviteAccept() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-16 bg-white border border-neutral-200 rounded-2xl p-8">
-      <h1 className="text-xl font-semibold text-neutral-900">Project invitation</h1>
+    <div className="max-w-md mx-auto mt-16 bg-surface border border-line rounded-2xl p-8">
+      <h1 className="text-xl font-semibold text-ink">Project invitation</h1>
 
-      {isLoading && <p className="mt-4 text-sm text-neutral-500">Loading invitation…</p>}
+      {isLoading && <p className="mt-4 text-sm text-ink-muted">Loading invitation…</p>}
 
       {data && !error && (
         <>
-          <p className="mt-4 text-sm text-neutral-700">
+          <p className="mt-4 text-sm text-ink">
             You have been invited to join <b>{data.board_name}</b> as{" "}
             <b>{data.role.replace("_", " ")}</b>.
           </p>
           <button
             onClick={accept}
             disabled={busy}
-            className="mt-6 w-full bg-neutral-900 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-neutral-800 disabled:opacity-60"
+            className="mt-6 w-full bg-brand text-brand-fg rounded-lg py-2.5 text-sm font-medium hover:bg-brand-hover disabled:opacity-60"
           >
             {busy ? "Joining…" : "Accept invitation"}
           </button>
@@ -63,17 +63,17 @@ export default function InviteAccept() {
       )}
 
       {error && (
-        <div className="mt-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+        <div className="mt-4 text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-3 py-2">
           {error}
         </div>
       )}
 
       {error && (
         <div className="mt-4 flex gap-4 text-sm">
-          <button onClick={switchAccount} className="font-medium text-neutral-900 hover:underline">
+          <button onClick={switchAccount} className="font-medium text-ink hover:underline">
             Sign in with a different account
           </button>
-          <Link to="/boards" className="text-neutral-500 hover:underline">Go to my boards</Link>
+          <Link to="/boards" className="text-ink-muted hover:underline">Go to my boards</Link>
         </div>
       )}
     </div>

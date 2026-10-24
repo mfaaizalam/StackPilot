@@ -58,6 +58,10 @@
   --gradient-card: linear-gradient(145deg, #353943 0%, #252a2e 100%);
 }
 
+/* Sidebar width, switched by <html data-sidebar="collapsed"> */
+:root { --sidebar-w: 15rem; }
+[data-sidebar='collapsed'] { --sidebar-w: 3.5rem; }
+
 /* Print always uses a light page, whatever the screen theme is */
 @media print {
   :root,
@@ -130,4 +134,34 @@
 @media print {
   .app-dotted .sticky.top-0 { top: 0; }
   .app-dotted .min-h-screen { min-height: 0; }
+}
+
+:root { --sidebar-w: 15rem; }
+[data-sidebar='collapsed'] { --sidebar-w: 3.5rem; }
+
+/* Smooth theme switch: the class is added by useTheme for ~350ms only,
+   so hover effects and other transitions are not slowed down the rest of the time. */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+  transition-duration: 250ms !important;
+  transition-timing-function: ease !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *::before,
+  .theme-transition *::after {
+    transition: none !important;
+  }
+}
+
+@media print {
+  .theme-transition,
+  .theme-transition * {
+    transition: none !important;
+  }
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { queryClient } from "../api/queryClient.js";
 import useActiveBoardId from "../hooks/useActiveBoardId.js";
+import useTheme from "../hooks/useTheme.js";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
 const Svg = ({ size = 16, children }) => (
@@ -48,6 +49,29 @@ const IconLogout = () => (
     <path d="M6.5 2.5h-3v11h3M10 5l3 3-3 3M13 8H6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
+const IconSun = () => (
+  <Svg>
+    <circle cx="8" cy="8" r="2.8" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </Svg>
+);
+const IconMoon = () => (
+  <Svg>
+    <path d="M13.5 9.6A5.8 5.8 0 016.4 2.5a5.8 5.8 0 107.1 7.1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+  </Svg>
+);
+const IconMonitor = () => (
+  <Svg>
+    <rect x="2" y="2.5" width="12" height="8.5" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+    <path d="M5.5 13.5h5M8 11v2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </Svg>
+);
+
+const THEME_OPTIONS = [
+  { value: "system", label: "System", icon: <IconMonitor /> },
+  { value: "light", label: "Light", icon: <IconSun /> },
+  { value: "dark", label: "Dark", icon: <IconMoon /> },
+];
 
 // ── Searchable features ──────────────────────────────────────────────────────
 // `to` is the section under /boards/:boardId/ unless `absolute` is set.
@@ -219,6 +243,7 @@ function readUser() {
 function AccountMenu() {
   const navigate = useNavigate();
   const { boardId } = useActiveBoardId();
+  const { mode, setMode } = useTheme();
   const user = readUser();
   const [open, setOpen] = useState(false);
 
@@ -261,18 +286,40 @@ function AccountMenu() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div role="menu" className="absolute right-0 top-full mt-1.5 z-20 w-60 bg-surface border border-line rounded-xl shadow-lg py-1">
+          <div role="menu" className="absolute right-0 top-full mt-1.5 z-20 w-64 bg-surface border border-line rounded-xl shadow-lg py-1">
             <div className="px-3 py-2.5 border-b border-line">
               <p className="text-[13px] font-medium truncate">{name}</p>
               <p className="text-xs text-ink-muted truncate">{user?.email || ""}</p>
             </div>
 
-            <button disabled className={`${item} text-ink-muted/60 cursor-not-allowed`} role="menuitem">
-              <IconPalette /> Theme
-              <span className="ml-auto text-[10px] font-medium text-ink-muted/70 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
-                Coming soon
-              </span>
-            </button>
+            {/* Theme switch */}
+            <div className="px-3 py-2.5">
+              <p className="flex items-center gap-2 text-[11px] text-ink-muted mb-1.5">
+                <IconPalette /> Theme
+              </p>
+              <div
+                role="radiogroup"
+                aria-label="Theme"
+                className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-surface-2 border border-line"
+              >
+                {THEME_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    role="radio"
+                    aria-checked={mode === o.value}
+                    onClick={() => setMode(o.value)}
+                    className={`flex items-center justify-center gap-1 py-1.5 rounded-md text-[12px] transition ${
+                      mode === o.value
+                        ? "bg-surface text-ink font-medium shadow-sm"
+                        : "text-ink-muted hover:text-ink"
+                    }`}
+                  >
+                    {o.icon}
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <button
               role="menuitem"
@@ -296,11 +343,10 @@ function AccountMenu() {
 
 // ── Topbar ───────────────────────────────────────────────────────────────────
 // Fixed, full width, h-12 so its bottom border lines up with the sidebar's logo
-// row. The search + Ask AI group is positioned against the whole viewport
-// (left-1/2), not the space beside the sidebar.
+// row. Left padding follows the sidebar width (expanded or icon-only).
 export default function Topbar({ onMenu, assistantOpen, onToggleAssistant }) {
   return (
-    <header className="fixed inset-x-0 top-0 z-30 h-12 bg-canvas border-b border-line flex items-center gap-2 px-3 md:pl-64 md:pr-4 print:hidden">
+    <header className="fixed inset-x-0 top-0 z-30 h-12 bg-canvas border-b border-line flex items-center gap-2 px-3 md:pl-[var(--sidebar-w)] md:pr-4 transition-[padding] duration-200 print:hidden">
       {/* Mobile: hamburger + logo (the sidebar is a drawer there) */}
       <div className="flex items-center gap-2 md:hidden shrink-0">
         <button

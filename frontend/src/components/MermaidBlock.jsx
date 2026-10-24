@@ -44,18 +44,18 @@ export default function MermaidBlock({ source }) {
   if (failed) {
     return (
       <div className="mb-4">
-        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-2">
+        <p className="text-xs text-warning bg-warning-soft border border-warning/30 rounded-lg px-3 py-2 mb-2">
           This diagram could not be drawn. Its source is shown below.
         </p>
-        <pre className="text-xs bg-neutral-50 border border-neutral-200 rounded-lg p-3 overflow-x-auto">{source}</pre>
+        <pre className="text-xs bg-surface-2 border border-line rounded-lg p-3 overflow-x-auto">{source}</pre>
       </div>
     );
   }
-  if (!svg) return <div className="h-32 mb-4 bg-neutral-50 border border-neutral-200 rounded-xl animate-pulse" />;
+  if (!svg) return <div className="h-32 mb-4 bg-surface-2 border border-line rounded-xl animate-pulse" />;
 
   return (
     <div
-      className="mb-5 bg-white border border-neutral-200 rounded-xl p-4 overflow-x-auto print:break-inside-avoid [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:mx-auto"
+      className="mb-5 bg-white border border-line rounded-xl p-4 overflow-x-auto print:break-inside-avoid [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:mx-auto"
       role="img"
       aria-label="Diagram"
       dangerouslySetInnerHTML={{ __html: svg }}

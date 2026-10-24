@@ -19,6 +19,7 @@ import { useBoards } from "./api/queries.js";
 import SddPage from "./pages/SddPage.jsx";
 import GanttPage from "./pages/GanttPage.jsx";
 import DocumentPage from "./pages/DocumentPage.jsx";
+import useDocumentTitle from "./hooks/useDocumentTitle.js";
 
 function PrivateLayout() {
   const token = localStorage.getItem("token");
@@ -38,7 +39,7 @@ function HomeRedirect() {
   const { data: boards, isLoading, isError } = useBoards();
 
   if (isLoading) {
-    return <div className="p-10 text-sm text-neutral-500">Loading…</div>;
+    return <div className="p-10 text-sm text-ink-muted">Loading…</div>;
   }
 
   if (isError || !boards?.length) {
@@ -55,6 +56,10 @@ function HomeRedirect() {
 }
 
 export default function App() {
+  // Sets the browser tab title for public pages (landing, login, register, invite, 404).
+  // Pages inside AppLayout are handled there, where the project name is available.
+  useDocumentTitle(undefined, "public");
+
   return (
     <Routes>
       <Route path="/" element={<Landing />} />

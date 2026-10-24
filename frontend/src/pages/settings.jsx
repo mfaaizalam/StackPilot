@@ -18,17 +18,17 @@ const roleLabel = (role) =>
   })[role] || role;
 
 const inputClass =
-  "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/10";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand/10";
 const buttonClass =
   "inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40";
-const primaryButton = `${buttonClass} bg-neutral-950 text-white hover:bg-neutral-800`;
-const secondaryButton = `${buttonClass} border border-neutral-200 text-neutral-700 hover:bg-neutral-50`;
-const dangerButton = `${buttonClass} border border-red-100 text-red-600 hover:bg-red-50`;
+const primaryButton = `${buttonClass} bg-brand text-brand-fg hover:bg-brand-hover`;
+const secondaryButton = `${buttonClass} border border-line text-ink hover:bg-surface-2`;
+const dangerButton = `${buttonClass} border border-danger/20 text-danger hover:bg-danger-soft`;
 
 function ErrorMessage({ children }) {
   if (!children) return null;
   return (
-    <p className="mt-3 rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+    <p className="mt-3 rounded-lg border border-danger/20 bg-danger-soft px-3 py-2 text-sm text-danger">
       {children}
     </p>
   );
@@ -36,11 +36,11 @@ function ErrorMessage({ children }) {
 
 function Section({ title, description, children }) {
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white p-5">
+    <section className="rounded-2xl border border-line bg-surface p-5">
       <div className="mb-4">
-        <h2 className="text-sm font-semibold text-neutral-900">{title}</h2>
+        <h2 className="text-sm font-semibold text-ink">{title}</h2>
         {description && (
-          <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
             {description}
           </p>
         )}
@@ -228,13 +228,13 @@ export default function BoardSettings() {
   };
 
   if (boardLoading || roleLoading) {
-    return <div className="p-8 text-sm text-neutral-500">Loading project settings…</div>;
+    return <div className="p-8 text-sm text-ink-muted">Loading project settings…</div>;
   }
 
   if (boardError) {
     return (
       <div className="p-8">
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-danger">
           {showError(boardError, "Could not load this project.")}
         </p>
         <Link to="/boards" className="mt-3 inline-block text-sm underline">
@@ -250,18 +250,18 @@ export default function BoardSettings() {
         <div>
           <Link
             to={`/boards/${boardId}/kanban`}
-            className="text-xs text-neutral-500 hover:text-neutral-900"
+            className="text-xs text-ink-muted hover:text-ink"
           >
             ← Back to board
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-neutral-900">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
             Project settings
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-ink-muted">
             {board?.name || "Project"} · Your role: {roleLabel(role)}
           </p>
         </div>
-        <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-600">
+        <span className="rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-medium text-ink-muted">
           {roleLabel(role)}
         </span>
       </div>
@@ -314,7 +314,7 @@ export default function BoardSettings() {
               </button>
             </div>
             {lookup && (
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-ink-muted">
                 {lookup.registered
                   ? `Account found${lookup.name ? ` for ${lookup.name}` : ""}.`
                   : "This email is not registered yet. The user must create an account before accepting."}
@@ -329,13 +329,13 @@ export default function BoardSettings() {
         description="Project access is controlled by each member's role."
       >
         {membersLoading ? (
-          <p className="text-sm text-neutral-500">Loading members…</p>
+          <p className="text-sm text-ink-muted">Loading members…</p>
         ) : membersError ? (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-danger">
             {showError(membersError, "Could not load members.")}
           </p>
         ) : members.length === 0 ? (
-          <p className="text-sm text-neutral-500">No members found.</p>
+          <p className="text-sm text-ink-muted">No members found.</p>
         ) : (
           <div className="divide-y divide-neutral-100">
             {members.map((member) => (
@@ -344,13 +344,13 @@ export default function BoardSettings() {
                 className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-neutral-900">
+                  <p className="truncate text-sm font-medium text-ink">
                     {member.name || member.email}
                     {member.is_owner && (
-                      <span className="ml-2 text-xs font-normal text-neutral-400">Owner</span>
+                      <span className="ml-2 text-xs font-normal text-ink-muted/70">Owner</span>
                     )}
                   </p>
-                  <p className="mt-0.5 truncate text-xs text-neutral-500">
+                  <p className="mt-0.5 truncate text-xs text-ink-muted">
                     {member.email}
                   </p>
                 </div>
@@ -361,7 +361,7 @@ export default function BoardSettings() {
                         value={member.role}
                         disabled={busy}
                         onChange={(e) => handleRoleChange(member, e.target.value)}
-                        className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-xs text-neutral-700"
+                        className="rounded-lg border border-line bg-surface px-2 py-1.5 text-xs text-ink"
                         aria-label={`Role for ${member.email}`}
                       >
                         {ROLES.map((r) => (
@@ -378,7 +378,7 @@ export default function BoardSettings() {
                       </button>
                     </>
                   ) : (
-                    <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs text-neutral-600">
+                    <span className="rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs text-ink-muted">
                       {roleLabel(member.role)}
                     </span>
                   )}
@@ -392,20 +392,20 @@ export default function BoardSettings() {
       {isAdmin && (
         <Section title="Pending invitations" description="Invitations waiting to be accepted.">
           {invitationsLoading ? (
-            <p className="text-sm text-neutral-500">Loading invitations…</p>
+            <p className="text-sm text-ink-muted">Loading invitations…</p>
           ) : invitationsError ? (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-danger">
               {showError(invitationsError, "Could not load invitations.")}
             </p>
           ) : invitations.length === 0 ? (
-            <p className="text-sm text-neutral-500">No pending invitations.</p>
+            <p className="text-sm text-ink-muted">No pending invitations.</p>
           ) : (
             <div className="divide-y divide-neutral-100">
               {invitations.map((inv) => (
                 <div key={inv.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-neutral-900">{inv.email}</p>
-                    <p className="mt-0.5 text-xs text-neutral-500">
+                    <p className="truncate text-sm font-medium text-ink">{inv.email}</p>
+                    <p className="mt-0.5 text-xs text-ink-muted">
                       {roleLabel(inv.role)} · Expires {new Date(inv.expires_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -426,21 +426,21 @@ export default function BoardSettings() {
 
       <Section title="Recent activity" description="Recent actions recorded for this project.">
         {activityLoading ? (
-          <p className="text-sm text-neutral-500">Loading activity…</p>
+          <p className="text-sm text-ink-muted">Loading activity…</p>
         ) : activityError ? (
-          <p className="text-sm text-red-600">
+          <p className="text-sm text-danger">
             {showError(activityError, "Could not load activity.")}
           </p>
         ) : activity.length === 0 ? (
-          <p className="text-sm text-neutral-500">No activity recorded yet.</p>
+          <p className="text-sm text-ink-muted">No activity recorded yet.</p>
         ) : (
           <div className="space-y-3">
             {activity.map((item) => (
               <div key={item.id} className="flex gap-3">
                 <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-neutral-300" />
                 <div className="min-w-0">
-                  <p className="text-sm text-neutral-800">{item.summary}</p>
-                  <p className="mt-0.5 text-xs text-neutral-400">
+                  <p className="text-sm text-ink">{item.summary}</p>
+                  <p className="mt-0.5 text-xs text-ink-muted/70">
                     {item.user_name || "A member"} · {new Date(item.created_at).toLocaleString()}
                   </p>
                 </div>

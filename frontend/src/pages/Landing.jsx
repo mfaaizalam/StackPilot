@@ -618,7 +618,7 @@ function Logo() {
       to="/"
       className="flex items-center gap-2 text-lg font-semibold tracking-tight"
     >
-      <div className="w-7 h-7 rounded-md flex items-center justify-center font-bold bg-white text-neutral-950">
+      <div className="w-7 h-7 rounded-md flex items-center justify-center font-bold bg-surface text-neutral-950">
         S
       </div>
       <span className="text-white">StackPilot</span>
@@ -653,7 +653,7 @@ function NavBar() {
       >
         <Logo />
 
-        <nav className="hidden md:flex items-center gap-8 text-sm text-neutral-300">
+        <nav className="hidden md:flex items-center gap-8 text-sm text-ink-muted/50">
           <a href="#features" className="hover:text-white transition">Product</a>
           <a href="#how-it-works" className="hover:text-white transition">Workflow</a>
           <a href="#demo" className="hover:text-white transition">Demo</a>
@@ -663,13 +663,13 @@ function NavBar() {
         <div className="flex items-center gap-3">
           <Link
             to="/login"
-            className="hidden sm:inline text-sm font-medium text-neutral-300 hover:text-white transition"
+            className="hidden sm:inline text-sm font-medium text-ink-muted/50 hover:text-white transition"
           >
             Sign in
           </Link>
           <Link
             to="/register"
-            className="text-sm font-medium bg-white text-neutral-950 rounded-full px-5 py-2.5 hover:bg-neutral-200 transition"
+            className="text-sm font-medium bg-surface text-neutral-950 rounded-full px-5 py-2.5 hover:bg-neutral-200 transition"
           >
             Get started <span aria-hidden="true">↗</span>
           </Link>
@@ -695,7 +695,7 @@ function SectionHeading({ eyebrow, title, description, center = false }) {
         {title}
       </h2>
       {description && (
-        <p className={`mt-5 max-w-2xl text-sm sm:text-base leading-7 text-neutral-300 ${center ? "mx-auto" : ""}`}>
+        <p className={`mt-5 max-w-2xl text-sm sm:text-base leading-7 text-ink-muted/50 ${center ? "mx-auto" : ""}`}>
           {description}
         </p>
       )}
@@ -716,7 +716,7 @@ function Hero() {
         <div ref={ref} className="reveal grid lg:grid-cols-[1.12fr_.88fr] gap-12 lg:gap-16 items-center">
           <div>
             <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/30 px-4 py-2 backdrop-blur-md">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-surface animate-pulse" />
               <span className="text-[10px] sm:text-xs uppercase tracking-[0.16em] text-white/75">
                 AI-assisted software planning
               </span>
@@ -730,7 +730,7 @@ function Hero() {
               To execution.
             </h1>
 
-            <p className="mt-7 max-w-xl text-base sm:text-lg leading-8 text-neutral-300">
+            <p className="mt-7 max-w-xl text-base sm:text-lg leading-8 text-ink-muted/50">
               Turn your project idea into structured requirements, UML diagrams,
               organized tasks and a clearer delivery plan — all in one connected
               software planning workspace.
@@ -739,7 +739,7 @@ function Hero() {
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <Link
                 to="/register"
-                className="group inline-flex items-center gap-3 rounded-full bg-white px-6 py-3.5 text-sm font-medium text-black transition hover:-translate-y-0.5 hover:bg-neutral-200"
+                className="group inline-flex items-center gap-3 rounded-full bg-surface px-6 py-3.5 text-sm font-medium text-black transition hover:-translate-y-0.5 hover:bg-neutral-200"
               >
                 Start planning
                 <span className="transition-transform group-hover:translate-x-1">↗</span>
@@ -762,7 +762,7 @@ function Hero() {
           </div>
 
           <div className="relative mx-auto w-full max-w-[440px] lg:ml-auto">
-            <div className="absolute -inset-8 rounded-full bg-white/[0.035] blur-3xl" />
+            <div className="absolute -inset-8 rounded-full bg-surface/[0.035] blur-3xl" />
             <div className="relative rounded-2xl border border-white/15 bg-black/45 p-2.5 shadow-2xl shadow-black/40 backdrop-blur-xl">
               <video
                 className="block aspect-video w-full rounded-xl object-contain bg-black"
@@ -862,7 +862,7 @@ function FeatureCard({ number, title, desc, tags }) {
       </div>
 
       <h3 className="mt-8 text-xl font-medium tracking-tight text-white">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-neutral-300">{desc}</p>
+      <p className="mt-3 text-sm leading-7 text-ink-muted/50">{desc}</p>
 
       <div className="mt-6 flex flex-wrap gap-2">
         {tags.map((tag) => (
@@ -950,12 +950,12 @@ function Step({ number, title, desc, last = false }) {
         <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-black/60 text-xs font-medium text-white">
           {number}
         </span>
-        {!last && <span className="mt-2 w-px flex-1 bg-white/15" />}
+        {!last && <span className="mt-2 w-px flex-1 bg-surface/15" />}
       </div>
 
       <div className="pb-10">
         <h3 className="pt-2 text-lg font-medium text-white">{title}</h3>
-        <p className="mt-2 max-w-lg text-sm leading-7 text-neutral-300">{desc}</p>
+        <p className="mt-2 max-w-lg text-sm leading-7 text-ink-muted/50">{desc}</p>
       </div>
     </div>
   );
@@ -974,7 +974,7 @@ function HowItWorks() {
 
           <Link
             to="/register"
-            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-5 py-3 text-sm text-white/85 transition hover:border-white/45 hover:bg-white/[0.05]"
+            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/20 px-5 py-3 text-sm text-white/85 transition hover:border-white/45 hover:bg-surface/[0.05]"
           >
             Start a project <span>↗</span>
           </Link>
@@ -1079,7 +1079,7 @@ function WorkflowPreview() {
                 aria-pressed={active === i}
                 className={`rounded-full px-4 py-2.5 text-xs transition ${
                   active === i
-                    ? "bg-white text-black"
+                    ? "bg-surface text-black"
                     : "border border-white/15 bg-black/20 text-white/65 hover:border-white/35 hover:text-white"
                 }`}
               >
@@ -1092,9 +1092,9 @@ function WorkflowPreview() {
         <div className="sp-outline relative overflow-hidden rounded-2xl p-5 sm:p-8">
           <div className="flex items-center justify-between gap-3">
             <div className="flex gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-white/25" />
-              <span className="h-2 w-2 rounded-full bg-white/25" />
-              <span className="h-2 w-2 rounded-full bg-white/25" />
+              <span className="h-2 w-2 rounded-full bg-surface/25" />
+              <span className="h-2 w-2 rounded-full bg-surface/25" />
+              <span className="h-2 w-2 rounded-full bg-surface/25" />
             </div>
             <span className="text-[10px] uppercase tracking-[.18em] text-white/40">
               Illustrative preview
@@ -1108,7 +1108,7 @@ function WorkflowPreview() {
             <h3 className="mt-3 text-2xl sm:text-3xl font-medium tracking-tight text-white">
               {current.title}
             </h3>
-            <p className="mt-3 max-w-md text-sm leading-7 text-neutral-300">
+            <p className="mt-3 max-w-md text-sm leading-7 text-ink-muted/50">
               {current.description}
             </p>
           </div>
@@ -1215,7 +1215,7 @@ function Faq() {
                   +
                 </span>
               </summary>
-              <p className="max-w-2xl pt-4 pr-8 text-sm leading-7 text-neutral-300">
+              <p className="max-w-2xl pt-4 pr-8 text-sm leading-7 text-ink-muted/50">
                 {faq.a}
               </p>
             </details>
@@ -1252,14 +1252,14 @@ function CtaBanner() {
             <span className="text-white/40">Build with confidence.</span>
           </h2>
 
-          <p className="mx-auto mt-6 max-w-xl text-sm sm:text-base leading-7 text-neutral-300">
+          <p className="mx-auto mt-6 max-w-xl text-sm sm:text-base leading-7 text-ink-muted/50">
             Give your project a clearer structure — from the first requirements
             to tasks, design decisions and delivery planning.
           </p>
 
           <Link
             to="/register"
-            className="mt-9 inline-flex items-center gap-3 rounded-full bg-white px-7 py-4 text-sm font-medium text-black transition hover:-translate-y-0.5 hover:bg-neutral-200"
+            className="mt-9 inline-flex items-center gap-3 rounded-full bg-surface px-7 py-4 text-sm font-medium text-black transition hover:-translate-y-0.5 hover:bg-neutral-200"
           >
             Get started with StackPilot <span>↗</span>
           </Link>
@@ -1320,7 +1320,7 @@ export default function Landing() {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-clip bg-[#020204] text-white selection:bg-white selection:text-black">
+    <div className="relative min-h-screen overflow-clip bg-[#020204] text-white selection:bg-surface selection:text-black">
       <GalaxyBackground />
 
       <div className="relative z-10">

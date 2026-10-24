@@ -41,15 +41,15 @@ export default function PendingInvitations() {
   };
 
   return (
-    <section className="mb-8 rounded-2xl border border-neutral-200 bg-white p-5">
-      <h2 className="text-sm font-semibold text-neutral-900">
+    <section className="mb-8 rounded-2xl border border-line bg-surface p-5">
+      <h2 className="text-sm font-semibold text-ink">
         Invitations for you ({invites.length})
       </h2>
-      <p className="mt-1 text-xs text-neutral-500">
+      <p className="mt-1 text-xs text-ink-muted">
         You have been invited to join these projects.
       </p>
       {error && (
-        <p className="mt-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+        <p className="mt-3 text-sm text-danger bg-danger-soft border border-danger/20 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
@@ -60,10 +60,10 @@ export default function PendingInvitations() {
             className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-neutral-900">
+              <p className="truncate text-sm font-medium text-ink">
                 {inv.board_name || "Project"}
               </p>
-              <p className="mt-0.5 text-xs text-neutral-500">
+              <p className="mt-0.5 text-xs text-ink-muted">
                 Join as {roleLabel(inv.role)} · Expires{" "}
                 {new Date(inv.expires_at).toLocaleDateString()}
               </p>
@@ -73,7 +73,7 @@ export default function PendingInvitations() {
                 type="button"
                 disabled={busyId === inv.id}
                 onClick={() => respond(inv, "decline")}
-                className="text-sm font-medium px-3.5 py-2 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50 disabled:opacity-40 transition"
+                className="text-sm font-medium px-3.5 py-2 rounded-lg border border-line text-ink hover:bg-surface-2 disabled:opacity-40 transition"
               >
                 Decline
               </button>
@@ -81,7 +81,7 @@ export default function PendingInvitations() {
                 type="button"
                 disabled={busyId === inv.id}
                 onClick={() => respond(inv, "accept")}
-                className="text-sm font-medium px-3.5 py-2 rounded-lg bg-neutral-950 text-white hover:bg-neutral-800 disabled:opacity-40 transition"
+                className="text-sm font-medium px-3.5 py-2 rounded-lg bg-brand text-brand-fg hover:bg-brand-hover disabled:opacity-40 transition"
               >
                 Accept
               </button>
