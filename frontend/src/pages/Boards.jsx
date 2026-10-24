@@ -113,13 +113,16 @@ export default function Boards() {
     ? error?.response?.data?.detail || "Failed to load projects. Is the backend running?"
     : "";
 
-  // Modal state
+  // Edit modal state (creating no longer uses the modal)
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingProject, setEditingProject] = useState(null); // null = create, object = edit
+  const [editingProject, setEditingProject] = useState(null);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // New-project state
+  const [creating, setCreating] = useState(false);
 
   // Toast
   const [toast, setToast] = useState(null);
@@ -136,16 +139,27 @@ export default function Boards() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // ── CRUD handlers (API paths unchanged) ───────────────────────────────────
-  const handleCreate = async (form) => {
-    const { data } = await api.post("/boards/", form);
-    syncAfterChange((prev = []) => [data, ...prev]);
-    showToast("Project created.");
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  // New project: create it right away, then let the user name it and describe
+  // it on the Project Scope tab.
+  const handleNewProject = async () => {
+    if (creating) return;
+    setCreating(true);
+    try {
+      const { data } = await api.post("/boards/", { name: "Untitled project", description: "" });
+      syncAfterChange((prev = []) => [data, ...prev]);
+      navigate(`/boards/${data.id}/scope`);
+    } catch (err) {
+      showToast(err?.response?.data?.detail || "Could not create the project.", "error");
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleEdit = async (form) => {
     const { data } = await api.put(`/boards/${editingProject.id}`, form);
     syncAfterChange((prev = []) => prev.map((p) => (p.id === data.id ? data : p)));
+    queryClient.invalidateQueries({ queryKey: ["board", String(data.id)] });
     showToast("Project updated.");
   };
 
@@ -164,12 +178,10 @@ export default function Boards() {
     }
   };
 
-  // ── Open project → navigate to detail ────────────────────────────────────
+  // Open project → Overview
   const handleOpenProject = (project) => {
-    navigate(`/boards/${project.id}`);
+    navigate(`/boards/${project.id}/overview`);
   };
-
-  const openCreate = () => { setEditingProject(null); setModalOpen(true); };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -229,14 +241,15 @@ export default function Boards() {
             <IconEmpty />
             <p className="mt-5 text-base font-medium text-ink">No projects yet</p>
             <p className="mt-1.5 text-sm text-ink-muted max-w-xs">
-              Create your first project to start organising columns and tasks.
+              Create your first project, then describe it on the Project Scope tab.
             </p>
             <button
-              onClick={openCreate}
-              className="mt-6 flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover transition"
+              onClick={handleNewProject}
+              disabled={creating}
+              className="mt-6 flex items-center gap-2 bg-brand text-brand-fg text-sm font-medium px-4 py-2.5 rounded-lg hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               <IconPlus />
-              Create a project
+              {creating ? "Creating…" : "Create a project"}
             </button>
           </div>
         )}
@@ -256,11 +269,12 @@ export default function Boards() {
 
             {/* "Add project" card */}
             <button
-              onClick={openCreate}
-              className="h-full min-h-[9rem] flex flex-col items-center justify-center gap-2 border border-dashed border-ink-muted/40 rounded-card text-ink-muted/70 hover:border-ink-muted/60 hover:text-ink-muted hover:bg-surface transition"
+              onClick={handleNewProject}
+              disabled={creating}
+              className="h-full min-h-[9rem] flex flex-col items-center justify-center gap-2 border border-dashed border-ink-muted/40 rounded-card text-ink-muted/70 hover:border-ink-muted/60 hover:text-ink-muted hover:bg-surface disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               <IconPlus />
-              <span className="text-sm font-medium">New project</span>
+              <span className="text-sm font-medium">{creating ? "Creating…" : "New project"}</span>
             </button>
           </div>
         )}
@@ -269,8 +283,8 @@ export default function Boards() {
       {/* ── Modals ── */}
       <BoardModal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSubmit={editingProject ? handleEdit : handleCreate}
+        onClose={() => { setModalOpen(false); setEditingProject(null); }}
+        onSubmit={handleEdit}
         initial={editingProject}
       />
 

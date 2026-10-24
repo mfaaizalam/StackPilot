@@ -100,3 +100,21 @@
 @utility card-gradient {
   background-image: var(--gradient-card);
 }
+
+/* Dotted canvas behind every page.
+   Put class="app-dotted" on the <main> that wraps the routed page (AppLayout).
+   Pages paint bg-canvas on their root, so inside .app-dotted that colour is
+   made transparent and the dots show through. The sidebar is outside <main>,
+   so it keeps its solid background. */
+.app-dotted {
+  background-image: radial-gradient(circle, rgba(128, 128, 128, 0.28) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+.app-dotted .bg-canvas {
+  background-color: transparent;
+}
+@media print {
+  .app-dotted {
+    background-image: none;
+  }
+}

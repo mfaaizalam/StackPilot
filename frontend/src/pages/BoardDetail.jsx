@@ -797,13 +797,7 @@ export default function BoardDetail() {
         ]}
         onDragEnd={handleDragEnd}
       >
-        <div
-          className="flex-1 min-w-0 overflow-x-auto"
-          style={{
-            backgroundImage: "radial-gradient(circle, rgba(128,128,128,.28) 1px, transparent 1.5px)",
-            backgroundSize: "22px 22px",
-          }}
-        >
+        <div className="flex-1 min-w-0 overflow-x-auto">
           <div className="flex gap-5 p-4 sm:p-6 min-h-full items-start" style={{ minWidth: "max-content" }}>
 
             {loading && [1,2,3].map(i => (

@@ -4,6 +4,31 @@ import { useBoards } from "../api/queries.js";
 import { queryClient } from "../api/queryClient.js";
 
 // ── Icons ────────────────────────────────────────────────────────────────────
+function IconOverview() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <rect x="2.5" y="7.5" width="4" height="5" rx="1" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="13.5" y="7.5" width="4" height="5" rx="1" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M6.5 10h7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconScope() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="3" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+function IconGithub() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="10" cy="10" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
 function IconChevron() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -94,17 +119,37 @@ function IconFolder() {
   );
 }
 
-const SECTIONS = [
-  { to: "kanban", label: "Kanban Board", icon: <IconKanban /> },
-  { to: "srs", label: "SRS Document", icon: <IconSrs /> },
-  { to: "diagrams", label: "Diagrams", icon: <IconDiagrams /> },
-  { to: "sdd", label: "Design Document", icon: <IconSdd /> },
-  { to: "costing", label: "Costing", icon: <IconCosting /> },
-  { to: "timeline", label: "Timeline & Finance", icon: <IconGantt /> },
-  { to: "document", label: "Document", icon: <IconDeploy /> },
-  { to: "settings", label: "Settings", icon: <IconSettings /> },
+const OVERVIEW = { to: "overview", label: "Overview", icon: <IconOverview /> };
+const SETTINGS = { to: "settings", label: "Settings", icon: <IconSettings /> };
+
+const GROUPS = [
+  {
+    key: "pm",
+    label: "Project Manager",
+    items: [
+      { to: "kanban",        label: "Kanban Board", icon: <IconKanban /> },
+      { to: "timeline",      label: "Gantt Chart",  icon: <IconGantt /> },
+      { to: "github-issues", label: "GitHub Issues", icon: <IconGithub />, soon: true },
+    ],
+  },
+  {
+    key: "tech",
+    label: "Technical Manager",
+    items: [
+      { to: "scope",    label: "Project Scope",       icon: <IconScope /> },
+      { to: "srs",      label: "SRS Document",        icon: <IconSrs /> },
+      { to: "diagrams", label: "Diagrams",            icon: <IconDiagrams /> },
+      { to: "sdd",      label: "Design Document",     icon: <IconSdd /> },
+      { to: "document", label: "Deployment Document", icon: <IconDeploy /> },
+    ],
+  },
 ];
-const SECTION_KEYS = SECTIONS.map((s) => s.to);
+
+const SECTION_KEYS = [
+  OVERVIEW.to,
+  SETTINGS.to,
+  ...GROUPS.flatMap((g) => g.items.map((i) => i.to)),
+];
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
@@ -112,6 +157,21 @@ export default function Sidebar({ open, onClose }) {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const { data: boards = [] } = useBoards();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  // Collapsed state per group, remembered across visits.
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("sidebarCollapsed") || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const toggleGroup = (key) =>
+    setCollapsed((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      localStorage.setItem("sidebarCollapsed", JSON.stringify(next));
+      return next;
+    });
 
   // Current project: from the URL when inside a project, otherwise the last one used.
   const match = useMatch("/boards/:boardId/*");
@@ -128,7 +188,13 @@ export default function Sidebar({ open, onClose }) {
 
   // Keep the user in the same section when switching projects.
   const seg = location.pathname.split("/")[3];
-  const currentSection = SECTION_KEYS.includes(seg) ? seg : "kanban";
+  const currentSection = SECTION_KEYS.includes(seg) ? seg : "overview";
+
+  // Auto-expand the group that contains the page being viewed.
+  useEffect(() => {
+    const g = GROUPS.find((grp) => grp.items.some((i) => i.to === seg));
+    if (g) setCollapsed((prev) => (prev[g.key] ? { ...prev, [g.key]: false } : prev));
+  }, [seg]);
 
   const switchTo = (board) => {
     setSwitcherOpen(false);
@@ -145,7 +211,45 @@ export default function Sidebar({ open, onClose }) {
   };
 
   const linkBase =
-    "flex items-center gap-2.5 text-sm px-3 py-2 rounded-lg transition";
+    "flex items-center gap-2 text-[13px] px-2.5 py-1.5 rounded-md transition";
+
+  const renderItem = ({ to, label, icon, soon }) =>
+    activeId ? (
+      <NavLink
+        key={to}
+        to={`/boards/${activeId}/${to}`}
+        onClick={onClose}
+        className={({ isActive }) =>
+          `${linkBase} ${
+            isActive
+              ? "bg-surface-2 text-ink font-medium"
+              : "text-ink-muted hover:text-ink hover:bg-surface-2"
+          }`
+        }
+      >
+        {icon}
+        {label}
+        {soon && (
+          <span className="ml-auto text-[10px] font-medium text-ink-muted/70 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
+            Soon
+          </span>
+        )}
+      </NavLink>
+    ) : (
+      <span
+        key={to}
+        title="Select a project first"
+        className={`${linkBase} text-ink-muted/50 cursor-not-allowed`}
+      >
+        {icon}
+        {label}
+        {soon && (
+          <span className="ml-auto text-[10px] font-medium text-ink-muted/50 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
+            Soon
+          </span>
+        )}
+      </span>
+    );
 
   return (
     <>
@@ -163,27 +267,27 @@ export default function Sidebar({ open, onClose }) {
         } md:translate-x-0`}
       >
         {/* Logo */}
-        <div className="h-14 px-4 flex items-center gap-2 font-semibold tracking-tight border-b border-line shrink-0">
+        <div className="h-12 px-4 flex items-center gap-2 font-semibold tracking-tight border-b border-line shrink-0">
           <div className="w-7 h-7 rounded-md bg-brand text-brand-fg flex items-center justify-center font-bold text-sm">
             S
           </div>
           StackPilot
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {/* Projects row (current project + switcher) */}
           <div className="relative">
-            <p className="px-1 mb-1.5 text-[11px] text-ink-muted/70 font-medium uppercase tracking-wide">
+            <p className="px-1 mb-1 text-[10px] text-ink-muted/70 font-medium uppercase tracking-wide">
               Projects
             </p>
             <button
               onClick={() => setSwitcherOpen((v) => !v)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-line bg-surface hover:bg-surface-2 transition text-left"
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md border border-line bg-surface hover:bg-surface-2 transition text-left"
             >
               <span className="text-ink-muted shrink-0">
                 <IconFolder />
               </span>
-              <span className="flex-1 min-w-0 text-sm font-medium text-ink truncate">
+              <span className="flex-1 min-w-0 text-[13px] font-medium text-ink truncate">
                 {currentBoard?.name || "Select a project"}
               </span>
               <span className="text-ink-muted/70 shrink-0">
@@ -203,7 +307,7 @@ export default function Sidebar({ open, onClose }) {
                         <button
                           key={b.id}
                           onClick={() => switchTo(b)}
-                          className={`w-full text-left px-3 py-2 text-sm truncate hover:bg-surface-2 transition ${
+                          className={`w-full text-left px-3 py-1.5 text-[13px] truncate hover:bg-surface-2 transition ${
                             String(b.id) === String(activeId)
                               ? "font-medium text-ink bg-surface-2"
                               : "text-ink-muted"
@@ -221,7 +325,7 @@ export default function Sidebar({ open, onClose }) {
                         navigate("/boards");
                         onClose?.();
                       }}
-                      className="w-full text-left px-3 py-2 text-xs text-ink-muted hover:text-ink hover:bg-surface-2 transition"
+                      className="w-full text-left px-3 py-1.5 text-xs text-ink-muted hover:text-ink hover:bg-surface-2 transition"
                     >
                       Manage projects / New project
                     </button>
@@ -232,62 +336,53 @@ export default function Sidebar({ open, onClose }) {
           </div>
 
           {/* Section links */}
-          <nav className="space-y-1">
-            {SECTIONS.map(({ to, label, icon, soon }) =>
-              activeId ? (
-                <NavLink
-                  key={to}
-                  to={`/boards/${activeId}/${to}`}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `${linkBase} ${
-                      isActive
-                        ? "bg-surface-2 text-ink font-medium"
-                        : "text-ink-muted hover:text-ink hover:bg-surface-2"
-                    }`
-                  }
-                >
-                  {icon}
-                  {label}
-                  {soon && (
-                    <span className="ml-auto text-[10px] font-medium text-ink-muted/70 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
-                      Soon
+          <nav className="space-y-0.5">
+            {renderItem(OVERVIEW)}
+
+            {GROUPS.map((group) => {
+              const isCollapsed = !!collapsed[group.key];
+              return (
+                <div key={group.key} className="pt-2">
+                  <button
+                    onClick={() => toggleGroup(group.key)}
+                    aria-expanded={!isCollapsed}
+                    className="w-full flex items-center justify-between px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-muted/70 hover:text-ink transition"
+                  >
+                    {group.label}
+                    <span
+                      className={`transition-transform duration-150 ${
+                        isCollapsed ? "-rotate-90" : ""
+                      }`}
+                    >
+                      <IconChevron />
                     </span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="mt-0.5 ml-3 pl-2 border-l border-line space-y-0.5">
+                      {group.items.map(renderItem)}
+                    </div>
                   )}
-                </NavLink>
-              ) : (
-                <span
-                  key={to}
-                  title="Select a project first"
-                  className={`${linkBase} text-ink-muted/50 cursor-not-allowed`}
-                >
-                  {icon}
-                  {label}
-                  {soon && (
-                    <span className="ml-auto text-[10px] font-medium text-ink-muted/50 bg-surface-2 border border-line rounded-full px-1.5 py-0.5">
-                      Soon
-                    </span>
-                  )}
-                </span>
-              )
-            )}
+                </div>
+              );
+            })}
           </nav>
         </div>
 
-        {/* User + sign out */}
-        <div className="border-t border-line p-3 shrink-0">
-          <div className="flex items-center gap-2.5 mb-3 px-1">
-            <div className="w-9 h-9 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm shrink-0">
+        {/* Settings (pinned) + user + sign out */}
+        <div className="border-t border-line p-3 shrink-0 space-y-2">
+          <nav>{renderItem(SETTINGS)}</nav>
+          <div className="flex items-center gap-2.5 px-1">
+            <div className="w-8 h-8 rounded-full bg-brand text-brand-fg flex items-center justify-center font-semibold text-sm shrink-0">
               {user?.name?.charAt(0) || "U"}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium leading-none truncate">{user?.name || "User"}</p>
+              <p className="text-[13px] font-medium leading-none truncate">{user?.name || "User"}</p>
               <p className="text-xs text-ink-muted mt-1 truncate">{user?.email || ""}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full text-sm px-3 py-2 rounded-lg border border-line hover:bg-surface-2 transition"
+            className="w-full text-[13px] px-3 py-1.5 rounded-md border border-line hover:bg-surface-2 transition"
           >
             Sign out
           </button>
